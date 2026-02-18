@@ -1,0 +1,234 @@
+'use client'
+
+import { useEffect, useState, useRef } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import apiClient from '@/lib/api-client'
+
+export default function ContractQRPage() {
+  const params = useParams()
+  const [contract, setContract] = useState<any>(null)
+  const [qrCode, setQrCode] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(true)
+  const qrRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (params.id) {
+      fetchContractAndQR()
+    }
+  }, [params.id])
+
+  const fetchContractAndQR = async () => {
+    try {
+      const [contractData, qrData] = await Promise.all([
+        apiClient.getContract(params.id as string),
+        apiClient.getContractQRCode(params.id as string),
+      ])
+      setContract(contractData)
+      setQrCode(qrData.qrCode)
+    } catch (err) {
+      console.error('Failed to fetch contract QR:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleDownload = () => {
+    if (!qrCode) return
+    const link = document.createElement('a')
+    link.href = qrCode
+    link.download = `contract-${contract?.contractNumber}-qr.png`
+    link.click()
+  }
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+            <p className="mt-4 text-gray-600">Loading QR code...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  if (!contract) {
+    return (
+      <ProtectedRoute>
+        <div className="text-center py-12">
+          <p className="text-gray-500">Contract not found</p>
+          <Link href="/dashboard/contracts" className="text-blue-600 hover:text-blue-700 mt-4 inline-block">
+            ← Back to Contracts
+          </Link>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Link
+              href={`/dashboard/contracts/${contract.id}`}
+              className="text-blue-600 hover:text-blue-700 text-sm mb-2 inline-block"
+            >
+              ← Back to Contract
+            </Link>
+            <h2 className="text-2xl font-bold text-gray-900">Contract QR Code</h2>
+            <p className="text-gray-600">{contract.contractNumber}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDownload}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              📥 Download
+            </button>
+            <button
+              onClick={handlePrint}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              🖨️ Print
+            </button>
+          </div>
+        </div>
+
+        {/* QR Code Display */}
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-8 print:shadow-none" ref={qrRef}>
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Philippine Fisheries Development Authority
+              </h3>
+              <p className="text-lg text-gray-700">Bulan, Sorsogon Fish Port</p>
+              <p className="text-sm text-gray-500 mt-2">Contract Monitoring System</p>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex justify-center mb-6">
+              {qrCode ? (
+                <img src={qrCode} alt="Contract QR Code" className="w-64 h-64" />
+              ) : (
+                <div className="w-64 h-64 flex items-center justify-center bg-gray-100 rounded">
+                  <p className="text-gray-500">QR Code not available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Contract Details */}
+            <div className="border-t pt-6">
+              <table className="w-full text-sm">
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Contract Number:</td>
+                    <td className="py-2 text-gray-900">{contract.contractNumber}</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Tenant:</td>
+                    <td className="py-2 text-gray-900">
+                      {contract.tenant?.firstName} {contract.tenant?.lastName}
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Rental Space:</td>
+                    <td className="py-2 text-gray-900">
+                      {contract.rentalSpace?.spaceNumber} - {contract.rentalSpace?.type?.name}
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Space Size:</td>
+                    <td className="py-2 text-gray-900">
+                      {contract.rentalSpace?.squareMeters} m²
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Contract Period:</td>
+                    <td className="py-2 text-gray-900">
+                      {new Date(contract.startDate).toLocaleDateString()} to{' '}
+                      {new Date(contract.endDate).toLocaleDateString()}
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Monthly Rent:</td>
+                    <td className="py-2 text-gray-900">₱{contract.monthlyRent.toLocaleString()}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-medium text-gray-700">Status:</td>
+                    <td className="py-2">
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                        {contract.status}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Space Map Placeholder */}
+            <div className="mt-6 border-t pt-6">
+              <h4 className="font-semibold text-gray-900 mb-3">Rental Space Location Map</h4>
+              <div className="bg-gray-100 rounded p-4 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded h-48 flex items-center justify-center">
+                  <div className="text-gray-500">
+                    <p className="mb-2">📍 {contract.rentalSpace?.location}</p>
+                    <p className="text-sm">Space: {contract.rentalSpace?.squareMeters} square meters</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-6 text-center text-xs text-gray-500 border-t pt-4">
+              <p>Scan this QR code to view complete contract details</p>
+              <p className="mt-1">Generated: {new Date().toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="max-w-2xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-4 print:hidden">
+          <h4 className="font-semibold text-blue-900 mb-2">📱 QR Code Usage</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Scanning this QR code will display full contract details and rental space information</li>
+            <li>• Tenants can use this to quickly access their contract information</li>
+            <li>• Staff can use it for quick verification during site inspections</li>
+            <li>• The QR code contains the contract ID and verification token</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Print Styles */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print\\:shadow-none,
+          .print\\:shadow-none * {
+            visibility: visible;
+          }
+          .print\\:shadow-none {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </ProtectedRoute>
+  )
+}
