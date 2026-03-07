@@ -12,16 +12,12 @@ export default function PaymentsPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [payments, setPayments] = useState<Payment[]>([])
-  const [demandLetters, setDemandLetters] = useState<Record<number, any[]>>({})
-  const [loadingDemandLetters, setLoadingDemandLetters] = useState<Record<number, boolean>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [monthFilter, setMonthFilter] = useState('')
   const [sortColumn, setSortColumn] = useState('due_date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [currentPage, setCurrentPage] = useState(1)
-  const perPage = 10
 
   // Only cashiers can record and edit payments
   const canRecordPayments = user?.role && user.role.toUpperCase() === 'CASHIER'
@@ -30,34 +26,14 @@ export default function PaymentsPage() {
     fetchPayments()
   }, [])
 
-  const fetchDemandLetters = async (contractId: number) => {
-    setLoadingDemandLetters(prev => ({ ...prev, [contractId]: true }))
-    try {
-      const response = await apiClient.get(`/contracts/${contractId}/demand-letters`)
-      const letters = response.data?.data || response.data || []
-      setDemandLetters(prev => ({
-        ...prev,
-        [contractId]: Array.isArray(letters) ? letters : []
-      }))
-    } catch (err) {
-      console.error(`Failed to load demand letters for contract ${contractId}:`, err)
-      setDemandLetters(prev => ({
-        ...prev,
-        [contractId]: []
-      }))
-    } finally {
-      setLoadingDemandLetters(prev => ({ ...prev, [contractId]: false }))
-    }
-  }
+
 
   const fetchPayments = async () => {
     try {
       const response = await apiClient.getPayments()
       // Handle paginated response from backend
       const paymentsData = response.data?.data || response.data || response
-      const paymentsList = Array.isArray(paymentsData) ? paymentsData : []
-      console.log('Loaded payments:', paymentsList) // Debug logging
-      setPayments(paymentsList)
+      setPayments(Array.isArray(paymentsData) ? paymentsData : [])
     } catch (err: any) {
       alert(err.message || 'Failed to load payments')
       setPayments([])
@@ -146,13 +122,6 @@ export default function PaymentsPage() {
     }
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
-
-  const totalPayments = filteredPayments.length
-  const totalPages = Math.ceil(totalPayments / perPage)
-  const paginatedPayments = filteredPayments.slice(
-    (currentPage - 1) * perPage,
-    currentPage * perPage
-  )
 
   const totalPaid = filteredPayments
     .filter((p) => (p.status || '').toLowerCase() === 'paid')
@@ -301,7 +270,7 @@ export default function PaymentsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedPayments.map((payment) => {
+                  {filteredPayments.map((payment) => {
                     const contractStatus = payment.contract?.status || 'N/A';
                     const contractStatusColors = {
                       active: 'bg-green-100 text-green-800',
@@ -350,7 +319,7 @@ export default function PaymentsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className={`flex gap-2 ${(payment.status?.toLowerCase() === 'overdue') ? 'bg-red-50 p-2 rounded' : ''}`}>
+                        <div className="flex gap-2">
                           <button 
                             onClick={() => router.push(`/dashboard/payments/${payment.id}`)}
                             title="View Payment"
@@ -368,66 +337,6 @@ export default function PaymentsPage() {
                               Edit
                             </button>
                           )}
-                          {(payment.status?.toLowerCase() === 'overdue') && (
-                            <button 
-                              onClick={async () => {
-                                const contractId = payment.contract?.id
-                                if (!contractId) {
-                                  alert('Contract ID not found')
-                                  return
-                                }
-                                
-                                try {
-                                  // Directly fetch demand letters for this contract
-                                  const response = await apiClient.get(`/contracts/${contractId}/demand-letters`)
-                                  console.log('Demand letters response:', response)
-                                  
-                                  const letters = response.data?.data || response.data || []
-                                  console.log('Parsed letters:', letters)
-                                  
-                                  if (Array.isArray(letters) && letters.length > 0) {
-                                    const letter = letters[0]
-                                    console.log('Downloading letter:', letter.id)
-                                    
-                                    // Fetch the PDF with authentication
-                                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-                                    const token = localStorage.getItem('auth_token')
-                                    
-                                    const pdfResponse = await fetch(`${apiUrl}/demand-letters/${letter.id}/download`, {
-                                      headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Accept': 'application/pdf'
-                                      }
-                                    })
-                                    
-                                    if (!pdfResponse.ok) {
-                                      throw new Error(`Failed to download PDF: ${pdfResponse.status} ${pdfResponse.statusText}`)
-                                    }
-                                    
-                                    // Convert response to blob and download
-                                    const blob = await pdfResponse.blob()
-                                    const url = window.URL.createObjectURL(blob)
-                                    const a = document.createElement('a')
-                                    a.href = url
-                                    a.download = `demand-letter-${letter.demand_number}.pdf`
-                                    document.body.appendChild(a)
-                                    a.click()
-                                    window.URL.revokeObjectURL(url)
-                                    document.body.removeChild(a)
-                                  } else {
-                                    alert('No demand letter generated yet for this payment')
-                                  }
-                                } catch (error: any) {
-                                  console.error('Error downloading demand letter:', error)
-                                  alert('Error downloading demand letter: ' + error.message)
-                                }
-                              }}
-                              title="Download Demand Letter PDF for overdue payment"
-                              className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-red-700 bg-red-100 hover:text-red-900 hover:bg-red-200 transition-colors font-semibold border border-red-300"
-                            >
-                              📋 Demand Letter
-                            </button>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -439,57 +348,9 @@ export default function PaymentsPage() {
           )}
         </div>
 
-        {/* Pagination */}
         {!isLoading && filteredPayments.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4 flex items-center justify-between">
-            <div className="text-sm text-slate-600">
-              Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalPayments)} of {totalPayments} payments
-            </div>
-            {totalPages > 1 && (
-              <div className="flex gap-2 items-center">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
-                >
-                  ← Previous
-                </button>
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum = i + 1
-                    // Show pages around current page
-                    if (totalPages > 5) {
-                      if (currentPage <= 3) pageNum = i + 1
-                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
-                      else pageNum = currentPage - 2 + i
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-2.5 py-1.5 rounded text-sm transition font-medium ${
-                          currentPage === pageNum
-                            ? 'bg-indigo-600 text-white'
-                            : 'border border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  })}
-                  {totalPages > 5 && (
-                    <span className="px-2 py-1.5 text-slate-500">... {totalPages}</span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
+          <div className="text-sm text-gray-600">
+            Showing {filteredPayments.length} of {payments.length} payments
           </div>
         )}
       </div>

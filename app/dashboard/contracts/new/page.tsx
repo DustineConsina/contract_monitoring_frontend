@@ -41,19 +41,6 @@ export default function NewContractPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Auto-populate monthly rent when rental space is selected
-  useEffect(() => {
-    if (formData.rentalSpaceId && spaces.length > 0) {
-      const selectedSpace = spaces.find((s: any) => s.id == formData.rentalSpaceId)
-      if (selectedSpace && selectedSpace.base_rental_rate) {
-        setFormData((prev) => ({
-          ...prev,
-          monthlyRent: selectedSpace.base_rental_rate.toString(),
-        }))
-      }
-    }
-  }, [formData.rentalSpaceId, spaces])
-
   const fetchData = async () => {
     try {
       const [tenantsData, spacesData] = await Promise.all([
@@ -204,7 +191,7 @@ export default function NewContractPage() {
                     <div
                       className="px-4 py-2 text-gray-500 text-sm cursor-pointer hover:bg-gray-100"
                       onClick={() => {
-                        setFormData({ ...formData, rentalSpaceId: '', monthlyRent: '' })
+                        setFormData({ ...formData, rentalSpaceId: '' })
                         setShowSpaceDropdown(false)
                       }}
                     >
@@ -220,7 +207,7 @@ export default function NewContractPage() {
                         }}
                       >
                         <div className="font-medium">{space.space_code} - {space.name}</div>
-                        <div className="text-gray-500 text-xs">{space.size_sqm} sqm • ₱{parseFloat(space.base_rental_rate || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/month</div>
+                        <div className="text-gray-500 text-xs">{space.size_sqm} sqm • {space.status}</div>
                       </div>
                     ))}
                   </div>
@@ -278,13 +265,9 @@ export default function NewContractPage() {
                     required
                     min="0"
                     step="0.01"
-                    disabled={!formData.rentalSpaceId}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
-                    placeholder={formData.rentalSpaceId ? 'Auto-populated from rental space rate' : 'Select a rental space first'}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="0.00"
                   />
-                  {formData.rentalSpaceId && (
-                    <p className="text-xs text-blue-600 mt-1">💡 Auto-populated from rental space rate</p>
-                  )}
                 </div>
 
                 <div>

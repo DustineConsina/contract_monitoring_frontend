@@ -42,7 +42,7 @@ export default function PaymentDetailPage() {
             setEditFormData({
               amount_to_pay: '',
               payment_method: found.payment_method || '',
-              remarks: found.remarks || '',
+              remarks: '',
             })
             setIsEditingModalOpen(true)
           }, 100)
@@ -62,7 +62,7 @@ export default function PaymentDetailPage() {
       setEditFormData({
         amount_to_pay: '',
         payment_method: payment.payment_method || 'cash',
-        remarks: payment.remarks || '',
+        remarks: '',
       })
       setIsEditingModalOpen(true)
     }
@@ -111,7 +111,7 @@ export default function PaymentDetailPage() {
       console.log('Token:', token ? 'Present' : 'Missing')
 
       const requestBody = {
-        amount: editFormData.amount_to_pay ? parseFloat(editFormData.amount_to_pay) : 0,
+        amount_to_pay: editFormData.amount_to_pay ? parseFloat(editFormData.amount_to_pay) : 0,
         payment_method: editFormData.payment_method || 'cash',
         remarks: editFormData.remarks,
       }
@@ -375,34 +375,18 @@ export default function PaymentDetailPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Amount to Pay (₱)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      name="amount_to_pay"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      max={payment ? parseFloat(payment.balance || 0) : undefined}
-                      value={editFormData.amount_to_pay}
-                      onChange={handleEditFormChange}
-                      placeholder="Enter payment amount"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (payment) {
-                          setEditFormData({
-                            ...editFormData,
-                            amount_to_pay: parseFloat(payment.balance || 0).toString()
-                          })
-                        }
-                      }}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm"
-                    >
-                      Max
-                    </button>
-                  </div>
+                  <input
+                    type="number"
+                    name="amount_to_pay"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max={payment ? parseFloat(payment.balance || 0) : undefined}
+                    value={editFormData.amount_to_pay}
+                    onChange={handleEditFormChange}
+                    placeholder="Enter payment amount"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                   <p className="text-xs text-gray-500 mt-1">
                     Maximum: ₱{payment ? parseFloat(payment.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} (remaining balance with interest)
                   </p>
@@ -439,17 +423,17 @@ export default function PaymentDetailPage() {
                     onClick={handleUpdatePayment}
                     disabled={isUpdating || !editFormData.amount_to_pay}
                     title="Record Payment"
-                    className="flex-1 bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex-1 bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center"
                   >
-                    {isUpdating ? 'Recording...' : 'Save'}
+                    {isUpdating ? '⏳' : '💾'}
                   </button>
                   <button
                     onClick={closeEditModal}
                     disabled={isUpdating}
                     title="Cancel"
-                    className="flex-1 bg-slate-300 text-slate-800 rounded-lg px-4 py-2 hover:bg-slate-400 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex-1 bg-gray-300 text-gray-800 rounded-lg px-4 py-2 hover:bg-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center"
                   >
-                    Cancel
+                    ✕
                   </button>
                 </div>
               </div>

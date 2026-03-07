@@ -31,7 +31,7 @@ class ApiClient {
     }
   }
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
@@ -323,7 +323,7 @@ class ApiClient {
   // Audit Logs
   async getAuditLogs(params?: any) {
     const query = params ? `?${new URLSearchParams(params)}` : ''
-    return this.request<any>(`/audit-logs${query}`)
+    return this.request<any>(`/reports/audit-log${query}`)
   }
 
   // Tenants/Users

@@ -16,49 +16,34 @@ export default function ContractsPage() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all')
   const [activatingId, setActivatingId] = useState<number | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalContracts, setTotalContracts] = useState(0)
-  const [perPage, setPerPage] = useState(15)
 
   useEffect(() => {
-    setCurrentPage(1) // Reset to first page when filter changes
-    fetchContracts(1)
+    fetchContracts()
   }, [statusFilter])
 
-  useEffect(() => {
-    fetchContracts(currentPage)
-  }, [currentPage])
-
-  const fetchContracts = async (page: number = 1) => {
+  const fetchContracts = async () => {
     try {
-      setIsLoading(true)
-      const params: any = { page }
+      const params: any = {}
       if (statusFilter !== 'all') {
         params.status = statusFilter.toLowerCase()
       }
       const response = await apiClient.getContracts(params)
       
       // The API returns: { success: true, data: { data: [...], pagination_info } }
+      // OR for direct responses: { success: true, data: [...] }
+      // OR just: [...]
+      
       let contractList: any[] = []
-      let pagination: any = {}
       
       // Check if response has data property
       if (response && response.data) {
-        // If data is an array, use it (no pagination)
+        // If data is an array, use it
         if (Array.isArray(response.data)) {
           contractList = response.data
         }
         // If data has a data property (paginated), extract it
         else if (response.data.data && Array.isArray(response.data.data)) {
           contractList = response.data.data
-          // Extract pagination info if available
-          pagination = {
-            current_page: response.data.current_page || page,
-            last_page: response.data.last_page || 1,
-            total: response.data.total || contractList.length,
-            per_page: response.data.per_page || 15
-          }
         }
       }
       // If response is directly an array
@@ -67,13 +52,9 @@ export default function ContractsPage() {
       }
       
       console.log('Fetched contracts:', contractList)
-      console.log('Pagination:', pagination)
+      console.log('First contract sample:', contractList[0])
       
       setContracts(contractList)
-      setCurrentPage(pagination.current_page || page)
-      setTotalPages(pagination.last_page || 1)
-      setTotalContracts(pagination.total || contractList.length)
-      setPerPage(pagination.per_page || 15)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load contracts')
@@ -362,57 +343,10 @@ export default function ContractsPage() {
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Summary */}
         {!isLoading && filteredContracts.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4 flex items-center justify-between">
-            <div className="text-sm text-slate-600">
-              Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalContracts)} of {totalContracts} contracts
-            </div>
-            {totalPages > 1 && (
-              <div className="flex gap-2 items-center">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
-                >
-                  ← Previous
-                </button>
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum = i + 1
-                    // Show pages around current page
-                    if (totalPages > 5) {
-                      if (currentPage <= 3) pageNum = i + 1
-                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
-                      else pageNum = currentPage - 2 + i
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-2.5 py-1.5 rounded text-sm transition font-medium ${
-                          currentPage === pageNum
-                            ? 'bg-indigo-600 text-white'
-                            : 'border border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  })}
-                  {totalPages > 5 && (
-                    <span className="px-2 py-1.5 text-slate-500">... {totalPages}</span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
+          <div className="text-sm font-medium text-slate-600">
+            Showing <span className="text-slate-900 font-bold">{filteredContracts.length}</span> of <span className="text-slate-900 font-bold">{contracts.length}</span> contracts
           </div>
         )}
       </div>

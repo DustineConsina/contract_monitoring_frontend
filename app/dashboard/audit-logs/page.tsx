@@ -38,7 +38,7 @@ export default function AuditLogsPage() {
     const initialFetch = async () => {
       try {
         setIsLoading(true)
-        const response = await apiClient.request<any>('/reports/audit-log')
+        const response = await apiClient.getAuditLogs()
         const logsData = response.data?.data?.audit_logs || response.data?.audit_logs || []
         setLogs(Array.isArray(logsData) ? logsData : [])
         setError(null)
@@ -56,7 +56,7 @@ export default function AuditLogsPage() {
   const fetchLogs = async () => {
     try {
       setIsRefreshing(true)
-      const response = await apiClient.request<any>('/reports/audit-log')
+      const response = await apiClient.getAuditLogs()
       const logsData = response.data?.data?.audit_logs || response.data?.audit_logs || []
       setLogs(Array.isArray(logsData) ? logsData : [])
       setError(null)
