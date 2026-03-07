@@ -35,13 +35,27 @@ export default function PaymentDetailPage() {
       const paymentsArray = data.data?.data || data.data || data
       const found = Array.isArray(paymentsArray) ? paymentsArray.find((p: Payment) => p.id && parseInt(p.id) === parseInt(paymentId)) : null
       if (found) {
-        setPayment(found)
+        // Map the payment to ensure numeric fields are properly set
+        const mappedPayment = {
+          ...found,
+          amountDue: parseFloat(String(found.amountDue || found.amount_due || 0)),
+          interestAmount: parseFloat(String(found.interestAmount || found.interest_amount || 0)),
+          totalAmount: parseFloat(String(found.totalAmount || found.total_amount || 0)),
+          amountPaid: parseFloat(String(found.amountPaid || found.amount_paid || 0)),
+          dueDate: found.dueDate || found.due_date,
+          billingPeriodStart: found.billingPeriodStart || found.billing_period_start,
+          billingPeriodEnd: found.billingPeriodEnd || found.billing_period_end,
+          paymentNumber: found.paymentNumber || found.payment_number,
+          paymentMethod: found.paymentMethod || found.payment_method,
+          referenceNumber: found.referenceNumber || found.reference_number,
+        }
+        setPayment(mappedPayment)
         // Auto-open edit modal if edit query param is present
         if (searchParams.get('edit') === 'true') {
           setTimeout(() => {
             setEditFormData({
               amount_to_pay: '',
-              payment_method: found.payment_method || '',
+              payment_method: mappedPayment.paymentMethod || mappedPayment.payment_method || '',
               remarks: '',
             })
             setIsEditingModalOpen(true)
@@ -236,7 +250,7 @@ export default function PaymentDetailPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Payment Number</label>
-                <p className="text-gray-900 font-mono">{payment.payment_number}</p>
+                <p className="text-gray-900 font-mono">{payment.paymentNumber || payment.payment_number}</p>
               </div>
 
               <div>
@@ -253,22 +267,22 @@ export default function PaymentDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
-                  <p className="text-gray-900">{new Date(payment.due_date || payment.dueDate || '').toLocaleDateString()}</p>
+                  <p className="text-gray-900">{new Date(payment.dueDate || payment.due_date || '').toLocaleDateString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Payment Method</label>
-                  <p className="text-gray-900">{(payment.payment_method || 'N/A').toUpperCase()}</p>
+                  <p className="text-gray-900">{(payment.paymentMethod || payment.payment_method || 'N/A').toUpperCase()}</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Reference Number</label>
-                <p className="text-gray-900">{payment.reference_number || 'N/A'}</p>
+                <p className="text-gray-900">{payment.referenceNumber || payment.reference_number || 'N/A'}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Remarks</label>
-                <p className="text-gray-900">{payment.remarks || 'N/A'}</p>
+                <p className="text-gray-900">{payment.remarks || payment.notes || 'N/A'}</p>
               </div>
             </div>
 
@@ -287,28 +301,28 @@ export default function PaymentDetailPage() {
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Due (Original)</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.amount_due || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.amountDue || payment.amount_due || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Interest (3%)</label>
-                    <p className="font-semibold text-blue-600">₱{parseFloat(String(payment.interest_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-blue-600">₱{parseFloat(String(payment.interestAmount || payment.interest_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Total Amount Due</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.total_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.totalAmount || payment.total_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Paid</label>
-                    <p className="font-semibold text-green-600">₱{parseFloat(String(payment.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-green-600">₱{parseFloat(String(payment.amountPaid || payment.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
               </div>
@@ -321,19 +335,19 @@ export default function PaymentDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Contract Number</label>
-                  <p className="text-gray-900 font-mono">{payment.contract?.contract_number || payment.contract?.contractNumber || 'N/A'}</p>
+                  <p className="text-gray-900 font-mono">{payment.contract?.contractNumber || payment.contract?.contract_number || 'N/A'}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Tenant</label>
-                  <p className="text-gray-900">{payment.tenant?.user?.name || payment.tenant?.business_name || 'N/A'}</p>
+                  <p className="text-gray-900">{payment.tenant?.user?.name || payment.tenant?.contactPerson || payment.tenant?.contact_person || payment.tenant?.businessName || payment.tenant?.business_name || 'N/A'}</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Billing Period</label>
                   <p className="text-gray-900">
-                    {payment.billing_period_start && payment.billing_period_end
-                      ? `${new Date(payment.billing_period_start).toLocaleDateString()} - ${new Date(payment.billing_period_end).toLocaleDateString()}`
+                    {(payment.billingPeriodStart || payment.billing_period_start) && (payment.billingPeriodEnd || payment.billing_period_end)
+                      ? `${new Date(String(payment.billingPeriodStart || payment.billing_period_start)).toLocaleDateString()} - ${new Date(String(payment.billingPeriodEnd || payment.billing_period_end)).toLocaleDateString()}`
                       : 'N/A'}
                   </p>
                 </div>

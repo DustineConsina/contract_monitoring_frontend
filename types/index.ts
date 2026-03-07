@@ -24,6 +24,7 @@ export interface User {
   contactNumber?: string
   contact_number?: string
   address?: string
+  status?: string
   user?: User
   createdAt?: string
   created_at?: string

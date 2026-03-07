@@ -143,8 +143,8 @@ export default function RentalSpacesPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               >
                 <option value="all">All Types</option>
-                {Array.from(new Set(spaces.map((s: any) => s.space_type))).map((type: any) => (
-                  <option key={type} value={type}>
+                {Array.from(new Set(spaces.map((s: any) => s.space_type))).map((type: any, index: number) => (
+                  <option key={`${type}-${index}`} value={type}>
                     {type}
                   </option>
                 ))}
@@ -194,17 +194,19 @@ export default function RentalSpacesPage() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">{space.space_code}</h3>
+                  <h3 className="font-semibold text-gray-900">{space.space_code || space.spaceCode || 'N/A'}</h3>
                   <span className="text-2xl">{getStatusIcon(space.status)}</span>
                 </div>
                 <div className="space-y-2 text-sm mb-4">
-                  <div className="text-gray-600">{space.space_type}</div>
-                  <div className="text-gray-600">
-                    📏 {space.size_sqm} m²
+                  <div className="text-gray-700 font-medium">
+                    {space.space_type || space.spaceType || 'Space Type N/A'}
                   </div>
-                  {space.name && (
+                  <div className="text-gray-600">
+                    📏 {space.size_sqm || space.sizeSqm || space.squareMeters || 'N/A'} m²
+                  </div>
+                  {(space.name || space.location) && (
                     <div className="text-gray-600 text-xs">
-                      📍 {space.name}
+                      📍 {space.name || space.location}
                     </div>
                   )}
                   {space.base_rental_rate && (

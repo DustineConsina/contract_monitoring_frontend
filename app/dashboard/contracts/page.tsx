@@ -54,7 +54,34 @@ function ContractsPageContent() {
       console.log('Fetched contracts:', contractList)
       console.log('First contract sample:', contractList[0])
       
-      setContracts(contractList)
+      // Log the numeric fields from the first contract
+      if (contractList.length > 0) {
+        const first = contractList[0]
+        console.log('🔍 FIRST CONTRACT - RAW NUMERIC FIELDS:', {
+          monthlyRental: first.monthlyRental,
+          depositAmount: first.depositAmount,
+          interestRate: first.interestRate,
+        })
+      }
+      
+      // Map numeric fields to ensure they're properly parsed
+      const mappedContracts = contractList.map((c: any) => {
+        const monthlyRentValue = parseFloat(String(c.monthlyRental || 0))
+        const securityDepositValue = parseFloat(String(c.depositAmount || 0))
+        
+        return {
+          ...c,
+          monthlyRent: monthlyRentValue,
+          securityDeposit: securityDepositValue,
+          interestRate: parseFloat(String(c.interestRate || 0)),
+          startDate: c.startDate || c.start_date,
+          endDate: c.endDate || c.end_date,
+        }
+      })
+      
+      console.log('✅ First contract AFTER mapping:', mappedContracts[0])
+      
+      setContracts(mappedContracts)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load contracts')

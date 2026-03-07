@@ -147,6 +147,11 @@ class ApiClient {
         }
       }
 
+      // Handle 204 No Content
+      if (response.status === 204) {
+        return {} as T
+      }
+
       const data = await response.json()
       // Transform snake_case keys to camelCase
       return transformKeysToCAmelCase(data) as T

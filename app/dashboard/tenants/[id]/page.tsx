@@ -26,57 +26,73 @@ export default function TenantDetailsPage() {
       console.log('Fetching tenant with ID:', tenantId)
       const response = await apiClient.getTenant(tenantId.toString())
       
-      console.log('Full API Response:', response)
+      console.log('Tenant API Response:', response)
       
-      // API returns {success, data} structure - extract the actual tenant data
-      const tenantData = response.data || response
+      // API returns {success, data} or just {data} - extract tenant
+      let tenantData = response.data || response
       
-      console.log('Extracted Tenant Data:', tenantData)
-      console.log('User from tenant:', tenantData.user)
-      console.log('Contracts from tenant:', tenantData.contracts)
+      console.log('Tenant Data:', tenantData)
+      console.log('Tenant ID check:', tenantData?.id, 'Expected:', tenantId)
       
       if (!tenantData || !tenantData.id) {
-        setError('Failed to load tenant data - invalid response structure')
-        setIsLoading(false)
-        return
+        throw new Error('Invalid tenant data or not found')
       }
       
-      // Get user full name directly from user.name (not by splitting contact_person)
-      const fullName = tenantData.user?.name || tenantData.contact_person || tenantData.business_name || ''
+      // Get full name from various sources (camelCase > snake_case > user.name)
+      const fullName = tenantData.contactPerson || tenantData.contact_person || tenantData.user?.name || tenantData.name || ''
+      const nameParts = fullName.trim().split(/\s+/)
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
       
-      // Map API response fields to frontend expected format
-      const mappedTenant = {
+      // Build mapped tenant with BOTH snake_case and camelCase options
+      const mappedTenant: any = {
         id: tenantData.id,
-        // Use user's full name directly
+        // Name fields
         name: fullName,
-        firstName: fullName.split(' ')[0] || '',
-        lastName: fullName.split(' ').slice(1).join(' ') || '',
-        // User fields
-        email: tenantData.user?.email || '',
-        contactNumber: tenantData.user?.phone || tenantData.contact_number || '',
-        address: tenantData.user?.address || '', // User address, NOT business address!
-        role: tenantData.user?.role || 'TENANT',
-        createdAt: tenantData.user?.created_at || tenantData.created_at,
-        // Tenant fields
-        contact_person: tenantData.contact_person,
-        business_name: tenantData.business_name || '',
-        business_type: tenantData.business_type,
-        business_address: tenantData.business_address || '',
-        tin: tenantData.tin,
-        tenant_code: tenantData.tenant_code,
-        status: tenantData.status,
+        firstName: firstName,
+        lastName: lastName,
+        // User info
+        email: tenantData.email || tenantData.user?.email || '',
+        phone: tenantData.phone || tenantData.contactNumber || tenantData.contact_number || tenantData.user?.phone || '',
+        contactNumber: tenantData.contactNumber || tenantData.contact_number || tenantData.user?.phone || '',
+        address: tenantData.address || tenantData.user?.address || '',
+        role: tenantData.role || tenantData.user?.role || 'TENANT',
+        // Business fields - try camelCase first, then snake_case
+        businessName: tenantData.businessName || tenantData.business_name || '',
+        businessType: tenantData.businessType || tenantData.business_type || '',
+        businessAddress: tenantData.businessAddress || tenantData.business_address || '',
+        contactPerson: tenantData.contactPerson || tenantData.contact_person || '',
+        tin: tenantData.tin || '',
+        tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
+        status: (tenantData.status || tenantData.status || 'active'),
+        // Keep snake_case for backward compatibility
+        contact_person: tenantData.contact_person || tenantData.contactPerson || '',
+        business_name: tenantData.business_name || tenantData.businessName || '',
+        business_type: tenantData.business_type || tenantData.businessType || '',
+        business_address: tenantData.business_address || tenantData.businessAddress || '',
+        tenant_code: tenantData.tenant_code || tenantData.tenantCode || '',
+        // Nested objects
+        user: tenantData.user,
+        createdAt: tenantData.createdAt || tenantData.created_at,
       }
+      
+      console.log('Mapped tenant:', { id: mappedTenant.id, firstName: mappedTenant.firstName, lastName: mappedTenant.lastName, businessName: mappedTenant.businessName })
       
       setTenant(mappedTenant)
       
-      // Use contracts from tenant data
-      const contractsList = Array.isArray(tenantData.contracts) ? tenantData.contracts : []
-      console.log('Setting contracts list:', contractsList)
+      // Contracts
+      let contractsList = []
+      if (tenantData.contracts && Array.isArray(tenantData.contracts)) {
+        contractsList = tenantData.contracts
+      } else if (tenantData.contract) {
+        contractsList = [tenantData.contract]
+      }
+      console.log('Setting contracts:', contractsList)
       setContracts(contractsList)
       
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching tenant data:', err)
+      console.error('Error fetching tenant:', err)
       setError(err.message || 'Failed to load tenant data')
     } finally {
       setIsLoading(false)
@@ -212,42 +228,42 @@ export default function TenantDetailsPage() {
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Business Name
               </label>
-              <p className="text-gray-900">{(tenant as any).business_name || 'N/A'}</p>
+              <p className="text-gray-900">{tenant.businessName || tenant.business_name || 'N/A'}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Tenant Code
               </label>
-              <p className="text-gray-900 font-mono">{(tenant as any).tenant_code || 'N/A'}</p>
+              <p className="text-gray-900 font-mono">{tenant.tenantCode || (tenant as any).tenant_code || 'N/A'}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Tax Identification Number (TIN)
               </label>
-              <p className="text-gray-900 font-mono">{(tenant as any).tin || 'Not Provided'}</p>
+              <p className="text-gray-900 font-mono">{tenant.tin || 'Not Provided'}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Business Type
               </label>
-              <p className="text-gray-900 capitalize">{(tenant as any).business_type ? (tenant as any).business_type.replace('_', ' ') : 'Not Specified'}</p>
+              <p className="text-gray-900 capitalize">{(tenant.businessType || tenant.business_type || '').replace(/_/g, ' ')}</p>
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Business Address
               </label>
-              <p className="text-gray-900">{(tenant as any).business_address || 'Not Provided'}</p>
+              <p className="text-gray-900">{tenant.businessAddress || tenant.business_address || 'Not Provided'}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 Status
               </label>
-              <p className="text-gray-900 capitalize">{(tenant as any).status || 'Active'}</p>
+              <p className="text-gray-900 capitalize">{tenant.status || 'Active'}</p>
             </div>
           </div>
         </div>

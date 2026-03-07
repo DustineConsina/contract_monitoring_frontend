@@ -30,26 +30,62 @@ export default function ContractDetailsPage() {
   const fetchContract = async () => {
     try {
       const response = await apiClient.getContract(contractId)
-      // API returns {success, data} structure - extract the actual contract data
-      const contractData = response.data || response
       
-      console.log('🔍 Contract API Response:', contractData)
-      console.log('📊 Tenant data:', contractData.tenant)
-      console.log('💰 Payments data:', contractData.payments)
+      console.log('🔍 RAW API Response:', response)
+      console.log('🔍 Response keys:', Object.keys(response))
+      console.log('🔍 response.success:', response.success)
+      console.log('🔍 response.data:', response.data)
+      
+      // API structure: {success: true, data: {contract object}}
+      let contractData = response.data
+      
+      if (!contractData) {
+        console.error('❌ No data in response!')
+        throw new Error('Invalid API response: missing data field')
+      }
+      
+      // Log all numeric fields to see what we're working with
+      console.log('🔍 RAW NUMERIC FIELDS:', {
+        monthlyRental: contractData.monthlyRental,
+        depositAmount: contractData.depositAmount,
+        interestRate: contractData.interestRate,
+      })
+      
+      console.log('✅ CONTRACT DATA:', {
+        id: contractData.id,
+        contractNumber: contractData.contractNumber || contractData.contract_number,
+        hasTenant: !!contractData.tenant,
+        hasPayments: !!contractData.payments,
+        paymentCount: contractData.payments?.length || 0,
+        hasRentalSpace: !!contractData.rentalSpace || !!contractData.rental_space,
+      })
+      
+      // Ensure arrays are arrays
+      if (contractData.payments && !Array.isArray(contractData.payments)) {
+        contractData.payments = [contractData.payments]
+      }
       
       // Map numeric fields to numbers for proper formatting
-      // Support both camelCase and snake_case from API
+      const monthlyRentValue = parseFloat(String(contractData.monthlyRental || 0))
+      const securityDepositValue = parseFloat(String(contractData.depositAmount || 0))
+      const interestRateValue = parseFloat(String(contractData.interestRate || 0))
+      
+      console.log('✅ PARSED VALUES:', {
+        monthlyRent: monthlyRentValue,
+        securityDeposit: securityDepositValue,
+        interestRate: interestRateValue,
+      })
+      
       const mappedContract = {
         ...contractData,
-        monthlyRent: parseFloat(contractData.monthlyRent || contractData.monthly_rental || 0),
-        securityDeposit: parseFloat(contractData.securityDeposit || contractData.deposit_amount || 0),
-        interestRate: parseFloat(contractData.interestRate || contractData.interest_rate || 0),
+        monthlyRent: monthlyRentValue,
+        securityDeposit: securityDepositValue,
+        interestRate: interestRateValue,
         startDate: contractData.startDate || contractData.start_date,
         endDate: contractData.endDate || contractData.end_date,
       }
       
-      console.log('✅ Mapped contract:', mappedContract)
-      
+      console.log('✅ FINAL MAPPED CONTRACT:', mappedContract)
       setContract(mappedContract)
     } catch (err: any) {
       console.error('❌ Error loading contract:', err)
@@ -280,65 +316,55 @@ export default function ContractDetailsPage() {
                     <p className="text-sm text-gray-600">{contract.tenant?.user?.email || 'N/A'}</p>
                   </div>
                 </div>
-                {(contract.tenant?.user?.phone || contract.tenant?.contactNumber) && (
+                {(contract.tenant?.user?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number) && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.contactNumber}
+                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number}
                   </div>
                 )}
-                {(contract.tenant?.user?.address || contract.tenant?.address) && (
+                {(contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address) && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Address:</span> {contract.tenant?.user?.address || contract.tenant?.address}
+                    <span className="font-medium">Address:</span> {contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address}
                   </div>
                 )}
               </div>
             </div>
-
-            {/* DEBUG: Show tenant data structure */}
-            {contract.tenant && (
-              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow p-6 mb-6">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-4">🔍 DEBUG: Tenant Data Available</h3>
-                <pre className="text-xs bg-white p-4 rounded overflow-auto max-h-60">
-                  {JSON.stringify(contract.tenant, null, 2)}
-                </pre>
-              </div>
-            )}
 
             {/* Business Details */}
             {contract.tenant && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
                 <div className="space-y-3">
-                  {contract.tenant.businessName && (
+                  {(contract.tenant.businessName || contract.tenant.business_name) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Name:</span>
-                      <span className="font-medium">{contract.tenant.businessName}</span>
+                      <span className="font-medium">{contract.tenant.businessName || contract.tenant.business_name}</span>
                     </div>
                   )}
-                  {contract.tenant.businessType && (
+                  {(contract.tenant.businessType || contract.tenant.business_type) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Type:</span>
-                      <span className="font-medium">{contract.tenant.businessType}</span>
+                      <span className="font-medium">{contract.tenant.businessType || contract.tenant.business_type}</span>
                     </div>
                   )}
-                  {contract.tenant.tin && (
+                  {(contract.tenant.tin) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">TIN:</span>
                       <span className="font-medium">{contract.tenant.tin}</span>
                     </div>
                   )}
-                  {contract.tenant.businessAddress && (
+                  {(contract.tenant.businessAddress || contract.tenant.business_address) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Address:</span>
-                      <span className="font-medium">{contract.tenant.businessAddress}</span>
+                      <span className="font-medium">{contract.tenant.businessAddress || contract.tenant.business_address}</span>
                     </div>
                   )}
-                  {contract.tenant.contactNumber && (
+                  {(contract.tenant.contactNumber || contract.tenant.contact_number) && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Contact Number:</span>
-                      <span className="font-medium">{contract.tenant.contactNumber}</span>
+                      <span className="font-medium">{contract.tenant.contactNumber || contract.tenant.contact_number}</span>
                     </div>
                   )}
-                  {!contract.tenant.businessName && !contract.tenant.businessType && !contract.tenant.tin && !contract.tenant.businessAddress && (
+                  {!(contract.tenant.businessName || contract.tenant.business_name) && !(contract.tenant.businessType || contract.tenant.business_type) && !contract.tenant.tin && !(contract.tenant.businessAddress || contract.tenant.business_address) && (
                     <p className="text-gray-500 text-sm">No business details available</p>
                   )}
                 </div>
@@ -348,23 +374,23 @@ export default function ContractDetailsPage() {
             {/* Rental Space Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Space</h3>
-              {contract.rentalSpace && (
+              {(contract.rentalSpace || contract.rental_space) && (
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Code:</span>
-                    <span className="font-medium">{contract.rentalSpace.spaceNumber || 'N/A'}</span>
+                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.spaceCode || (contract.rentalSpace || contract.rental_space)?.space_code || (contract.rentalSpace || contract.rental_space)?.spaceNumber || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Name:</span>
-                    <span className="font-medium">{contract.rentalSpace.name || 'N/A'}</span>
+                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.name || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Type:</span>
-                    <span className="font-medium">{contract.rentalSpace.type?.name || 'N/A'}</span>
+                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.type?.name || (contract.rentalSpace || contract.rental_space)?.spaceType || (contract.rentalSpace || contract.rental_space)?.space_type || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Size:</span>
-                    <span className="font-medium">{contract.rentalSpace.squareMeters || 'N/A'} sqm</span>
+                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.squareMeters || (contract.rentalSpace || contract.rental_space)?.size_sqm || 'N/A'} sqm</span>
                   </div>
                 </div>
               )}
@@ -375,16 +401,6 @@ export default function ContractDetailsPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms and Conditions</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{contract.terms}</p>
-              </div>
-            )}
-
-            {/* DEBUG: Show payments data structure */}
-            {contract.payments && (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg shadow p-6 mb-6">
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">💰 DEBUG: Payments Data (Count: {contract.payments.length})</h3>
-                <pre className="text-xs bg-white p-4 rounded overflow-auto max-h-60">
-                  {JSON.stringify(contract.payments, null, 2)}
-                </pre>
               </div>
             )}
 
@@ -409,35 +425,35 @@ export default function ContractDetailsPage() {
                     <tbody>
                       {contract.payments.map((payment: any) => (
                         <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || 'N/A'}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || payment.payment_number || 'N/A'}</td>
                           <td className="px-4 py-3 text-gray-600">
-                            {payment.billingPeriodStart 
-                              ? new Date(payment.billingPeriodStart).toLocaleDateString()
+                            {(payment.billingPeriodStart || payment.billing_period_start)
+                              ? new Date(String(payment.billingPeriodStart || payment.billing_period_start)).toLocaleDateString()
                               : 'N/A'
                             }
                             {' - '}
-                            {payment.billingPeriodEnd 
-                              ? new Date(payment.billingPeriodEnd).toLocaleDateString()
+                            {(payment.billingPeriodEnd || payment.billing_period_end)
+                              ? new Date(String(payment.billingPeriodEnd || payment.billing_period_end)).toLocaleDateString()
                               : 'N/A'
                             }
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {payment.dueDate 
-                              ? new Date(payment.dueDate).toLocaleDateString()
+                            {(payment.dueDate || payment.due_date)
+                              ? new Date(String(payment.dueDate || payment.due_date)).toLocaleDateString()
                               : 'N/A'
                             }
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-gray-900">
-                            ₱{(parseFloat(payment.amountDue) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.amountDue || payment.amount_due) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-red-600">
-                            ₱{(parseFloat(payment.interestAmount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.interestAmount || payment.interest_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-blue-600">
-                            ₱{(parseFloat(payment.totalAmount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.totalAmount || payment.total_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-green-600">
-                            ₱{(parseFloat(payment.amountPaid) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.amountPaid || payment.amount_paid) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -470,13 +486,13 @@ export default function ContractDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Start Date</p>
                   <p className="font-medium text-gray-900">
-                    {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : 'N/A'}
+                    {(contract.startDate || contract.start_date) ? new Date(String(contract.startDate || contract.start_date)).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">End Date</p>
                   <p className="font-medium text-gray-900">
-                    {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
+                    {(contract.endDate || contract.end_date) ? new Date(String(contract.endDate || contract.end_date)).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -489,26 +505,26 @@ export default function ContractDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Monthly Rent</p>
                   <p className="text-xl font-bold text-blue-600">
-                    ₱{(contract.monthlyRent || 0).toLocaleString()}
+                    ₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
                   </p>
                 </div>
                 <div className="border-t pt-3">
                   <p className="text-sm text-gray-600">Interest (3%)</p>
                   <p className="text-lg font-semibold text-red-600">
-                    ₱{((contract.monthlyRent || 0) * 0.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    ₱{((contract.monthlyRent || contract.monthly_rental || 0) * 0.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                 </div>
                 <div className="border-t pt-3 bg-blue-50 -mx-6 -mb-6 px-6 py-3 rounded-b-lg">
                   <p className="text-sm font-semibold text-gray-700">Total Monthly Charge</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    ₱{((contract.monthlyRent || 0) * 1.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    ₱{((contract.monthlyRent || contract.monthly_rental || 0) * 1.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                 </div>
-                {(contract.securityDeposit ?? 0) > 0 && (
+                {(contract.securityDeposit || contract.deposit_amount || 0) > 0 && (
                   <div className="pt-2">
                     <p className="text-sm text-gray-600">Security Deposit</p>
                     <p className="font-medium text-gray-900">
-                      ₱{(contract.securityDeposit || 0).toLocaleString()}
+                      ₱{(contract.securityDeposit || contract.deposit_amount || 0).toLocaleString()}
                     </p>
                   </div>
                 )}

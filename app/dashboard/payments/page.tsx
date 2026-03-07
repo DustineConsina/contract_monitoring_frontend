@@ -31,10 +31,53 @@ export default function PaymentsPage() {
   const fetchPayments = async () => {
     try {
       const response = await apiClient.getPayments()
-      // Handle paginated response from backend
-      const paymentsData = response.data?.data || response.data || response
-      setPayments(Array.isArray(paymentsData) ? paymentsData : [])
+      console.log('Payments API Response:', response)
+      
+      // Handle various response structures
+      let paymentsData = []
+      
+      if (response.data) {
+        if (response.data.data && Array.isArray(response.data.data)) {
+          paymentsData = response.data.data
+        } else if (Array.isArray(response.data)) {
+          paymentsData = response.data
+        }
+      } else if (Array.isArray(response)) {
+        paymentsData = response
+      }
+      
+      console.log('Extracted payments array:', paymentsData.length)
+      
+      // Ensure payments have required fields
+      const mappedPayments = paymentsData.map((p: any) => {
+        const amountDue = parseFloat(p.amountDue || p.amount_due || 0)
+        const interestAmount = parseFloat(p.interestAmount || p.interest_amount || 0)
+        const totalAmount = parseFloat(p.totalAmount || p.total_amount || 0)
+        const amountPaid = parseFloat(p.amountPaid || p.amount_paid || 0)
+        
+        return {
+          ...p,
+          // Ensure numeric fields are numbers
+          amountDue,
+          interestAmount,
+          totalAmount,
+          amountPaid,
+          // Calculate remaining balance
+          balance: totalAmount - amountPaid,
+          dueDate: p.dueDate || p.due_date,
+          billingPeriodStart: p.billingPeriodStart || p.billing_period_start,
+          billingPeriodEnd: p.billingPeriodEnd || p.billing_period_end,
+          // Map status field from both formats
+          status: p.status || p.payment_status || 'pending',
+          // Map payment number
+          paymentNumber: p.paymentNumber || p.payment_number,
+        }
+      })
+      
+      setPayments(mappedPayments)
+      console.log('Payments loaded:', mappedPayments.length)
     } catch (err: any) {
+      console.error('Error loading payments:', err)
       alert(err.message || 'Failed to load payments')
       setPayments([])
     } finally {
@@ -43,8 +86,10 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = Array.isArray(payments) ? payments.filter((payment) => {
-    const contractNumber = payment.contract?.contractNumber || ''
+    // Get contract number from payment object (may be nested)
+    const contractNumber = payment.contract?.contractNumber || payment.contract?.contract_number || ''
     const matchesSearch = contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    
     // Handle both uppercase and lowercase status from backend
     const paymentStatus = (payment.status || '').toLowerCase()
     const filterStatus = statusFilter.toLowerCase()
@@ -53,7 +98,7 @@ export default function PaymentsPage() {
     // Filter by month
     let matchesMonth = true
     if (monthFilter) {
-      const dueDate = new Date(payment.dueDate || '')
+      const dueDate = new Date(payment.dueDate || payment.due_date || '')
       const [year, month] = monthFilter.split('-')
       matchesMonth = dueDate.getFullYear() === parseInt(year) && (dueDate.getMonth() + 1) === parseInt(month)
     }
@@ -64,12 +109,12 @@ export default function PaymentsPage() {
 
     switch (sortColumn) {
       case 'contract':
-        aValue = a.contract?.contractNumber || ''
-        bValue = b.contract?.contractNumber || ''
+        aValue = a.contract?.contractNumber || a.contract?.contract_number || ''
+        bValue = b.contract?.contractNumber || b.contract?.contract_number || ''
         break
       case 'due_date':
-        aValue = new Date(a.dueDate || '').getTime()
-        bValue = new Date(b.dueDate || '').getTime()
+        aValue = new Date(a.dueDate || a.due_date || '').getTime()
+        bValue = new Date(b.dueDate || b.due_date || '').getTime()
         break
       case 'amount':
         aValue = parseFloat(String(a.amountDue || 0))
@@ -281,7 +326,7 @@ export default function PaymentsPage() {
                     return (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {payment.contract?.contract_number || payment.contract?.contractNumber || 'N/A'}
+                        {payment.contract?.contractNumber || payment.contract?.contract_number || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${contractStatusColors[contractStatus as keyof typeof contractStatusColors] || 'bg-gray-100 text-gray-800'}`}>

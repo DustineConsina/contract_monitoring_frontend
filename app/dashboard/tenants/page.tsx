@@ -223,22 +223,22 @@ export default function TenantsPage() {
                       <span>{tenant.contact_number || tenant.user?.phone}</span>
                     </div>
                   )}
-                  {tenant.business_address && (
+                  {(tenant.business_address || tenant.businessAddress) && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>📍</span>
-                      <span className="truncate">{tenant.business_address}</span>
+                      <span className="truncate">{tenant.business_address || tenant.businessAddress}</span>
                     </div>
                   )}
-                  {tenant.tin && (
+                  {(tenant.tin) && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>🆔</span>
                       <span className="text-xs font-mono">{tenant.tin}</span>
                     </div>
                   )}
-                  {tenant.business_type && (
+                  {(tenant.business_type || tenant.businessType) && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>🏷️</span>
-                      <span className="capitalize">{tenant.business_type}</span>
+                      <span className="capitalize">{tenant.business_type || tenant.businessType}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-gray-600">
