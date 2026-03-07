@@ -64,7 +64,7 @@ export default function NewPaymentPage() {
 
     try {
       // Get the selected contract to extract tenant_id
-      const selectedContract = contracts.find((c) => c.id === parseInt(formData.contractId))
+      const selectedContract = contracts.find((c) => c.id && parseInt(c.id) === parseInt(formData.contractId))
       
       if (!selectedContract) {
         alert('Please select a valid contract')
@@ -108,11 +108,11 @@ export default function NewPaymentPage() {
     const contractId = e.target.value
     
     // Auto-fill amount from contract
-    const selectedContract = contracts.find((c) => c.id.toString() === contractId)
+    const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
     if (selectedContract) {
       // Get monthly rental - try multiple field name variations
-      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || selectedContract.monthlyAmount || 0
+      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
       const amountString = monthlyRent ? parseFloat(monthlyRent.toString()).toFixed(2) : '0.00'
       
       setFormData({

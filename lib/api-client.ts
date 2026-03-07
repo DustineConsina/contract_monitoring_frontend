@@ -6,6 +6,27 @@ interface ApiError {
   status: number
 }
 
+// Convert snake_case to camelCase
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
+}
+
+// Transform object keys from snake_case to camelCase
+function transformKeysToCAmelCase(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map((item) => transformKeysToCAmelCase(item))
+
+  const transformed: any = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const camelKey = toCamelCase(key)
+      const value = obj[key]
+      transformed[camelKey] = transformKeysToCAmelCase(value)
+    }
+  }
+  return transformed
+}
+
 class ApiClient {
   private baseUrl: string
   private token: string | null = null
@@ -93,7 +114,8 @@ class ApiClient {
       }
 
       const data = await response.json()
-      return data
+      // Transform snake_case keys to camelCase
+      return transformKeysToCAmelCase(data) as T
     } catch (error: any) {
       // Network errors (backend not running)
       if (error.name === 'TypeError' && error.message?.includes('fetch')) {

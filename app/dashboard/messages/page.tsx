@@ -50,7 +50,7 @@ export default function MessagesPage() {
 
   const handleSelectMessage = async (message: Message) => {
     setSelectedMessage(message)
-    if (!message.isRead) {
+    if (!message.isRead && message.id) {
       try {
         await apiClient.markMessageAsRead(message.id)
         fetchMessages()
@@ -212,7 +212,7 @@ export default function MessagesPage() {
                       {message.content}
                     </div>
                     <div className="text-xs text-gray-400 mt-2">
-                      {new Date(message.createdAt).toLocaleString()}
+                      {new Date(message.createdAt || '').toLocaleString()}
                     </div>
                   </button>
                 ))
@@ -234,7 +234,7 @@ export default function MessagesPage() {
                       {selectedMessage.sender?.lastName}
                     </span>
                     <span>•</span>
-                    <span>{new Date(selectedMessage.createdAt).toLocaleString()}</span>
+                    <span>{new Date(selectedMessage.createdAt || '').toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="prose max-w-none">

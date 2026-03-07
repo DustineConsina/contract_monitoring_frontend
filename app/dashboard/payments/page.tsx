@@ -53,7 +53,7 @@ export default function PaymentsPage() {
     // Filter by month
     let matchesMonth = true
     if (monthFilter) {
-      const dueDate = new Date(payment.due_date || payment.dueDate)
+      const dueDate = new Date(payment.due_date || payment.dueDate || '')
       const [year, month] = monthFilter.split('-')
       matchesMonth = dueDate.getFullYear() === parseInt(year) && (dueDate.getMonth() + 1) === parseInt(month)
     }
@@ -68,16 +68,16 @@ export default function PaymentsPage() {
         bValue = b.contract?.contract_number || b.contract?.contractNumber || ''
         break
       case 'due_date':
-        aValue = new Date(a.due_date || a.dueDate).getTime()
-        bValue = new Date(b.due_date || b.dueDate).getTime()
+        aValue = new Date(a.due_date || a.dueDate || '').getTime()
+        bValue = new Date(b.due_date || b.dueDate || '').getTime()
         break
       case 'amount':
-        aValue = parseFloat(a.amount_due || a.amount || 0)
-        bValue = parseFloat(b.amount_due || b.amount || 0)
+        aValue = parseFloat(String(a.amount_due || a.amount || 0))
+        bValue = parseFloat(String(b.amount_due || b.amount || 0))
         break
       case 'total':
-        aValue = parseFloat(a.total_amount || a.totalAmount || 0)
-        bValue = parseFloat(b.total_amount || b.totalAmount || 0)
+        aValue = parseFloat(String(a.total_amount || a.totalAmount || 0))
+        bValue = parseFloat(String(b.total_amount || b.totalAmount || 0))
         break
       case 'status':
         aValue = a.status || ''
@@ -125,14 +125,14 @@ export default function PaymentsPage() {
 
   const totalPaid = filteredPayments
     .filter((p) => (p.status || '').toLowerCase() === 'paid')
-    .reduce((sum, p) => sum + parseFloat(p.amount_paid || p.amountPaid || 0), 0)
+    .reduce((sum, p) => sum + parseFloat(String(p.amount_paid || p.amountPaid || 0)), 0)
 
   const totalPending = filteredPayments
     .filter((p) => {
       const status = (p.status || '').toLowerCase()
       return status === 'pending' || status === 'overdue'
     })
-    .reduce((sum, p) => sum + parseFloat(p.balance || 0), 0)
+    .reduce((sum, p) => sum + parseFloat(String(p.balance || 0)), 0)
 
   const totalPaymentCount = filteredPayments.length
 
@@ -294,28 +294,28 @@ export default function PaymentsPage() {
                           : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(payment.due_date || payment.dueDate).toLocaleDateString()}
+                        {new Date(payment.due_date || payment.dueDate || '').toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₱{parseFloat(payment.amount_due || payment.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ₱{parseFloat(String(payment.amount_due || payment.amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                         <span className="text-red-600">
-                          ₱{(parseFloat(payment.amount_due || payment.amount || 0) * 0.03).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₱{(parseFloat(String(payment.amount_due || payment.amount || 0)) * 0.03).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        <span className={parseFloat(payment.balance || 0) > 0 ? 'text-red-600' : 'text-green-600'}>
-                          ₱{parseFloat(payment.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span className={parseFloat(String(payment.balance || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>
+                          ₱{parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                            payment.status
+                            payment.status || ''
                           )}`}
                         >
-                          {payment.status}
+                          {payment.status || 'pending'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -330,9 +330,9 @@ export default function PaymentsPage() {
                           {canRecordPayments && (
                             <button 
                               onClick={() => router.push(`/dashboard/payments/${payment.id}?edit=true`)}
-                              disabled={payment.balance === 0 || parseFloat(payment.balance || 0) === 0 || contractStatus === 'terminated'}
-                              title={contractStatus === 'terminated' ? "Cannot edit payments for terminated contracts" : payment.balance === 0 || parseFloat(payment.balance || 0) === 0 ? "This payment is already paid" : "Edit this payment"}
-                              className={`px-3 py-1 rounded text-sm flex items-center justify-center gap-1 transition-colors ${ contractStatus === 'terminated' || payment.balance === 0 || parseFloat(payment.balance || 0) === 0 ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-green-600 hover:text-green-900 hover:bg-green-50'}`}
+                              disabled={payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 || contractStatus === 'terminated'}
+                              title={contractStatus === 'terminated' ? "Cannot edit payments for terminated contracts" : payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 ? "This payment is already paid" : "Edit this payment"}
+                              className={`px-3 py-1 rounded text-sm flex items-center justify-center gap-1 transition-colors ${ contractStatus === 'terminated' || payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-green-600 hover:text-green-900 hover:bg-green-50'}`}
                             >
                               Edit
                             </button>

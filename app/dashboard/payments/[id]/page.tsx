@@ -33,7 +33,7 @@ export default function PaymentDetailPage() {
       const data = await apiClient.getPayments()
       // Extract payments from paginated response
       const paymentsArray = data.data?.data || data.data || data
-      const found = Array.isArray(paymentsArray) ? paymentsArray.find((p: Payment) => p.id === parseInt(paymentId)) : null
+      const found = Array.isArray(paymentsArray) ? paymentsArray.find((p: Payment) => p.id && parseInt(p.id) === parseInt(paymentId)) : null
       if (found) {
         setPayment(found)
         // Auto-open edit modal if edit query param is present
@@ -89,7 +89,7 @@ export default function PaymentDetailPage() {
     }
 
     const amountToPay = parseFloat(editFormData.amount_to_pay)
-    const currentBalance = parseFloat(payment.balance || 0)
+    const currentBalance = parseFloat(String(payment.balance || 0))
 
     // Check if amount exceeds remaining balance
     if (amountToPay > currentBalance) {
@@ -201,9 +201,9 @@ export default function PaymentDetailPage() {
           <div className="flex gap-2">
             <button
               onClick={openEditModal}
-              disabled={payment && (payment.balance === 0 || parseFloat(payment.balance || 0) === 0)}
-              title={payment && (payment.balance === 0 || parseFloat(payment.balance || 0) === 0) ? "This payment is already paid" : "Record a payment"}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${payment && (payment.balance === 0 || parseFloat(payment.balance || 0) === 0) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+              disabled={!!(payment && (payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0))}
+              title={payment && (payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0) ? "This payment is already paid" : "Record a payment"}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg transition ${payment && (payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
             >
               ✏️
             </button>
@@ -243,17 +243,17 @@ export default function PaymentDetailPage() {
                 <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
                 <span
                   className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusBadge(
-                    payment.status
+                    payment.status || 'pending'
                   )}`}
                 >
-                  {(payment.status || '').toUpperCase()}
+                  {(payment.status || 'pending').toUpperCase()}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
-                  <p className="text-gray-900">{new Date(payment.due_date || payment.dueDate).toLocaleDateString()}</p>
+                  <p className="text-gray-900">{new Date(payment.due_date || payment.dueDate || '').toLocaleDateString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Payment Method</label>
@@ -279,7 +279,7 @@ export default function PaymentDetailPage() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-red-700">Balance Remaining</label>
-                  <p className="font-bold text-2xl text-red-600">₱{parseFloat(payment.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-bold text-2xl text-red-600">₱{parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
               </div>
 
@@ -287,28 +287,28 @@ export default function PaymentDetailPage() {
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Due (Original)</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(payment.amount_due || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.amount_due || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Interest (3%)</label>
-                    <p className="font-semibold text-blue-600">₱{parseFloat(payment.interest_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-blue-600">₱{parseFloat(String(payment.interest_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Total Amount Due</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(payment.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.total_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Paid</label>
-                    <p className="font-semibold text-green-600">₱{parseFloat(payment.amount_paid || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-green-600">₱{parseFloat(String(payment.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function PaymentDetailPage() {
         )}
 
         {/* No Payment Found */}
-        {!isLoading && !payment && !error && (
+        {!isLoading && !payment && (
           <div className="text-center py-12">
             <p className="text-gray-500">Payment not found</p>
           </div>
@@ -369,7 +369,7 @@ export default function PaymentDetailPage() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-gray-600 mb-1">Current Balance</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    ₱{payment ? parseFloat(payment.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                    ₱{payment ? parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                   </p>
                 </div>
 
@@ -381,14 +381,14 @@ export default function PaymentDetailPage() {
                     inputMode="decimal"
                     step="0.01"
                     min="0"
-                    max={payment ? parseFloat(payment.balance || 0) : undefined}
+                    max={payment ? parseFloat(String(payment.balance || 0)) : undefined}
                     value={editFormData.amount_to_pay}
                     onChange={handleEditFormChange}
                     placeholder="Enter payment amount"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Maximum: ₱{payment ? parseFloat(payment.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} (remaining balance with interest)
+                    Maximum: ₱{payment ? parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'} (remaining balance with interest)
                   </p>
                 </div>
 

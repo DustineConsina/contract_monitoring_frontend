@@ -172,7 +172,7 @@ export default function NewContractPage() {
                 >
                   {formData.rentalSpaceId
                     ? spaces.find((s: any) => s.id == formData.rentalSpaceId)
-                      ? `${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.space_code} - ${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.name}`
+                      ? `${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.spaceCode || spaces.find((s: any) => s.id == formData.rentalSpaceId)?.spaceNumber || 'N/A'} - ${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.name || 'N/A'}`
                       : 'Select a rental space'
                     : 'Select a rental space'}
                   <span className="float-right">▼</span>

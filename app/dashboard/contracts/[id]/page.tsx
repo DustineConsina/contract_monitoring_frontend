@@ -36,9 +36,9 @@ export default function ContractDetailsPage() {
       // Map numeric fields to numbers for proper formatting
       const mappedContract = {
         ...contractData,
-        monthlyRent: parseFloat(contractData.monthlyRent || contractData.monthly_rental || 0),
-        securityDeposit: parseFloat(contractData.securityDeposit || contractData.deposit_amount || 0),
-        interestRate: parseFloat(contractData.interestRate || contractData.interest_rate || 0),
+        monthlyRent: parseFloat(contractData.monthlyRent || 0),
+        securityDeposit: parseFloat(contractData.securityDeposit || 0),
+        interestRate: parseFloat(contractData.interestRate || 0),
       }
       
       setContract(mappedContract)
@@ -77,7 +77,7 @@ export default function ContractDetailsPage() {
         duration_months: parseInt(renewalDuration),
       }
       if (renewalRent && parseFloat(renewalRent) > 0) {
-        renewalData.monthly_rental = parseFloat(renewalRent)
+        renewalData.monthlyRent = parseFloat(renewalRent)
       }
       await apiClient.renewContract(contractId, renewalData)
       setShowRenewModal(false)
@@ -116,7 +116,7 @@ export default function ContractDetailsPage() {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `lease-${contract.contractNumber || contract.contract_number}.pdf`
+      link.download = `lease-${contract.contractNumber}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -178,7 +178,7 @@ export default function ContractDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Contract Details</h2>
-            <p className="text-gray-600">{contract.contractNumber || contract.contract_number}</p>
+            <p className="text-gray-600">{contract.contractNumber}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Link
@@ -250,7 +250,7 @@ export default function ContractDetailsPage() {
                   {contract.status?.toUpperCase() || 'PENDING'}
                 </span>
                 <div className="text-sm text-gray-600">
-                  Created on {new Date(contract.createdAt || contract.created_at).toLocaleDateString()}
+                  Created on {contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'N/A'}
                 </div>
               </div>
             </div>
@@ -265,19 +265,19 @@ export default function ContractDetailsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {contract.tenant?.contact_person || contract.tenant?.firstName} {contract.tenant?.lastName || ''}
+                      {contract.tenant?.firstName} {contract.tenant?.lastName || ''}
                     </p>
-                    <p className="text-sm text-gray-600">{contract.tenant?.user?.email || contract.tenant?.email}</p>
+                    <p className="text-sm text-gray-600">{contract.tenant?.email}</p>
                   </div>
                 </div>
-                {(contract.tenant?.contact_number || contract.tenant?.contactNumber) && (
+                {contract.tenant?.contactNumber && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Phone:</span> {contract.tenant?.contact_number || contract.tenant?.contactNumber}
+                    <span className="font-medium">Phone:</span> {contract.tenant?.contactNumber}
                   </div>
                 )}
-                {(contract.tenant?.business_address || contract.tenant?.address) && (
+                {contract.tenant?.address && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Address:</span> {contract.tenant?.business_address || contract.tenant?.address}
+                    <span className="font-medium">Address:</span> {contract.tenant?.address}
                   </div>
                 )}
               </div>
@@ -286,36 +286,33 @@ export default function ContractDetailsPage() {
             {/* Rental Space Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Space</h3>
-              {(() => {
-                const rs = contract.rentalSpace || contract.rental_space
-                return (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Space Code:</span>
-                      <span className="font-medium">{rs?.space_code || rs?.spaceNumber || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Space Name:</span>
-                      <span className="font-medium">{rs?.name || rs?.location || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Type:</span>
-                      <span className="font-medium">{rs?.space_type || rs?.type?.name || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Size:</span>
-                      <span className="font-medium">{rs?.size_sqm || rs?.squareMeters || 'N/A'} sqm</span>
-                    </div>
+              {contract.rentalSpace && (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Space Code:</span>
+                    <span className="font-medium">{contract.rentalSpace.spaceNumber || 'N/A'}</span>
                   </div>
-                )
-              })()}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Space Name:</span>
+                    <span className="font-medium">{contract.rentalSpace.name || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Type:</span>
+                    <span className="font-medium">{contract.rentalSpace.type?.name || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Size:</span>
+                    <span className="font-medium">{contract.rentalSpace.squareMeters || 'N/A'} sqm</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Terms and Conditions */}
-            {(contract.terms || contract.terms_conditions) && (
+            {contract.terms && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms and Conditions</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{contract.terms || contract.terms_conditions}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">{contract.terms}</p>
               </div>
             )}
           </div>
@@ -329,13 +326,13 @@ export default function ContractDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Start Date</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(contract.startDate || contract.start_date).toLocaleDateString()}
+                    {contract.startDate ? new Date(contract.startDate).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">End Date</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(contract.endDate || contract.end_date).toLocaleDateString()}
+                    {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -363,7 +360,7 @@ export default function ContractDetailsPage() {
                     ₱{((contract.monthlyRent || 0) * 1.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                 </div>
-                {contract.securityDeposit > 0 && (
+                {(contract.securityDeposit ?? 0) > 0 && (
                   <div className="pt-2">
                     <p className="text-sm text-gray-600">Security Deposit</p>
                     <p className="font-medium text-gray-900">
@@ -383,7 +380,7 @@ export default function ContractDetailsPage() {
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Terminate Contract?</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to terminate contract <span className="font-semibold">{contract?.contractNumber || contract?.contract_number}</span>? This action cannot be undone.
+              Are you sure you want to terminate contract <span className="font-semibold">{contract?.contractNumber}</span>? This action cannot be undone.
             </p>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">Termination Reason</label>
@@ -425,7 +422,7 @@ export default function ContractDetailsPage() {
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Renew Contract?</h3>
             <p className="text-gray-600 mb-6">
-              Renew contract <span className="font-semibold">{contract?.contractNumber || contract?.contract_number}</span> for {contract?.tenant?.contact_person || contract?.tenant?.firstName}.
+              Renew contract <span className="font-semibold">{contract?.contractNumber}</span> for {contract?.tenant?.firstName}.
             </p>
             <div className="space-y-4 mb-6">
               <div>

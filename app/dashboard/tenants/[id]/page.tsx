@@ -199,7 +199,7 @@ export default function TenantDetailsPage() {
                 Member Since
               </label>
               <p className="text-gray-900">
-                {new Date(tenant.createdAt).toLocaleDateString()}
+                {new Date(tenant.createdAt || '').toLocaleDateString()}
               </p>
             </div>
           </div>

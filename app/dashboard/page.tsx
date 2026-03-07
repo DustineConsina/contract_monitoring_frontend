@@ -239,11 +239,11 @@ export default function DashboardPage() {
                         {payment.paymentFor}
                       </div>
                       <div className="text-xs text-indigo-600 mt-1">
-                        {new Date(payment.paymentDate).toLocaleDateString()}
+                        {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                     <div className="text-sm font-bold text-indigo-700">
-                      ₱{payment.totalAmount.toLocaleString()}
+                      ₱{(payment.totalAmount ?? 0).toLocaleString()}
                     </div>
                   </div>
                 ))}

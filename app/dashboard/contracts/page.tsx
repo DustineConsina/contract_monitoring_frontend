@@ -121,7 +121,7 @@ export default function ContractsPage() {
         console.error('Failed to parse JSON:', parseError)
         // If response is ok but JSON parse fails, still consider it success
         if (response.ok) {
-          setContracts(contracts.map(c => c.id === contractId ? { ...c, status: 'active' } : c))
+          setContracts(contracts.map(c => c.id && c.id.toString() === contractId.toString() ? { ...c, status: 'active' } : c))
           setSuccessMessage(`✅ Contract ${contractNumber} activated!`)
           setTimeout(() => setSuccessMessage(null), 3000)
           setActivatingId(null)
@@ -135,7 +135,7 @@ export default function ContractsPage() {
       }
 
       // Update local state
-      setContracts(contracts.map(c => c.id === contractId ? { ...c, status: 'active' } : c))
+      setContracts(contracts.map(c => c.id && c.id.toString() === contractId.toString() ? { ...c, status: 'active' } : c))
       setSuccessMessage(`✅ Contract ${contractNumber} activated!`)
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err: any) {
@@ -294,8 +294,8 @@ export default function ContractsPage() {
                         })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                        {contract.startDate || contract.start_date ? new Date(contract.startDate || contract.start_date).toLocaleDateString() : 'N/A'} −{' '}
-                        {contract.endDate || contract.end_date ? new Date(contract.endDate || contract.end_date).toLocaleDateString() : 'N/A'}
+                        {contract.startDate || contract.start_date ? new Date(contract.startDate || contract.start_date || '').toLocaleDateString() : 'N/A'} −{' '}
+                        {contract.endDate || contract.end_date ? new Date(contract.endDate || contract.end_date || '').toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
                         ₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
@@ -326,8 +326,8 @@ export default function ContractsPage() {
                         </Link>
                         {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
                           <button
-                            onClick={() => handleActivateContract(contract.id, contract.contract_number || contract.contractNumber || `Contract ${contract.id}`)}
-                            disabled={activatingId === contract.id}
+                            onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contract_number || contract.contractNumber || `Contract ${contract.id}`)}
+                            disabled={activatingId === parseInt(contract.id || '0')}
                             title="Activate Contract"
                             className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
