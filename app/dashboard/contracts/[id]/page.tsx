@@ -141,7 +141,7 @@ export default function ContractDetailsPage() {
     
     setIsDownloading(true)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.4:8000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
       const token = localStorage.getItem('auth_token')
       const response = await fetch(`${apiUrl}/contracts/${contract.id}/lease`, {
         method: 'GET',

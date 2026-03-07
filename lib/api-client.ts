@@ -1,5 +1,5 @@
 // API Client for communicating with backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
 
 interface ApiError {
   message: string
