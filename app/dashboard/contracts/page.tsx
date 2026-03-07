@@ -66,8 +66,8 @@ function ContractsPageContent() {
 
   const filteredContracts = Array.isArray(contracts) ? contracts.filter((contract) => {
     const searchLower = searchTerm.toLowerCase()
-    const tenantName = (contract.tenant?.contact_person || '').toLowerCase()
-    const spaceName = (contract.rentalSpace?.space_code || contract.rentalSpace?.name || '').toLowerCase()
+    const tenantName = (contract.tenant?.contactPerson || contract.tenant?.user?.name || '').toLowerCase()
+    const spaceName = (contract.rentalSpace?.spaceCode || contract.rentalSpace?.name || '').toLowerCase()
     return (
       (contract.contractNumber || '').toLowerCase().includes(searchLower) ||
       tenantName.includes(searchLower) ||
@@ -276,17 +276,17 @@ function ContractsPageContent() {
                         </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
-                        {contract.tenant?.user?.name || contract.tenant?.contact_person || 'N/A'}
+                        {contract.tenant?.user?.name || contract.tenant?.contactPerson || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                         {(() => {
-                          const rs = contract.rentalSpace || contract.rental_space
+                          const rs = contract.rentalSpace || contract.rentalSpace
                           return (
                             <>
-                              {rs?.space_code || rs?.spaceCode || 'N/A'}
+                              {rs?.spaceCode || rs?.space_code || 'N/A'}
                               {rs && (
                                 <div className="text-xs text-slate-500 mt-1">
-                                  {rs?.space_type || rs?.type?.name || 'N/A'}
+                                  {rs?.type?.name || rs?.spaceType || 'N/A'}
                                 </div>
                               )}
                             </>
@@ -294,11 +294,11 @@ function ContractsPageContent() {
                         })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                        {contract.startDate || contract.start_date ? new Date(contract.startDate || contract.start_date || '').toLocaleDateString() : 'N/A'} −{' '}
-                        {contract.endDate || contract.end_date ? new Date(contract.endDate || contract.end_date || '').toLocaleDateString() : 'N/A'}
+                        {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'} −{' '}
+                        {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                        ₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
+                        ₱{(contract.monthlyRent || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -326,7 +326,7 @@ function ContractsPageContent() {
                         </Link>
                         {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
                           <button
-                            onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contract_number || contract.contractNumber || `Contract ${contract.id}`)}
+                            onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contractNumber || `Contract ${contract.id}`)}
                             disabled={activatingId === parseInt(contract.id || '0')}
                             title="Activate Contract"
                             className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

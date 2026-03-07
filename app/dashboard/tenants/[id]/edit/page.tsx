@@ -81,6 +81,7 @@ export default function EditTenantPage() {
       const submitData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        contactPerson: fullName,
         email: formData.email,
         contactNumber: formData.contactNumber,
         address: formData.address, // Personal address

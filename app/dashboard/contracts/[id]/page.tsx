@@ -38,11 +38,14 @@ export default function ContractDetailsPage() {
       console.log('💰 Payments data:', contractData.payments)
       
       // Map numeric fields to numbers for proper formatting
+      // Support both camelCase and snake_case from API
       const mappedContract = {
         ...contractData,
-        monthlyRent: parseFloat(contractData.monthlyRent || 0),
-        securityDeposit: parseFloat(contractData.securityDeposit || 0),
-        interestRate: parseFloat(contractData.interestRate || 0),
+        monthlyRent: parseFloat(contractData.monthlyRent || contractData.monthly_rental || 0),
+        securityDeposit: parseFloat(contractData.securityDeposit || contractData.deposit_amount || 0),
+        interestRate: parseFloat(contractData.interestRate || contractData.interest_rate || 0),
+        startDate: contractData.startDate || contractData.start_date,
+        endDate: contractData.endDate || contractData.end_date,
       }
       
       console.log('✅ Mapped contract:', mappedContract)

@@ -6,6 +6,27 @@ interface ApiError {
   status: number
 }
 
+// Convert camelCase to snake_case
+function toSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+}
+
+// Transform object keys from camelCase to snake_case
+function transformKeysToSnakeCase(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map((item) => transformKeysToSnakeCase(item))
+
+  const transformed: any = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const snakeKey = toSnakeCase(key)
+      const value = obj[key]
+      transformed[snakeKey] = transformKeysToSnakeCase(value)
+    }
+  }
+  return transformed
+}
+
 // Convert snake_case to camelCase
 function toCamelCase(str: string): string {
   return str.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
@@ -69,8 +90,21 @@ class ApiClient {
     }
 
     try {
+      // Convert request body from camelCase to snake_case
+      let body = options.body
+      if (body && typeof body === 'string') {
+        try {
+          const parsedBody = JSON.parse(body)
+          const convertedBody = transformKeysToSnakeCase(parsedBody)
+          body = JSON.stringify(convertedBody)
+        } catch (e) {
+          // If it's not valid JSON, leave it as is
+        }
+      }
+
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         ...options,
+        body,
         headers,
       })
 

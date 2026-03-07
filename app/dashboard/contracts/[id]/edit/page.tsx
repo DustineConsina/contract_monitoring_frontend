@@ -82,6 +82,7 @@ export default function EditContractPage() {
         tenantId: parseInt(formData.tenantId),
         rentalSpaceId: parseInt(formData.rentalSpaceId),
         startDate: formData.startDate,
+        endDate: formData.endDate,
         durationMonths: 1, // This will be calculated from start/end date on backend
         monthlyRent: parseFloat(formData.monthlyRent),
         securityDeposit: parseFloat(formData.securityDeposit),
