@@ -32,10 +32,8 @@ export default function TenantDetailsPage() {
       const tenantData = response.data || response
       
       console.log('Extracted Tenant Data:', tenantData)
-      console.log('Tenant ID from data:', tenantData.id)
-      console.log('All keys in tenantData:', Object.keys(tenantData))
+      console.log('User from tenant:', tenantData.user)
       console.log('Contracts from tenant:', tenantData.contracts)
-      console.log('Number of contracts:', tenantData.contracts?.length || 0)
       
       if (!tenantData || !tenantData.id) {
         setError('Failed to load tenant data - invalid response structure')
@@ -43,26 +41,27 @@ export default function TenantDetailsPage() {
         return
       }
       
-      // Map API response fields to frontend expected format
-      const fullName = tenantData.contact_person || tenantData.business_name || ''
-      const nameParts = fullName.trim().split(' ')
-      const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0]
-      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
+      // Get user full name directly from user.name (not by splitting contact_person)
+      const fullName = tenantData.user?.name || tenantData.contact_person || tenantData.business_name || ''
       
+      // Map API response fields to frontend expected format
       const mappedTenant = {
         id: tenantData.id,
-        firstName: firstName,
-        lastName: lastName,
+        // Use user's full name directly
+        name: fullName,
+        firstName: fullName.split(' ')[0] || '',
+        lastName: fullName.split(' ').slice(1).join(' ') || '',
+        // User fields
         email: tenantData.user?.email || '',
-        contactNumber: tenantData.contact_number || tenantData.user?.phone || '',
-        address: tenantData.business_address || tenantData.user?.address || '',
+        contactNumber: tenantData.user?.phone || tenantData.contact_number || '',
+        address: tenantData.user?.address || '', // User address, NOT business address!
         role: tenantData.user?.role || 'TENANT',
-        createdAt: tenantData.created_at,
-        // Include original fields too
+        createdAt: tenantData.user?.created_at || tenantData.created_at,
+        // Tenant fields
         contact_person: tenantData.contact_person,
-        business_name: tenantData.business_name,
+        business_name: tenantData.business_name || '',
         business_type: tenantData.business_type,
-        business_address: tenantData.business_address,
+        business_address: tenantData.business_address || '',
         tin: tenantData.tin,
         tenant_code: tenantData.tenant_code,
         status: tenantData.status,
@@ -70,7 +69,7 @@ export default function TenantDetailsPage() {
       
       setTenant(mappedTenant)
       
-      // Use contracts from tenant data (they're loaded via relationship in backend)
+      // Use contracts from tenant data
       const contractsList = Array.isArray(tenantData.contracts) ? tenantData.contracts : []
       console.log('Setting contracts list:', contractsList)
       setContracts(contractsList)
