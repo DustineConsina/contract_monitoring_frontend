@@ -15,16 +15,17 @@ export default function EditTenantPage() {
     lastName: '',
     email: '',
     contactNumber: '',
-    address: '',
-    business_name: '',
-    business_type: '',
-    business_address: '',
+    address: '', // Personal address (user table)
+    businessName: '',
+    businessType: '',
+    businessAddress: '', // Business address (tenant table)
     tin: '',
   })
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTenant()
@@ -35,25 +36,32 @@ export default function EditTenantPage() {
       const response = await apiClient.getTenant(tenantId)
       const tenant = response.data || response
       
+      console.log('Tenant data loaded:', tenant)
+      
       // Split full name into first and last name
-      const fullName = tenant.contact_person || tenant.firstName || ''
+      const fullName = tenant.contactPerson || tenant.firstName || ''
       const nameParts = fullName.trim().split(' ')
       const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0]
       const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
+      
+      console.log('Extracted name parts:', { firstName, lastName })
+      console.log('User data:', tenant.user)
       
       setFormData({
         firstName: firstName,
         lastName: lastName,
         email: tenant.user?.email || tenant.email || '',
-        contactNumber: tenant.contact_number || tenant.contactNumber || '',
-        address: tenant.business_address || tenant.address || '',
-        business_name: tenant.business_name || '',
-        business_type: tenant.business_type || '',
-        business_address: tenant.business_address || '',
+        contactNumber: tenant.contactNumber || tenant.user?.phone || '',
+        address: tenant.user?.address || '', // FIX: Use user.address, not business_address
+        businessName: tenant.businessName || '',
+        businessType: tenant.businessType || '',
+        businessAddress: tenant.businessAddress || '', // FIX: Keep business_address separate
         tin: tenant.tin || '',
       })
       setError(null)
+      setDebugInfo(null)
     } catch (err: any) {
+      console.error('Error loading tenant:', err)
       setError(err.message || 'Failed to load tenant data')
     } finally {
       setIsLoading(false)
@@ -64,21 +72,49 @@ export default function EditTenantPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
+    setDebugInfo(null)
 
     try {
       // Combine firstName and lastName back into contact_person
       const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ').trim()
       
       const submitData = {
-        ...formData,
-        firstName: fullName,
-        contact_person: fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        contactNumber: formData.contactNumber,
+        address: formData.address, // Personal address
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+        businessAddress: formData.businessAddress, // Business address (separate!)
+        tin: formData.tin,
       }
       
-      await apiClient.updateTenant(tenantId, submitData)
+      console.log('Submitting data:', submitData)
+      setDebugInfo(`Sending: ${JSON.stringify(submitData, null, 2)}`)
+      
+      const response = await apiClient.updateTenant(tenantId, submitData)
+      console.log('Update response:', response)
+      
       router.push(`/dashboard/tenants/${tenantId}`)
     } catch (err: any) {
-      setError(err.message || 'Failed to update tenant')
+      console.error('Error updating tenant:', err)
+      
+      // Show detailed error information
+      let errorMessage = err.message || 'Failed to update tenant'
+      let details = ''
+      
+      if (err.response?.data?.errors) {
+        details = JSON.stringify(err.response.data.errors, null, 2)
+        errorMessage = err.response.data.message || errorMessage
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      }
+      
+      setError(errorMessage)
+      if (details) {
+        setDebugInfo(`Errors: ${details}`)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -109,7 +145,12 @@ export default function EditTenantPage() {
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm font-semibold text-red-700">Error: {error}</p>
+            {debugInfo && (
+              <pre className="text-xs text-red-600 mt-2 bg-red-100 p-2 rounded overflow-auto max-h-48">
+                {debugInfo}
+              </pre>
+            )}
           </div>
         )}
 
@@ -205,8 +246,8 @@ export default function EditTenantPage() {
                 </label>
                 <input
                   type="text"
-                  value={formData.business_name}
-                  onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                  value={formData.businessName}
+                  onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Enter business name"
                 />
@@ -230,8 +271,8 @@ export default function EditTenantPage() {
                   Business Type
                 </label>
                 <select
-                  value={formData.business_type}
-                  onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
+                  value={formData.businessType}
+                  onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
                   <option value="">Select business type</option>
@@ -249,8 +290,8 @@ export default function EditTenantPage() {
                 </label>
                 <textarea
                   rows={3}
-                  value={formData.business_address}
-                  onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
+                  value={formData.businessAddress}
+                  onChange={(e) => setFormData({ ...formData, businessAddress: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
                   placeholder="Enter complete business address"
                 />
