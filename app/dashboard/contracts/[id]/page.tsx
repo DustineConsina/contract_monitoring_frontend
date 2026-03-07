@@ -22,6 +22,7 @@ export default function ContractDetailsPage() {
   const [renewalDuration, setRenewalDuration] = useState('12')
   const [renewalRent, setRenewalRent] = useState('')
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isActivating, setIsActivating] = useState(false)
 
   useEffect(() => {
     fetchContract()
@@ -175,6 +176,20 @@ export default function ContractDetailsPage() {
     }
   }
 
+  const handleActivate = async () => {
+    setIsActivating(true)
+    try {
+      await apiClient.activateContract(contractId)
+      alert('Contract activated successfully!')
+      fetchContract() // Refresh the contract data
+    } catch (err: any) {
+      console.error('Activation error:', err)
+      alert(err.message || 'Failed to activate contract')
+    } finally {
+      setIsActivating(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <ProtectedRoute>
@@ -273,6 +288,15 @@ export default function ContractDetailsPage() {
                 className="px-4 py-2 inline-flex items-center justify-center gap-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
               >
                 Renew
+              </button>
+            )}
+            {contract.status?.toLowerCase() === 'pending' && (
+              <button
+                onClick={handleActivate}
+                disabled={isActivating}
+                className="px-4 py-2 inline-flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition font-medium"
+              >
+                {isActivating ? '⏳ Activating...' : 'Activate'}
               </button>
             )}
             <button

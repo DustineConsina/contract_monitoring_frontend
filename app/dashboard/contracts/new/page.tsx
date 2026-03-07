@@ -51,11 +51,22 @@ export default function NewContractPage() {
       const tenantsArray = tenantsData.data?.data || tenantsData.data || []
       const spacesArray = spacesData.data?.data || spacesData.data || []
       setTenants(tenantsArray)
+      
+      // Debug: Log spaces to check status values
+      console.log('🔍 Raw spaces from API:', spacesArray)
+      console.log('🔍 Status values:', spacesArray.map((s: any) => ({ id: s.id, status: s.status, space_status: s.space_status })))
+      
       // Filter only AVAILABLE spaces (case-insensitive)
-      setSpaces(spacesArray.filter((s: any) => {
-        const status = String(s.status || '').toUpperCase()
-        return status === 'AVAILABLE'
-      }))
+      const availableSpaces = spacesArray.filter((s: any) => {
+        const status = String(s.status || s.space_status || '').toUpperCase()
+        const isAvailable = status === 'AVAILABLE'
+        if (!isAvailable) {
+          console.log(`🚫 Filtering out space ${s.id}: status="${status}"`)
+        }
+        return isAvailable
+      })
+      console.log('✅ Filtered available spaces:', availableSpaces.length)
+      setSpaces(availableSpaces)
     } catch (err: any) {
       alert(err.message || 'Failed to load data')
     } finally {
