@@ -290,6 +290,16 @@ export default function ContractDetailsPage() {
               </div>
             </div>
 
+            {/* DEBUG: Show tenant data structure */}
+            {contract.tenant && (
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow p-6 mb-6">
+                <h3 className="text-lg font-semibold text-yellow-900 mb-4">🔍 DEBUG: Tenant Data Available</h3>
+                <pre className="text-xs bg-white p-4 rounded overflow-auto max-h-60">
+                  {JSON.stringify(contract.tenant, null, 2)}
+                </pre>
+              </div>
+            )}
+
             {/* Business Details */}
             {contract.tenant && (
               <div className="bg-white rounded-lg shadow p-6">
@@ -362,6 +372,16 @@ export default function ContractDetailsPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms and Conditions</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{contract.terms}</p>
+              </div>
+            )}
+
+            {/* DEBUG: Show payments data structure */}
+            {contract.payments && (
+              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg shadow p-6 mb-6">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">💰 DEBUG: Payments Data (Count: {contract.payments.length})</h3>
+                <pre className="text-xs bg-white p-4 rounded overflow-auto max-h-60">
+                  {JSON.stringify(contract.payments, null, 2)}
+                </pre>
               </div>
             )}
 
