@@ -284,7 +284,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="text-xs font-medium text-indigo-700">
-                      Expires: {new Date(contract.endDate).toLocaleDateString()}
+                      Expires: {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 ))}

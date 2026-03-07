@@ -170,7 +170,7 @@ export default function ReportsPage() {
               return (
                 <div key={key} className={`bg-gradient-to-br ${colors[idx % colors.length]} rounded-lg p-4 text-white shadow-lg`}>
                   <p className="text-xs opacity-90 uppercase tracking-wide">{key.replace(/_/g, ' ')}</p>
-                  <p className="text-2xl font-bold mt-2">{value}</p>
+                  <p className="text-2xl font-bold mt-2">{String(value)}</p>
                 </div>
               )
             })}
@@ -251,7 +251,7 @@ export default function ReportsPage() {
                 <div key={key} className={`bg-gradient-to-br ${colors[idx % colors.length]} rounded-lg p-4 text-white shadow-lg`}>
                   <p className="text-xs opacity-90 uppercase tracking-wide">{key.replace(/_/g, ' ')}</p>
                   <p className="text-xl font-bold mt-2">
-                    {typeof value === 'number' && key.includes('total') ? `₱${parseFloat(value.toString()).toLocaleString()}` : value}
+                    {typeof value === 'number' && key.includes('total') ? `₱${parseFloat(String(value)).toLocaleString()}` : String(value)}
                   </p>
                 </div>
               )
@@ -338,7 +338,7 @@ export default function ReportsPage() {
                 <div key={key} className={`bg-gradient-to-br ${colors[idx % colors.length]} rounded-lg p-4 text-white shadow-lg`}>
                   <p className="text-xs opacity-90 uppercase tracking-wide">{key.replace(/_/g, ' ')}</p>
                   <p className="text-xl font-bold mt-2">
-                    {typeof value === 'number' && key.includes('balance') ? `₱${parseFloat(value.toString()).toLocaleString()}` : value}
+                    {typeof value === 'number' && key.includes('balance') ? `₱${parseFloat(String(value)).toLocaleString()}` : String(value)}
                   </p>
                 </div>
               )
@@ -410,7 +410,7 @@ export default function ReportsPage() {
                 <div key={key} className={`bg-gradient-to-br ${colors[idx % colors.length]} rounded-lg p-4 text-white shadow-lg`}>
                   <p className="text-xs opacity-90 uppercase tracking-wide">{key.replace(/_/g, ' ')}</p>
                   <p className="text-xl font-bold mt-2">
-                    {typeof value === 'number' ? `₱${parseFloat(value.toString()).toLocaleString()}` : value}
+                    {typeof value === 'number' ? `₱${parseFloat(String(value)).toLocaleString()}` : String(value)}
                   </p>
                 </div>
               )
