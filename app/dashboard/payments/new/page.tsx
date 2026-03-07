@@ -10,7 +10,6 @@ import { Contract } from '@/types'
 export default function NewPaymentPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
@@ -24,15 +23,36 @@ export default function NewPaymentPage() {
   })
 
   useEffect(() => {
-    fetchContracts()
+    fetchData()
   }, [])
 
-  const fetchContracts = async () => {
+  const fetchData = async () => {
     try {
-      const data = await apiClient.getContracts({ status: 'ACTIVE' })
-      setContracts(Array.isArray(data) ? data : [])
+      // Fetch all contracts and payments
+      const [contractsData, paymentsData] = await Promise.all([
+        apiClient.getContracts(),
+        apiClient.getPayments(),
+      ])
+
+      // Extract contracts array from paginated response
+      const contractsArray = contractsData.data?.data || contractsData.data || contractsData
+      const paymentsArray = paymentsData.data?.data || paymentsData.data || paymentsData
+
+      // Get contract IDs that already have payments
+      const contractsWithPayments = new Set(
+        (Array.isArray(paymentsArray) ? paymentsArray : [])
+          .map((p: any) => p.contract_id)
+          .filter(Boolean)
+      )
+
+      // Filter contracts: exclude those with payments
+      const availableContracts = (Array.isArray(contractsArray) ? contractsArray : []).filter(
+        (c: any) => !contractsWithPayments.has(c.id)
+      )
+
+      setContracts(availableContracts)
     } catch (err: any) {
-      setError(err.message || 'Failed to load contracts')
+      alert(err.message || 'Failed to load contracts')
     } finally {
       setLoadingData(false)
     }
@@ -40,25 +60,38 @@ export default function NewPaymentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setIsLoading(true)
 
     try {
+      // Get the selected contract to extract tenant_id
+      const selectedContract = contracts.find((c) => c.id === parseInt(formData.contractId))
+      
+      if (!selectedContract) {
+        alert('Please select a valid contract')
+        setIsLoading(false)
+        return
+      }
+
+      // Map form data to backend expected format with proper snake_case field naming
       const paymentData: any = {
-        ...formData,
-        amount: parseFloat(formData.amount),
-        status: formData.paidDate ? 'PAID' : 'PENDING',
+        contract_id: parseInt(formData.contractId),
+        tenant_id: selectedContract.tenant?.id || selectedContract.tenant_id,
+        amount_due: parseFloat(formData.amount),
+        due_date: formData.dueDate,
+        payment_method: formData.paymentMethod,
+        remarks: formData.notes,
       }
 
-      // Remove paidDate if not provided
-      if (!formData.paidDate) {
-        delete paymentData.paidDate
+      // Only add payment_date if provided
+      if (formData.paidDate) {
+        paymentData.payment_date = formData.paidDate
       }
 
+      console.log('Submitting payment:', paymentData)
       await apiClient.createPayment(paymentData)
       router.push('/dashboard/payments')
     } catch (err: any) {
-      setError(err.message || 'Failed to record payment')
+      alert(err.message || 'Failed to record payment')
     } finally {
       setIsLoading(false)
     }
@@ -73,19 +106,27 @@ export default function NewPaymentPage() {
 
   const handleContractChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const contractId = e.target.value
-    setFormData({
-      ...formData,
-      contractId,
-    })
-
+    
     // Auto-fill amount from contract
-    const contract = contracts.find((c) => c.id === contractId)
-    if (contract) {
-      setFormData((prev) => ({
-        ...prev,
+    const selectedContract = contracts.find((c) => c.id.toString() === contractId)
+    
+    if (selectedContract) {
+      // Get monthly rental - try multiple field name variations
+      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || selectedContract.monthlyAmount || 0
+      const amountString = monthlyRent ? parseFloat(monthlyRent.toString()).toFixed(2) : '0.00'
+      
+      setFormData({
+        ...formData,
         contractId,
-        amount: contract.monthlyRent.toString(),
-      }))
+        amount: amountString,
+      })
+    } else {
+      // If no contract selected, clear the form
+      setFormData({
+        ...formData,
+        contractId,
+        amount: '',
+      })
     }
   }
 
@@ -105,13 +146,6 @@ export default function NewPaymentPage() {
             ← Back
           </Link>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
 
         {/* Form */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -137,8 +171,8 @@ export default function NewPaymentPage() {
                   <option value="">Select a contract</option>
                   {contracts.map((contract) => (
                     <option key={contract.id} value={contract.id}>
-                      {contract.contractNumber} - {contract.tenant?.firstName}{' '}
-                      {contract.tenant?.lastName} ({contract.rentalSpace?.spaceNumber})
+                      {contract.contractNumber || contract.contract_number} -{' '}
+                      {contract.tenant?.user?.name || contract.tenant?.contact_person || contract.tenant?.business_name}
                     </option>
                   ))}
                 </select>
@@ -151,16 +185,18 @@ export default function NewPaymentPage() {
                     Amount (₱) <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     name="amount"
-                    value={formData.amount}
-                    onChange={handleChange}
+                    value={formData.amount ? `₱${parseFloat(formData.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''}
+                    readOnly
+                    disabled
                     required
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="0.00"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-blue-50 text-gray-800 cursor-not-allowed outline-none font-semibold text-lg text-center"
+                    placeholder="Select contract to see amount"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Amount is fixed to the contract's monthly rental. Select a contract above to auto-fill.
+                  </p>
                 </div>
 
                 <div>
@@ -228,19 +264,21 @@ export default function NewPaymentPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4 justify-end pt-4 border-t">
+              <div className="flex gap-2 justify-end pt-4 border-t">
                 <Link
                   href="/dashboard/payments"
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  title="Cancel"
+                  className="px-4 py-2 flex items-center justify-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
                 >
                   Cancel
                 </Link>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Record Payment"
+                  className="px-4 py-2 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Recording...' : 'Record Payment'}
+                  {isLoading ? '⏳ Saving...' : 'Record'}
                 </button>
               </div>
             </form>

@@ -12,26 +12,26 @@ export default function RentalSpacesPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     fetchData()
+    
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+      fetchData()
+    }, 5000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   const fetchData = async () => {
     try {
+      setIsRefreshing(true)
       const spacesData = await apiClient.getRentalSpaces()
-      const spacesArray = Array.isArray(spacesData) ? spacesData : []
+      // Handle paginated response from API - extract actual array from nested structure
+      const spacesArray = spacesData.data?.data || spacesData.data || []
       setSpaces(spacesArray)
-      
-      // Extract unique space types
-      const types = Array.from(
-        new Map(
-          spacesArray
-            .filter((s: RentalSpace) => s.type)
-            .map((s: RentalSpace) => [s.type!.id, s.type!])
-        ).values()
-      ) as RentalSpaceType[]
-      setSpaceTypes(types)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load rental spaces')
@@ -39,47 +39,61 @@ export default function RentalSpacesPage() {
       setSpaceTypes([])
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
-  const filteredSpaces = Array.isArray(spaces) ? spaces.filter((space) => {
-    const matchesType = selectedType === 'all' || space.typeId === selectedType
-    const matchesStatus = statusFilter === 'all' || space.status === statusFilter.toUpperCase()
+  const filteredSpaces = Array.isArray(spaces) ? spaces.filter((space: any) => {
+    const matchesType = selectedType === 'all' || space.space_type === selectedType
+    const spaceStatus = String(space.status || '').toUpperCase()
+    const matchesStatus = statusFilter === 'all' || spaceStatus === statusFilter.toUpperCase()
     return matchesType && matchesStatus
   }) : []
 
   const getStatusBadge = (status: string) => {
+    const statusKey = String(status || '').toUpperCase()
     const colors = {
       AVAILABLE: 'bg-green-100 text-green-800',
       OCCUPIED: 'bg-blue-100 text-blue-800',
       MAINTENANCE: 'bg-orange-100 text-orange-800',
     }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[statusKey as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
   const getStatusIcon = (status: string) => {
+    const statusKey = String(status || '').toUpperCase()
     const icons = {
       AVAILABLE: '✅',
       OCCUPIED: '🔒',
       MAINTENANCE: '🔧',
     }
-    return icons[status as keyof typeof icons] || '❓'
+    return icons[statusKey as keyof typeof icons] || '❓'
   }
 
   const stats = {
     total: spaces.length,
-    available: Array.isArray(spaces) ? spaces.filter((s) => s.status === 'AVAILABLE').length : 0,
-    occupied: Array.isArray(spaces) ? spaces.filter((s) => s.status === 'OCCUPIED').length : 0,
-    maintenance: Array.isArray(spaces) ? spaces.filter((s) => s.status === 'MAINTENANCE').length : 0,
+    available: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'AVAILABLE').length : 0,
+    occupied: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'OCCUPIED').length : 0,
+    maintenance: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'MAINTENANCE').length : 0,
   }
 
   return (
     <ProtectedRoute>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Rental Spaces</h2>
-          <p className="text-gray-600">Manage rental spaces and availability</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Rental Spaces</h2>
+            <p className="text-gray-600">Manage rental spaces and availability</p>
+          </div>
+          <button
+            onClick={() => fetchData()}
+            disabled={isRefreshing}
+            title="Refresh Spaces"
+            className="px-4 py-2 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {isRefreshing ? '⏳' : '🔄'} Refresh
+          </button>
         </div>
 
         {/* Error Message */}
@@ -129,9 +143,9 @@ export default function RentalSpacesPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               >
                 <option value="all">All Types</option>
-                {spaceTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
+                {Array.from(new Set(spaces.map((s: any) => s.space_type))).map((type: any) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
                 ))}
               </select>
@@ -168,34 +182,34 @@ export default function RentalSpacesPage() {
               <p className="text-gray-500">No rental spaces found</p>
             </div>
           ) : (
-            filteredSpaces.map((space) => (
+            filteredSpaces.map((space: any) => (
               <div
                 key={space.id}
                 className={`bg-white rounded-lg shadow hover:shadow-lg transition p-4 border-2 ${
-                  space.status === 'AVAILABLE'
+                  String(space.status || '').toUpperCase() === 'AVAILABLE'
                     ? 'border-green-200'
-                    : space.status === 'OCCUPIED'
+                    : String(space.status || '').toUpperCase() === 'OCCUPIED'
                     ? 'border-blue-200'
                     : 'border-orange-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">{space.spaceNumber}</h3>
+                  <h3 className="font-semibold text-gray-900">{space.space_code}</h3>
                   <span className="text-2xl">{getStatusIcon(space.status)}</span>
                 </div>
                 <div className="space-y-2 text-sm mb-4">
-                  <div className="text-gray-600">{space.type?.name}</div>
+                  <div className="text-gray-600">{space.space_type}</div>
                   <div className="text-gray-600">
-                    📏 {space.squareMeters} m²
+                    📏 {space.size_sqm} m²
                   </div>
-                  {space.location && (
+                  {space.name && (
                     <div className="text-gray-600 text-xs">
-                      📍 {space.location}
+                      📍 {space.name}
                     </div>
                   )}
-                  {space.type?.baseRatePerSqm && (
+                  {space.base_rental_rate && (
                     <div className="text-gray-900 font-medium">
-                      ₱{space.type.baseRatePerSqm.toLocaleString()}/m²
+                      ₱{Number(space.base_rental_rate).toLocaleString()}/month
                     </div>
                   )}
                 </div>
@@ -205,7 +219,7 @@ export default function RentalSpacesPage() {
                       space.status
                     )}`}
                   >
-                    {space.status}
+                    {String(space.status || '').toUpperCase()}
                   </span>
                 </div>
               </div>

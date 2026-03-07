@@ -4,14 +4,16 @@ export type UserRole = 'ADMIN' | 'STAFF' | 'TENANT'
 
 export interface User {
   id: string
+  name?: string
   email: string
   firstName: string
   lastName: string
   role: UserRole
+  phone?: string
   contactNumber?: string
   address?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type SpaceStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE'
@@ -67,6 +69,8 @@ export interface Payment {
   id: string
   contractId: string
   contract?: Contract
+  tenantId?: string
+  tenant?: User
   amount: number
   paymentDate: string
   dueDate: string
@@ -79,9 +83,7 @@ export interface Payment {
   paymentMethod?: string
   notes?: string
   createdAt: string
-  updatedAt: string
-}
-
+  updatedAt
 export type NotificationType = 
   | 'PAYMENT_DUE' 
   | 'PAYMENT_OVERDUE' 
@@ -137,6 +139,7 @@ export interface DashboardStats {
   pendingPayments: number
   availableSpaces: number
   occupiedSpaces: number
+  totalRentalSpaces: number
   recentPayments: Payment[]
   expiringContracts: Contract[]
 }

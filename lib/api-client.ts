@@ -59,25 +59,28 @@ class ApiClient {
       if (!response.ok) {
         // Check if response is HTML (404 page, etc.)
         if (contentType?.includes('text/html')) {
-          throw {
-            message: `Backend endpoint not found: ${this.baseUrl}${endpoint}`,
-            status: response.status,
-          }
+          const err = new Error(`Backend endpoint not found: ${this.baseUrl}${endpoint}`)
+          ;(err as any).status = response.status
+          throw err
         }
 
         // Try to parse JSON error
         try {
           const errorData = await response.json()
-          throw {
-            message: errorData.message || errorData.error || 'Request failed',
-            status: response.status,
-          }
-        } catch (e) {
+          const message = errorData.message || errorData.error || 'Request failed'
+          const err = new Error(message)
+          ;(err as any).errors = errorData.errors || null
+          ;(err as any).debug = errorData.debug || null
+          ;(err as any).status = response.status
+          throw err
+        } catch (e: any) {
           // If JSON parse fails, use status text
-          throw {
-            message: `Error ${response.status}: ${response.statusText}`,
-            status: response.status,
+          if (e instanceof Error && e.message) {
+            throw e
           }
+          const err = new Error(`Error ${response.status}: ${response.statusText}`)
+          ;(err as any).status = response.status
+          throw err
         }
       }
 
@@ -89,14 +92,14 @@ class ApiClient {
         }
       }
 
-      return response.json()
+      const data = await response.json()
+      return data
     } catch (error: any) {
       // Network errors (backend not running)
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw {
-          message: `Cannot connect to backend at ${this.baseUrl}. Make sure backend is running.`,
-          status: 0,
-        }
+      if (error.name === 'TypeError' && error.message?.includes('fetch')) {
+        const err = new Error(`Cannot connect to backend at ${this.baseUrl}. Make sure backend is running.`)
+        ;(err as any).status = 0
+        throw err
       }
       // Re-throw our formatted errors
       throw error
@@ -156,6 +159,26 @@ class ApiClient {
     })
   }
 
+  async activateContract(id: string) {
+    return this.request<any>(`/contracts/${id}/activate`, {
+      method: 'POST',
+    })
+  }
+
+  async terminateContract(id: string, reason: string) {
+    return this.request<any>(`/contracts/${id}/terminate`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    })
+  }
+
+  async renewContract(id: string, data: { duration_months: number; monthly_rental?: number }) {
+    return this.request<any>(`/contracts/${id}/renew`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
   async getContractQRCode(id: string) {
     return this.request<{ qrCode: string }>(`/contracts/${id}/qr-code`)
   }
@@ -210,6 +233,47 @@ class ApiClient {
   }
 
   // Reports
+  async getContractsReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/contracts${query}`)
+  }
+
+  async getPaymentsReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/payments${query}`)
+  }
+
+  async getDelinquencyReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/delinquency${query}`)
+  }
+
+  async getRevenueReport(params?: any) {
+    const query = params ? `?${new URLSearchParams(params)}` : ''
+    return this.request<any>(`/reports/revenue${query}`)
+  }
+
+  async getTenantsReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/tenants${query}`)
+  }
+
+  async getExpiringContractsReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/expiring-contracts${query}`)
+  }
+
+  async getAuditLogReport(params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    return this.request<any>(`/reports/audit-log${query}`)
+  }
+
   async getActiveContracts() {
     return this.request<any>('/reports/active-contracts')
   }
@@ -228,7 +292,21 @@ class ApiClient {
   }
 
   async getDashboardStats() {
-    return this.request<any>('/reports/dashboard-stats')
+    const response = await this.request<any>('/reports/dashboard-stats')
+    // Extract data from response structure
+    return response.data || response
+  }
+
+  // Generic methods for flexible API calls
+  async get<T = any>(endpoint: string) {
+    return this.request<T>(endpoint)
+  }
+
+  async post<T = any>(endpoint: string, data?: any) {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    })
   }
 
   // Notifications
@@ -274,6 +352,69 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+  }
+
+  // Export reports
+  async exportReportPDF(reportType: string, params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const queryParams = new URLSearchParams(cleanParams || {})
+    queryParams.append('format', 'pdf')
+    const query = `?${queryParams.toString()}`
+    
+    const response = await fetch(`${this.baseUrl}/reports/${reportType}${query}`, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+    })
+    
+    if (!response.ok) throw new Error('Failed to export PDF')
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  }
+
+  async exportReportCSV(reportType: string, params?: any) {
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
+    const queryParams = new URLSearchParams(cleanParams || {})
+    queryParams.append('format', 'csv')
+    const query = `?${queryParams.toString()}`
+    
+    const response = await fetch(`${this.baseUrl}/reports/${reportType}${query}`, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      // Try to get error message from response
+      try {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      } catch (e: any) {
+        // If not JSON, use status text
+        if (e instanceof Error && e.message) {
+          throw e
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${reportType}-report-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
   }
 }
 

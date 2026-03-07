@@ -21,14 +21,23 @@ export default function ContractQRPage() {
 
   const fetchContractAndQR = async () => {
     try {
-      const [contractData, qrData] = await Promise.all([
-        apiClient.getContract(params.id as string),
-        apiClient.getContractQRCode(params.id as string),
-      ])
+      // Fetch contract details first
+      const contractResponse = await apiClient.getContract(params.id as string)
+      const contractData = contractResponse.data || contractResponse
       setContract(contractData)
-      setQrCode(qrData.qrCode)
+      
+      // Then fetch QR code
+      try {
+        const qrResponse = await apiClient.getContractQRCode(params.id as string)
+        if (qrResponse.qrCode) {
+          setQrCode(qrResponse.qrCode)
+        }
+      } catch (qrError) {
+        console.error('QR Code fetch error:', qrError)
+        // Don't fail completely if QR code fails
+      }
     } catch (err) {
-      console.error('Failed to fetch contract QR:', err)
+      console.error('Failed to fetch contract:', err)
     } finally {
       setIsLoading(false)
     }
@@ -132,42 +141,54 @@ export default function ContractQRPage() {
                 <tbody>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Contract Number:</td>
-                    <td className="py-2 text-gray-900">{contract.contractNumber}</td>
+                    <td className="py-2 text-gray-900">{contract.contractNumber || contract.contract_number}</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Tenant:</td>
                     <td className="py-2 text-gray-900">
-                      {contract.tenant?.firstName} {contract.tenant?.lastName}
+                      {contract.tenant?.contact_person || 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Rental Space:</td>
                     <td className="py-2 text-gray-900">
-                      {contract.rentalSpace?.spaceNumber} - {contract.rentalSpace?.type?.name}
+                      {(() => {
+                        const rs = contract.rentalSpace || contract.rental_space
+                        const code = rs?.space_code || rs?.spaceNumber || 'N/A'
+                        const name = rs?.name || rs?.location || ''
+                        const type = rs?.space_type || rs?.type?.name || 'N/A'
+                        return `${code}${name ? ' - ' + name : ''}`
+                      })()}
+                    </td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 font-medium text-gray-700">Type:</td>
+                    <td className="py-2 text-gray-900">
+                      {contract.rentalSpace?.space_type || contract.rentalSpace?.type?.name || 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Space Size:</td>
                     <td className="py-2 text-gray-900">
-                      {contract.rentalSpace?.squareMeters} m²
+                      {(contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters) || 'N/A'} m²
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Contract Period:</td>
                     <td className="py-2 text-gray-900">
-                      {new Date(contract.startDate).toLocaleDateString()} to{' '}
-                      {new Date(contract.endDate).toLocaleDateString()}
+                      {(contract.startDate || contract.start_date) ? new Date(contract.startDate || contract.start_date).toLocaleDateString() : 'N/A'} to{' '}
+                      {(contract.endDate || contract.end_date) ? new Date(contract.endDate || contract.end_date).toLocaleDateString() : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Monthly Rent:</td>
-                    <td className="py-2 text-gray-900">₱{contract.monthlyRent.toLocaleString()}</td>
+                    <td className="py-2 text-gray-900">₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}</td>
                   </tr>
                   <tr>
                     <td className="py-2 font-medium text-gray-700">Status:</td>
                     <td className="py-2">
                       <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
-                        {contract.status}
+                        {(contract.status || 'Pending').toUpperCase()}
                       </span>
                     </td>
                   </tr>
@@ -181,8 +202,8 @@ export default function ContractQRPage() {
               <div className="bg-gray-100 rounded p-4 text-center">
                 <div className="border-2 border-dashed border-gray-300 rounded h-48 flex items-center justify-center">
                   <div className="text-gray-500">
-                    <p className="mb-2">📍 {contract.rentalSpace?.location}</p>
-                    <p className="text-sm">Space: {contract.rentalSpace?.squareMeters} square meters</p>
+                    <p className="mb-2">📍 {contract.rentalSpace?.name || 'Location'}</p>
+                    <p className="text-sm">Space: {contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters || 'N/A'} square meters</p>
                   </div>
                 </div>
               </div>

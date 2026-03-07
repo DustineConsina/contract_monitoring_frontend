@@ -71,9 +71,10 @@ export default function MessagesPage() {
           </div>
           <button
             onClick={() => setShowCompose(!showCompose)}
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            title="New Message"
+            className="inline-flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            ✉️ New Message
+            +
           </button>
         </div>
 
@@ -154,15 +155,17 @@ export default function MessagesPage() {
                     <button
                       type="button"
                       onClick={() => setShowCompose(false)}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                      title="Cancel"
+                      className="w-10 h-10 flex items-center justify-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
                     >
-                      Cancel
+                      ✕
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      title="Send Message"
+                      className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                     >
-                      Send Message
+                      ✓
                     </button>
                   </div>
                 </form>

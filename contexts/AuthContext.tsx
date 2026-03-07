@@ -29,8 +29,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('auth_token')
       if (token) {
         apiClient.setToken(token)
-        const userData = await apiClient.getCurrentUser()
-        setUser(userData)
+        const response = await apiClient.getCurrentUser()
+        // Extract user from response structure { success: true, user: {...} }
+        const userData = response.user || response.data || response
+        
+        // Map backend user fields to frontend User type
+        const mappedUser = {
+          id: userData.id,
+          name: userData.name,
+          firstName: userData.name ? userData.name.split(' ').slice(0, -1).join(' ') : '',
+          lastName: userData.name ? userData.name.split(' ').pop() : '',
+          email: userData.email,
+          role: userData.role,
+          phone: userData.phone,
+          address: userData.address,
+        }
+        
+        setUser(mappedUser)
       }
     } catch (error) {
       console.error('Auth check failed:', error)
@@ -44,12 +59,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await apiClient.login(email, password)
       apiClient.setToken(response.token)
-      setUser(response.user)
+      
+      // Map backend user fields to frontend User type
+      const userData = response.user
+      const mappedUser = {
+        id: userData.id,
+        name: userData.name,
+        firstName: userData.name ? userData.name.split(' ').slice(0, -1).join(' ') : '',
+        lastName: userData.name ? userData.name.split(' ').pop() : '',
+        email: userData.email,
+        role: userData.role,
+        phone: userData.phone,
+        address: userData.address,
+      }
+      
+      setUser(mappedUser)
       router.push('/dashboard')
     } catch (error: any) {
       console.error('Login failed:', error)
-      // Show user-friendly error message
-      const errorMessage = error.message || 'Login failed. Please check your credentials.'
+      // Get the actual error message
+      let errorMessage = 'Login failed. Please check your credentials.'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (typeof error === 'object' && error.message) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
       throw new Error(errorMessage)
     }
   }

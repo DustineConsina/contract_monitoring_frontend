@@ -14,20 +14,66 @@ export default function ContractsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all')
+  const [activatingId, setActivatingId] = useState<number | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalContracts, setTotalContracts] = useState(0)
+  const [perPage, setPerPage] = useState(15)
 
   useEffect(() => {
-    fetchContracts()
+    setCurrentPage(1) // Reset to first page when filter changes
+    fetchContracts(1)
   }, [statusFilter])
 
-  const fetchContracts = async () => {
+  useEffect(() => {
+    fetchContracts(currentPage)
+  }, [currentPage])
+
+  const fetchContracts = async (page: number = 1) => {
     try {
-      const params: any = {}
+      setIsLoading(true)
+      const params: any = { page }
       if (statusFilter !== 'all') {
-        params.status = statusFilter.toUpperCase()
+        params.status = statusFilter.toLowerCase()
       }
-      const data = await apiClient.getContracts(params)
-      // Ensure data is an array
-      setContracts(Array.isArray(data) ? data : [])
+      const response = await apiClient.getContracts(params)
+      
+      // The API returns: { success: true, data: { data: [...], pagination_info } }
+      let contractList: any[] = []
+      let pagination: any = {}
+      
+      // Check if response has data property
+      if (response && response.data) {
+        // If data is an array, use it (no pagination)
+        if (Array.isArray(response.data)) {
+          contractList = response.data
+        }
+        // If data has a data property (paginated), extract it
+        else if (response.data.data && Array.isArray(response.data.data)) {
+          contractList = response.data.data
+          // Extract pagination info if available
+          pagination = {
+            current_page: response.data.current_page || page,
+            last_page: response.data.last_page || 1,
+            total: response.data.total || contractList.length,
+            per_page: response.data.per_page || 15
+          }
+        }
+      }
+      // If response is directly an array
+      else if (Array.isArray(response)) {
+        contractList = response
+      }
+      
+      console.log('Fetched contracts:', contractList)
+      console.log('Pagination:', pagination)
+      
+      setContracts(contractList)
+      setCurrentPage(pagination.current_page || page)
+      setTotalPages(pagination.last_page || 1)
+      setTotalContracts(pagination.total || contractList.length)
+      setPerPage(pagination.per_page || 15)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load contracts')
@@ -39,57 +85,127 @@ export default function ContractsPage() {
 
   const filteredContracts = Array.isArray(contracts) ? contracts.filter((contract) => {
     const searchLower = searchTerm.toLowerCase()
+    const tenantName = (contract.tenant?.contact_person || '').toLowerCase()
+    const spaceName = (contract.rentalSpace?.space_code || contract.rentalSpace?.name || '').toLowerCase()
     return (
-      contract.contractNumber.toLowerCase().includes(searchLower) ||
-      contract.tenant?.firstName.toLowerCase().includes(searchLower) ||
-      contract.tenant?.lastName.toLowerCase().includes(searchLower) ||
-      contract.rentalSpace?.spaceNumber.toLowerCase().includes(searchLower)
+      (contract.contractNumber || '').toLowerCase().includes(searchLower) ||
+      tenantName.includes(searchLower) ||
+      spaceName.includes(searchLower)
     )
   }) : []
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      EXPIRED: 'bg-orange-100 text-orange-800',
-      TERMINATED: 'bg-red-100 text-red-800',
-      RENEWED: 'bg-blue-100 text-blue-800',
+      ACTIVE: 'bg-emerald-100 text-emerald-800',
+      EXPIRED: 'bg-amber-100 text-amber-800',
+      TERMINATED: 'bg-rose-100 text-rose-800',
+      RENEWED: 'bg-indigo-100 text-indigo-800',
+      PENDING: 'bg-blue-100 text-blue-800',
     }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[status as keyof typeof colors] || 'bg-slate-100 text-slate-800'
+  }
+
+  const handleActivateContract = async (contractId: number, contractNumber: string) => {
+    if (!contractId) {
+      setError('Contract ID is missing')
+      return
+    }
+    
+    setActivatingId(contractId)
+    try {
+      const token = localStorage.getItem('auth_token')
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+      
+      const activateUrl = `${apiUrl}/contracts/${contractId}/activate`
+      console.log('Activating contract:', { contractId, contractNumber, url: activateUrl })
+      
+      // Use the dedicated activate endpoint
+      const response = await fetch(activateUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      // First, get the raw text to see what we're actually getting
+      const responseText = await response.text()
+      console.log('Raw response:', responseText)
+      console.log('Status:', response.status)
+
+      let jsonData
+      try {
+        jsonData = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError)
+        // If response is ok but JSON parse fails, still consider it success
+        if (response.ok) {
+          setContracts(contracts.map(c => c.id === contractId ? { ...c, status: 'active' } : c))
+          setSuccessMessage(`✅ Contract ${contractNumber} activated!`)
+          setTimeout(() => setSuccessMessage(null), 3000)
+          setActivatingId(null)
+          return
+        }
+        throw new Error(`Server returned invalid response: ${responseText}`)
+      }
+
+      if (!response.ok) {
+        throw new Error(jsonData.message || jsonData.error || 'Failed to activate contract')
+      }
+
+      // Update local state
+      setContracts(contracts.map(c => c.id === contractId ? { ...c, status: 'active' } : c))
+      setSuccessMessage(`✅ Contract ${contractNumber} activated!`)
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err: any) {
+      console.error('Activate error:', err)
+      setError(err.message || 'Failed to activate contract')
+      setTimeout(() => setError(null), 5000)
+    } finally {
+      setActivatingId(null)
+    }
   }
 
   return (
     <ProtectedRoute>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Contracts</h2>
-            <p className="text-gray-600">Manage rental contracts</p>
+            <h1 className="text-3xl font-bold text-slate-900">Contracts</h1>
+            <p className="text-slate-600 text-base mt-1">Manage rental contracts and agreements</p>
           </div>
           <Link
             href="/dashboard/contracts/new"
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            title="New Contract"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all"
           >
-            ➕ New Contract
+            + New Contract
           </Link>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">⚠️</span>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
+          <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
+            <div className="flex-shrink-0 text-red-500 font-bold text-xl">!</div>
+            <div>
+              <p className="text-sm font-medium text-red-900">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 p-4 rounded-lg flex items-start gap-3">
+            <div className="flex-shrink-0 text-green-600 font-bold text-xl">✓</div>
+            <div>
+              <p className="text-sm font-medium text-green-900">{successMessage}</p>
             </div>
           </div>
         )}
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Search */}
             <div>
@@ -98,7 +214,7 @@ export default function ContractsPage() {
                 placeholder="Search by contract number, tenant, or space..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition shadow-sm"
               />
             </div>
 
@@ -107,9 +223,10 @@ export default function ContractsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition shadow-sm"
               >
                 <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
                 <option value="terminated">Terminated</option>
@@ -120,20 +237,20 @@ export default function ContractsPage() {
         </div>
 
         {/* Contracts Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
-                <p className="mt-4 text-gray-600">Loading contracts...</p>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent" />
+                <p className="mt-4 text-slate-600 font-medium">Loading contracts...</p>
               </div>
             </div>
           ) : filteredContracts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No contracts found</p>
+              <p className="text-slate-500 font-medium">No contracts found</p>
               <Link
                 href="/dashboard/contracts/new"
-                className="inline-block mt-4 text-blue-600 hover:text-blue-700"
+                className="inline-block mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
               >
                 Create your first contract →
               </Link>
@@ -141,80 +258,101 @@ export default function ContractsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Contract #
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Tenant
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Rental Space
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Period
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Monthly Rent
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-slate-100">
                   {filteredContracts.map((contract) => (
-                    <tr key={contract.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <tr key={contract.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                         <Link
                           href={`/dashboard/contracts/${contract.id}`}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-indigo-600 hover:text-indigo-700 hover:underline"
                         >
-                          {contract.contractNumber}
+                          {contract.contractNumber || contract.contract_number}
                         </Link>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {contract.tenant?.firstName} {contract.tenant?.lastName}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
+                        {contract.tenant?.contact_person || contract.tenant?.firstName || 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {contract.rentalSpace?.spaceNumber}
-                        <div className="text-xs text-gray-500">
-                          {contract.rentalSpace?.type?.name}
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        {(() => {
+                          const rs = contract.rentalSpace || contract.rental_space
+                          return (
+                            <>
+                              {rs?.space_code || rs?.spaceCode || 'N/A'}
+                              {rs && (
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {rs?.space_type || rs?.type?.name || 'N/A'}
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(contract.startDate).toLocaleDateString()} -{' '}
-                        {new Date(contract.endDate).toLocaleDateString()}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        {contract.startDate || contract.start_date ? new Date(contract.startDate || contract.start_date).toLocaleDateString() : 'N/A'} −{' '}
+                        {contract.endDate || contract.end_date ? new Date(contract.endDate || contract.end_date).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₱{contract.monthlyRent.toLocaleString()}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+                        ₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                            contract.status
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusBadge(
+                            (contract.status || 'PENDING').toUpperCase()
                           )}`}
                         >
-                          {contract.status}
+                          {(contract.status || 'PENDING').toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex">
                         <Link
                           href={`/dashboard/contracts/${contract.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          title="View Contract"
+                          className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors"
                         >
                           View
                         </Link>
                         <Link
                           href={`/dashboard/contracts/${contract.id}/qr`}
-                          className="text-green-600 hover:text-green-900"
+                          title="View QR Code"
+                          className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
                         >
                           QR
                         </Link>
+                        {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
+                          <button
+                            onClick={() => handleActivateContract(contract.id, contract.contract_number || contract.contractNumber || `Contract ${contract.id}`)}
+                            disabled={activatingId === contract.id}
+                            title="Activate Contract"
+                            className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Activate
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -224,10 +362,57 @@ export default function ContractsPage() {
           )}
         </div>
 
-        {/* Summary */}
+        {/* Pagination */}
         {!isLoading && filteredContracts.length > 0 && (
-          <div className="text-sm text-gray-600">
-            Showing {filteredContracts.length} of {contracts.length} contracts
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4 flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalContracts)} of {totalContracts} contracts
+            </div>
+            {totalPages > 1 && (
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+                >
+                  ← Previous
+                </button>
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum = i + 1
+                    // Show pages around current page
+                    if (totalPages > 5) {
+                      if (currentPage <= 3) pageNum = i + 1
+                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
+                      else pageNum = currentPage - 2 + i
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-2.5 py-1.5 rounded text-sm transition font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-indigo-600 text-white'
+                            : 'border border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
+                  {totalPages > 5 && (
+                    <span className="px-2 py-1.5 text-slate-500">... {totalPages}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

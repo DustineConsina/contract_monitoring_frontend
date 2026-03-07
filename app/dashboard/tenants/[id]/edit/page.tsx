@@ -16,6 +16,10 @@ export default function EditTenantPage() {
     email: '',
     contactNumber: '',
     address: '',
+    business_name: '',
+    business_type: '',
+    business_address: '',
+    tin: '',
   })
 
   const [isLoading, setIsLoading] = useState(true)
@@ -28,13 +32,25 @@ export default function EditTenantPage() {
 
   const fetchTenant = async () => {
     try {
-      const tenant = await apiClient.getTenant(tenantId)
+      const response = await apiClient.getTenant(tenantId)
+      const tenant = response.data || response
+      
+      // Split full name into first and last name
+      const fullName = tenant.contact_person || tenant.firstName || ''
+      const nameParts = fullName.trim().split(' ')
+      const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0]
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
+      
       setFormData({
-        firstName: tenant.firstName || '',
-        lastName: tenant.lastName || '',
-        email: tenant.email || '',
-        contactNumber: tenant.contactNumber || '',
-        address: tenant.address || '',
+        firstName: firstName,
+        lastName: lastName,
+        email: tenant.user?.email || tenant.email || '',
+        contactNumber: tenant.contact_number || tenant.contactNumber || '',
+        address: tenant.business_address || tenant.address || '',
+        business_name: tenant.business_name || '',
+        business_type: tenant.business_type || '',
+        business_address: tenant.business_address || '',
+        tin: tenant.tin || '',
       })
       setError(null)
     } catch (err: any) {
@@ -50,7 +66,16 @@ export default function EditTenantPage() {
     setError(null)
 
     try {
-      await apiClient.updateTenant(tenantId, formData)
+      // Combine firstName and lastName back into contact_person
+      const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ').trim()
+      
+      const submitData = {
+        ...formData,
+        firstName: fullName,
+        contact_person: fullName,
+      }
+      
+      await apiClient.updateTenant(tenantId, submitData)
       router.push(`/dashboard/tenants/${tenantId}`)
     } catch (err: any) {
       setError(err.message || 'Failed to update tenant')
@@ -170,21 +195,86 @@ export default function EditTenantPage() {
             </div>
           </div>
 
+          {/* Business Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.business_name}
+                  onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="Enter business name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tax Identification Number (TIN)
+                </label>
+                <input
+                  type="text"
+                  value={formData.tin}
+                  onChange={(e) => setFormData({ ...formData, tin: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  placeholder="e.g., 123-456-789-012"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Type
+                </label>
+                <select
+                  value={formData.business_type}
+                  onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                >
+                  <option value="">Select business type</option>
+                  <option value="sole_proprietor">Sole Proprietor</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="corporation">Corporation</option>
+                  <option value="cooperative">Cooperative</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Address
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.business_address}
+                  onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  placeholder="Enter complete business address"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Actions */}
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+              title="Update Tenant"
+              className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Updating...' : 'Update Tenant'}
+              💾
             </button>
             <button
               type="button"
               onClick={() => router.push(`/dashboard/tenants/${tenantId}`)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+              title="Cancel"
+              className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
-              Cancel
+              ✕
             </button>
           </div>
         </form>

@@ -7,10 +7,26 @@ import apiClient from '@/lib/api-client'
 import { User } from '@/types'
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<User[]>([])
+  const [tenants, setTenants] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    contactNumber: '',
+    address: '',
+    businessName: '',
+    businessType: '',
+    businessAddress: '',
+    tin: '',
+  })
 
   useEffect(() => {
     fetchTenants()
@@ -18,8 +34,10 @@ export default function TenantsPage() {
 
   const fetchTenants = async () => {
     try {
-      const data = await apiClient.getTenants()
-      setTenants(Array.isArray(data) ? data : [])
+      const response = await apiClient.getTenants()
+      // Handle paginated response from API - response.data contains pagination info with data.data being the array
+      const tenantList = response.data?.data || response.data || []
+      setTenants(tenantList)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load tenants')
@@ -29,12 +47,95 @@ export default function TenantsPage() {
     }
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormError(null)
+    setSuccessMessage(null)
+
+    // Basic validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      setFormError('Please fill in all required fields')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await apiClient.createTenant({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        contact_number: formData.contactNumber,
+        address: formData.address,
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        business_address: formData.businessAddress,
+        tin: formData.tin,
+      })
+
+      setSuccessMessage('Tenant added successfully! 🎉')
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        contactNumber: '',
+        address: '',
+        businessName: '',
+        businessType: '',
+        businessAddress: '',
+        tin: '',
+      })
+
+      // Refresh tenants list
+      await fetchTenants()
+
+      // Close modal after a short delay
+      setTimeout(() => {
+        setShowModal(false)
+        setSuccessMessage(null)
+      }, 1500)
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to create tenant. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const closeModal = () => {
+    if (!isSubmitting) {
+      setShowModal(false)
+      setFormError(null)
+      setSuccessMessage(null)
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        contactNumber: '',
+        address: '',
+        businessName: '',
+        businessType: '',
+        businessAddress: '',
+        tin: '',
+      })
+    }
+  }
+
   const filteredTenants = Array.isArray(tenants) ? tenants.filter((tenant) => {
     const searchLower = searchTerm.toLowerCase()
+    const contactPerson = tenant.contact_person || tenant.user?.name || ''
+    const email = tenant.user?.email || tenant.email || ''
     return (
-      tenant.firstName.toLowerCase().includes(searchLower) ||
-      tenant.lastName.toLowerCase().includes(searchLower) ||
-      tenant.email.toLowerCase().includes(searchLower)
+      contactPerson.toLowerCase().includes(searchLower) ||
+      email.toLowerCase().includes(searchLower) ||
+      tenant.business_name.toLowerCase().includes(searchLower)
     )
   }) : []
 
@@ -47,12 +148,13 @@ export default function TenantsPage() {
             <h2 className="text-2xl font-bold text-gray-900">Tenants</h2>
             <p className="text-gray-600">Manage tenant information</p>
           </div>
-          <Link
-            href="/dashboard/tenants/new"
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          <button
+            onClick={() => setShowModal(true)}
+            title="Add Tenant"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            👤 Add Tenant
-          </Link>
+            + Add Tenant
+          </button>
         </div>
 
         {/* Error Message */}
@@ -85,7 +187,7 @@ export default function TenantsPage() {
           {isLoading ? (
             <div className="col-span-full flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+                <div className="text-4xl animate-spin mb-4">🐟</div>
                 <p className="mt-4 text-gray-600">Loading tenants...</p>
               </div>
             </div>
@@ -105,41 +207,59 @@ export default function TenantsPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">
-                      {tenant.firstName} {tenant.lastName}
+                      {tenant.contact_person || tenant.user?.name || 'N/A'}
                     </h3>
-                    <p className="text-sm text-gray-500">{tenant.role}</p>
+                    <p className="text-sm text-gray-500">{tenant.business_name}</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <span>📧</span>
-                    <span className="truncate">{tenant.email}</span>
+                    <span className="truncate">{tenant.user?.email || 'N/A'}</span>
                   </div>
-                  {tenant.contactNumber && (
+                  {(tenant.contact_number || tenant.user?.phone) && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>📱</span>
-                      <span>{tenant.contactNumber}</span>
+                      <span>{tenant.contact_number || tenant.user?.phone}</span>
                     </div>
                   )}
-                  {tenant.address && (
+                  {tenant.business_address && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <span>📍</span>
-                      <span className="truncate">{tenant.address}</span>
+                      <span className="truncate">{tenant.business_address}</span>
                     </div>
                   )}
+                  {tenant.tin && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <span>🆔</span>
+                      <span className="text-xs font-mono">{tenant.tin}</span>
+                    </div>
+                  )}
+                  {tenant.business_type && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <span>🏷️</span>
+                      <span className="capitalize">{tenant.business_type}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <span>🏢</span>
+                    <span className="text-xs font-mono">{tenant.tenant_code}</span>
+                  </div>
                 </div>
                 <div className="mt-4 pt-4 border-t flex gap-2">
                   <Link
                     href={`/dashboard/tenants/${tenant.id}`}
-                    className="flex-1 px-3 py-2 text-center text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    title="View Details"
+                    className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 bg-blue-600 text-white hover:bg-blue-700 transition"
                   >
-                    View Details
+                    🔍 View
                   </Link>
                   <Link
                     href={`/dashboard/contracts?tenantId=${tenant.id}`}
-                    className="flex-1 px-3 py-2 text-center text-sm border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition"
+                    title="Contracts"
+                    className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
                   >
-                    Contracts
+                    📄 Contracts
                   </Link>
                 </div>
               </div>
@@ -153,6 +273,257 @@ export default function TenantsPage() {
           </div>
         )}
       </div>
+
+      {/* Add Tenant Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900">Add New Tenant</h3>
+              <button
+                onClick={closeModal}
+                disabled={isSubmitting}
+                className="text-gray-500 hover:text-gray-700 text-2xl disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Success Message */}
+              {successMessage && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <span className="text-2xl">✅</span>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-green-700">{successMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {formError && (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{formError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Personal Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="John"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="Doe"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="john@example.com"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={handleChange}
+                      placeholder="+63 9xx xxx xxxx"
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Residential Address
+                    </label>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Street, City, Province, Postal Code"
+                      rows={3}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleChange}
+                      placeholder="Your Business Name"
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Type
+                    </label>
+                    <input
+                      type="text"
+                      name="businessType"
+                      value={formData.businessType}
+                      onChange={handleChange}
+                      placeholder="e.g., Retail, Manufacturing, Services"
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      TIN (Tax Identification Number)
+                    </label>
+                    <input
+                      type="text"
+                      name="tin"
+                      value={formData.tin}
+                      onChange={handleChange}
+                      placeholder="000-000-000-000"
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Address
+                    </label>
+                    <textarea
+                      name="businessAddress"
+                      value={formData.businessAddress}
+                      onChange={handleChange}
+                      placeholder="Street, City, Province, Postal Code"
+                      rows={3}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Credentials Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Account Credentials</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Minimum 8 characters recommended</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-2 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={isSubmitting}
+                  title="Cancel"
+                  className="w-10 h-10 flex items-center justify-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ✕
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  title="Create Tenant"
+                  className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? '⏳' : '+'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   )
 }

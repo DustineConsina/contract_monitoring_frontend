@@ -35,27 +35,35 @@ export default function EditContractPage() {
   const fetchData = async () => {
     try {
       // Fetch contract data
-      const contract = await apiClient.getContract(contractId.toString())
+      const contractResponse = await apiClient.getContract(contractId.toString())
+      const contract = contractResponse.data || contractResponse
       
       setFormData({
-        tenantId: contract.tenant.id.toString(),
-        rentalSpaceId: contract.rentalSpace.id.toString(),
-        startDate: new Date(contract.startDate).toISOString().split('T')[0],
-        endDate: new Date(contract.endDate).toISOString().split('T')[0],
-        monthlyRent: contract.monthlyRent.toString(),
-        securityDeposit: contract.securityDeposit.toString(),
-        terms: contract.terms || '',
-        status: contract.status,
+        tenantId: contract.tenant_id?.toString() || contract.tenant?.id?.toString() || '',
+        rentalSpaceId: contract.rental_space_id?.toString() || contract.rentalSpace?.id?.toString() || '',
+        startDate: contract.start_date ? new Date(contract.start_date).toISOString().split('T')[0] : '',
+        endDate: contract.end_date ? new Date(contract.end_date).toISOString().split('T')[0] : '',
+        monthlyRent: contract.monthly_rental?.toString() || contract.monthlyRent?.toString() || '',
+        securityDeposit: contract.deposit_amount?.toString() || contract.securityDeposit?.toString() || '',
+        terms: contract.terms_conditions || contract.terms || '',
+        status: contract.status || 'active',
       })
 
       // Fetch tenants and spaces for dropdowns
-      const [tenantsData, spacesData] = await Promise.all([
-        apiClient.getTenants({ role: 'TENANT' }),
-        apiClient.getRentalSpaces(),
-      ])
+      const tenantsResponse = await apiClient.getTenants()
+      const spacesResponse = await apiClient.getRentalSpaces()
+      
+      // Handle paginated responses from Laravel
+      let tenantsArray = Array.isArray(tenantsResponse) 
+        ? tenantsResponse 
+        : (tenantsResponse.data?.data || tenantsResponse.data || [])
+      
+      let spacesArray = Array.isArray(spacesResponse) 
+        ? spacesResponse 
+        : (spacesResponse.data?.data || spacesResponse.data || [])
 
-      setTenants(Array.isArray(tenantsData) ? tenantsData : [])
-      setSpaces(Array.isArray(spacesData) ? spacesData : [])
+      setTenants(tenantsArray)
+      setSpaces(spacesArray)
       setError(null)
     } catch (err: any) {
       setError(err.message || 'Failed to load contract data')
@@ -74,7 +82,7 @@ export default function EditContractPage() {
         tenantId: parseInt(formData.tenantId),
         rentalSpaceId: parseInt(formData.rentalSpaceId),
         startDate: formData.startDate,
-        endDate: formData.endDate,
+        durationMonths: 1, // This will be calculated from start/end date on backend
         monthlyRent: parseFloat(formData.monthlyRent),
         securityDeposit: parseFloat(formData.securityDeposit),
         terms: formData.terms,
@@ -132,9 +140,9 @@ export default function EditContractPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="">Select tenant</option>
-              {tenants.map((tenant) => (
+              {tenants.map((tenant: any) => (
                 <option key={tenant.id} value={tenant.id}>
-                  {tenant.firstName} {tenant.lastName} - {tenant.email}
+                  {tenant.business_name || `${tenant.firstName} ${tenant.lastName}`} - {tenant.contact_person || tenant.email}
                 </option>
               ))}
             </select>
@@ -152,11 +160,13 @@ export default function EditContractPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-border-transparent outline-none"
             >
               <option value="">Select rental space</option>
-              {spaces.map((space) => (
-                <option key={space.id} value={space.id}>
-                  {space.spaceNumber} - {space.location} ({space.squareMeters} sqm)
-                </option>
-              ))}
+              {spaces
+                .filter((space: any) => space.status === 'available' || parseInt(formData.rentalSpaceId) === space.id)
+                .map((space: any) => (
+                  <option key={space.id} value={space.id}>
+                    {space.space_code || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -254,20 +264,20 @@ export default function EditContractPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
-            >
-              {isSubmitting ? 'Updating...' : 'Update Contract'}
-            </button>
+          <div className="flex gap-2 justify-end pt-4 border-t">
             <button
               type="button"
               onClick={() => router.push(`/dashboard/contracts/${contractId}`)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

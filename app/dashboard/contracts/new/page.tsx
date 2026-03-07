@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -10,10 +10,12 @@ import { User, RentalSpace } from '@/types'
 export default function NewContractPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [tenants, setTenants] = useState<User[]>([])
   const [spaces, setSpaces] = useState<RentalSpace[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [showSpaceDropdown, setShowSpaceDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState({
     tenantId: '',
@@ -29,18 +31,46 @@ export default function NewContractPage() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSpaceDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Auto-populate monthly rent when rental space is selected
+  useEffect(() => {
+    if (formData.rentalSpaceId && spaces.length > 0) {
+      const selectedSpace = spaces.find((s: any) => s.id == formData.rentalSpaceId)
+      if (selectedSpace && selectedSpace.base_rental_rate) {
+        setFormData((prev) => ({
+          ...prev,
+          monthlyRent: selectedSpace.base_rental_rate.toString(),
+        }))
+      }
+    }
+  }, [formData.rentalSpaceId, spaces])
+
   const fetchData = async () => {
     try {
       const [tenantsData, spacesData] = await Promise.all([
         apiClient.getTenants(),
         apiClient.getRentalSpaces(),
       ])
-      const tenantsArray = Array.isArray(tenantsData) ? tenantsData : []
-      const spacesArray = Array.isArray(spacesData) ? spacesData : []
-      setTenants(tenantsArray.filter((t: User) => t.role === 'TENANT'))
-      setSpaces(spacesArray.filter((s: RentalSpace) => s.status === 'AVAILABLE'))
+      // Handle paginated responses - extract actual arrays from nested structure
+      const tenantsArray = tenantsData.data?.data || tenantsData.data || []
+      const spacesArray = spacesData.data?.data || spacesData.data || []
+      setTenants(tenantsArray)
+      // Filter only AVAILABLE spaces (case-insensitive)
+      setSpaces(spacesArray.filter((s: any) => {
+        const status = String(s.status || '').toUpperCase()
+        return status === 'AVAILABLE'
+      }))
     } catch (err: any) {
-      setError(err.message || 'Failed to load data')
+      alert(err.message || 'Failed to load data')
     } finally {
       setLoadingData(false)
     }
@@ -48,7 +78,6 @@ export default function NewContractPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setIsLoading(true)
 
     try {
@@ -57,9 +86,23 @@ export default function NewContractPage() {
         monthlyRent: parseFloat(formData.monthlyRent),
         securityDeposit: parseFloat(formData.securityDeposit),
       })
-      router.push('/dashboard/contracts')
+      setSuccessMessage('✅ Contract created successfully!')
+      setTimeout(() => {
+        router.push('/dashboard/contracts')
+      }, 2000)
     } catch (err: any) {
-      setError(err.message || 'Failed to create contract')
+      // Check if error is validation error with multiple field errors
+      if (err.errors && typeof err.errors === 'object') {
+        const errorMessages = Object.entries(err.errors)
+          .map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages[0] : messages;
+            return `${field}: ${msg}`;
+          })
+          .join('\n');
+        alert(`Validation Error:\n${errorMessages}`);
+      } else {
+        alert(err.message || 'Failed to create contract');
+      }
     } finally {
       setIsLoading(false)
     }
@@ -89,13 +132,6 @@ export default function NewContractPage() {
           </Link>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
         {/* Form */}
         <div className="bg-white rounded-lg shadow p-6">
           {loadingData ? (
@@ -106,7 +142,7 @@ export default function NewContractPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Tenant Selection */}
-              <div>
+              <div style={{ position: 'relative', zIndex: 10 }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tenant <span className="text-red-500">*</span>
                 </label>
@@ -115,39 +151,89 @@ export default function NewContractPage() {
                   value={formData.tenantId}
                   onChange={handleChange}
                   required
+                  style={{ position: 'relative', zIndex: 10 }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
                   <option value="">Select a tenant</option>
-                  {tenants.map((tenant) => (
+                  {tenants.map((tenant: any) => (
                     <option key={tenant.id} value={tenant.id}>
-                      {tenant.firstName} {tenant.lastName} - {tenant.email}
+                      {tenant.contact_person} - {tenant.user?.email}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Rental Space Selection */}
-              <div>
+              {/* Rental Space Selection - Custom Dropdown */}
+              <div ref={dropdownRef} style={{ position: 'relative', zIndex: 50 }}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Rental Space <span className="text-red-500">*</span>
                 </label>
-                <select
+                
+                {/* Hidden input for form submission */}
+                <input
+                  type="hidden"
                   name="rentalSpaceId"
                   value={formData.rentalSpaceId}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+                
+                {/* Custom Dropdown Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowSpaceDropdown(!showSpaceDropdown)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  style={{ textAlign: 'left' }}
                 >
-                  <option value="">Select a rental space</option>
-                  {spaces.map((space) => (
-                    <option key={space.id} value={space.id}>
-                      {space.spaceNumber} - {space.type?.name} ({space.squareMeters} sqm)
-                    </option>
-                  ))}
-                </select>
+                  {formData.rentalSpaceId
+                    ? spaces.find((s: any) => s.id == formData.rentalSpaceId)
+                      ? `${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.space_code} - ${spaces.find((s: any) => s.id == formData.rentalSpaceId)?.name}`
+                      : 'Select a rental space'
+                    : 'Select a rental space'}
+                  <span className="float-right">▼</span>
+                </button>
+                
+                {/* Custom Dropdown List - Opens Downward */}
+                {showSpaceDropdown && (
+                  <div
+                    className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
+                    style={{
+                      maxHeight: '300px',
+                      overflowY: 'auto',
+                      marginTop: '4px',
+                    }}
+                  >
+                    <div
+                      className="px-4 py-2 text-gray-500 text-sm cursor-pointer hover:bg-gray-100"
+                      onClick={() => {
+                        setFormData({ ...formData, rentalSpaceId: '', monthlyRent: '' })
+                        setShowSpaceDropdown(false)
+                      }}
+                    >
+                      Select a rental space
+                    </div>
+                    {spaces.map((space: any) => (
+                      <div
+                        key={space.id}
+                        className="px-4 py-2 text-sm cursor-pointer hover:bg-blue-100 border-b border-gray-100"
+                        onClick={() => {
+                          setFormData({ ...formData, rentalSpaceId: space.id })
+                          setShowSpaceDropdown(false)
+                        }}
+                      >
+                        <div className="font-medium">{space.space_code} - {space.name}</div>
+                        <div className="text-gray-500 text-xs">{space.size_sqm} sqm • ₱{parseFloat(space.base_rental_rate || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/month</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {spaces.length === 0 && !loadingData && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+                    ℹ️ No available rental spaces. All spaces are currently occupied or under maintenance.
+                  </div>
+                )}
               </div>
 
-              {/* Date Range */}
+              {/* Date Range - moved down to give space for dropdowns above */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -192,9 +278,13 @@ export default function NewContractPage() {
                     required
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="0.00"
+                    disabled={!formData.rentalSpaceId}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    placeholder={formData.rentalSpaceId ? 'Auto-populated from rental space rate' : 'Select a rental space first'}
                   />
+                  {formData.rentalSpaceId && (
+                    <p className="text-xs text-blue-600 mt-1">💡 Auto-populated from rental space rate</p>
+                  )}
                 </div>
 
                 <div>
@@ -230,24 +320,35 @@ export default function NewContractPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4 justify-end pt-4 border-t">
+              <div className="flex gap-2 justify-end pt-4 border-t">
                 <Link
                   href="/dashboard/contracts"
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  title="Cancel"
+                  className="px-4 py-2 flex items-center justify-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
                 >
                   Cancel
                 </Link>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Create Contract"
+                  className="px-4 py-2 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Creating...' : 'Create Contract'}
+                  {isLoading ? '⏳ Creating...' : 'Create'}
                 </button>
               </div>
             </form>
           )}
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg shadow-lg max-w-sm">
+              {successMessage}
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   )

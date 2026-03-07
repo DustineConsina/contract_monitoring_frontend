@@ -23,15 +23,61 @@ export default function TenantDetailsPage() {
 
   const fetchTenantData = async () => {
     try {
-      const tenantData = await apiClient.getTenant(tenantId.toString())
-      setTenant(tenantData)
+      console.log('Fetching tenant with ID:', tenantId)
+      const response = await apiClient.getTenant(tenantId.toString())
       
-      // Fetch contracts for this tenant
-      const contractsData = await apiClient.getContracts({ tenantId: tenantId.toString() })
-      setContracts(Array.isArray(contractsData) ? contractsData : [])
+      console.log('Full API Response:', response)
+      
+      // API returns {success, data} structure - extract the actual tenant data
+      const tenantData = response.data || response
+      
+      console.log('Extracted Tenant Data:', tenantData)
+      console.log('Tenant ID from data:', tenantData.id)
+      console.log('All keys in tenantData:', Object.keys(tenantData))
+      console.log('Contracts from tenant:', tenantData.contracts)
+      console.log('Number of contracts:', tenantData.contracts?.length || 0)
+      
+      if (!tenantData || !tenantData.id) {
+        setError('Failed to load tenant data - invalid response structure')
+        setIsLoading(false)
+        return
+      }
+      
+      // Map API response fields to frontend expected format
+      const fullName = tenantData.contact_person || tenantData.business_name || ''
+      const nameParts = fullName.trim().split(' ')
+      const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0]
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
+      
+      const mappedTenant = {
+        id: tenantData.id,
+        firstName: firstName,
+        lastName: lastName,
+        email: tenantData.user?.email || '',
+        contactNumber: tenantData.contact_number || tenantData.user?.phone || '',
+        address: tenantData.business_address || tenantData.user?.address || '',
+        role: tenantData.user?.role || 'TENANT',
+        createdAt: tenantData.created_at,
+        // Include original fields too
+        contact_person: tenantData.contact_person,
+        business_name: tenantData.business_name,
+        business_type: tenantData.business_type,
+        business_address: tenantData.business_address,
+        tin: tenantData.tin,
+        tenant_code: tenantData.tenant_code,
+        status: tenantData.status,
+      }
+      
+      setTenant(mappedTenant)
+      
+      // Use contracts from tenant data (they're loaded via relationship in backend)
+      const contractsList = Array.isArray(tenantData.contracts) ? tenantData.contracts : []
+      console.log('Setting contracts list:', contractsList)
+      setContracts(contractsList)
       
       setError(null)
     } catch (err: any) {
+      console.error('Error fetching tenant data:', err)
       setError(err.message || 'Failed to load tenant data')
     } finally {
       setIsLoading(false)
@@ -92,15 +138,17 @@ export default function TenantDetailsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => router.push('/dashboard/tenants')}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              title="Back to Tenants"
+              className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
-              ← Back
+              🔙
             </button>
             <Link
               href={`/dashboard/tenants/${tenantId}/edit`}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              title="Edit Tenant"
+              className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
-              ✏️ Edit
+              ✏️
             </Link>
           </div>
         </div>
@@ -157,6 +205,54 @@ export default function TenantDetailsPage() {
           </div>
         </div>
 
+        {/* Business Information */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Business Name
+              </label>
+              <p className="text-gray-900">{(tenant as any).business_name || 'N/A'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Tenant Code
+              </label>
+              <p className="text-gray-900 font-mono">{(tenant as any).tenant_code || 'N/A'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Tax Identification Number (TIN)
+              </label>
+              <p className="text-gray-900 font-mono">{(tenant as any).tin || 'Not Provided'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Business Type
+              </label>
+              <p className="text-gray-900 capitalize">{(tenant as any).business_type ? (tenant as any).business_type.replace('_', ' ') : 'Not Specified'}</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Business Address
+              </label>
+              <p className="text-gray-900">{(tenant as any).business_address || 'Not Provided'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Status
+              </label>
+              <p className="text-gray-900 capitalize">{(tenant as any).status || 'Active'}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Contracts Section */}
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
@@ -204,27 +300,27 @@ export default function TenantDetailsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {contracts.map((contract) => (
+                  {contracts.map((contract: any) => (
                     <tr key={contract.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Link
                           href={`/dashboard/contracts/${contract.id}`}
                           className="text-blue-600 hover:text-blue-800 font-medium"
                         >
-                          {contract.contractNumber}
+                          {contract.contract_number || contract.contractNumber || 'N/A'}
                         </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {contract.rentalSpace?.spaceNumber || 'N/A'}
+                        {contract.rentalSpace?.space_code || contract.rentalSpace?.spaceNumber || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(contract.startDate).toLocaleDateString()}
+                        {new Date(contract.start_date || contract.startDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(contract.endDate).toLocaleDateString()}
+                        {new Date(contract.end_date || contract.endDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        ₱{contract.monthlyRent.toLocaleString()}
+                        ₱{(contract.monthly_rental || contract.monthlyRent || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -265,7 +361,7 @@ export default function TenantDetailsPage() {
               Active Contracts
             </h4>
             <p className="text-3xl font-bold text-green-600">
-              {contracts.filter((c) => c.status === 'ACTIVE').length}
+              {contracts.filter((c) => (c.status || '').toUpperCase() === 'ACTIVE').length}
             </p>
           </div>
 
@@ -276,8 +372,11 @@ export default function TenantDetailsPage() {
             <p className="text-3xl font-bold text-blue-600">
               ₱
               {contracts
-                .filter((c) => c.status === 'ACTIVE')
-                .reduce((sum, c) => sum + c.monthlyRent, 0)
+                .filter((c) => (c.status || '').toUpperCase() === 'ACTIVE')
+                .reduce((sum, c) => {
+                  const rent = c.monthlyRent || c.monthly_rental || c.monthly_rent || 0
+                  return sum + (typeof rent === 'string' ? parseFloat(rent) : rent)
+                }, 0)
                 .toLocaleString()}
             </p>
           </div>
