@@ -118,7 +118,7 @@ export default function PaymentDetailPage() {
         throw new Error('Authentication token not found. Please login again.')
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
       const fullUrl = `${apiUrl}/payments/${payment.id}`
       
       console.log('API URL:', fullUrl)
