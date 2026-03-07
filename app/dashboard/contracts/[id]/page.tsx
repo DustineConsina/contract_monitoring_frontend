@@ -283,6 +283,48 @@ export default function ContractDetailsPage() {
               </div>
             </div>
 
+            {/* Business Details */}
+            {contract.tenant && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
+                <div className="space-y-3">
+                  {contract.tenant.business_name && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Business Name:</span>
+                      <span className="font-medium">{contract.tenant.business_name}</span>
+                    </div>
+                  )}
+                  {contract.tenant.business_type && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Business Type:</span>
+                      <span className="font-medium">{contract.tenant.business_type}</span>
+                    </div>
+                  )}
+                  {contract.tenant.tin && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">TIN:</span>
+                      <span className="font-medium">{contract.tenant.tin}</span>
+                    </div>
+                  )}
+                  {contract.tenant.business_address && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Business Address:</span>
+                      <span className="font-medium">{contract.tenant.business_address}</span>
+                    </div>
+                  )}
+                  {contract.tenant.contact_number && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Contact Number:</span>
+                      <span className="font-medium">{contract.tenant.contact_number}</span>
+                    </div>
+                  )}
+                  {!contract.tenant.business_name && !contract.tenant.business_type && !contract.tenant.tin && !contract.tenant.business_address && (
+                    <p className="text-gray-500 text-sm">No business details available</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Rental Space Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Space</h3>
@@ -313,6 +355,78 @@ export default function ContractDetailsPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms and Conditions</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">{contract.terms}</p>
+              </div>
+            )}
+
+            {/* Payment Schedule */}
+            {contract.payments && contract.payments.length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Schedule</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Payment #</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Billing Period</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Due Date</th>
+                        <th className="px-4 py-3 text-right font-semibold text-gray-700">Amount Due</th>
+                        <th className="px-4 py-3 text-right font-semibold text-gray-700">Interest (3%)</th>
+                        <th className="px-4 py-3 text-right font-semibold text-gray-700">Total Amount</th>
+                        <th className="px-4 py-3 text-right font-semibold text-gray-700">Amount Paid</th>
+                        <th className="px-4 py-3 text-center font-semibold text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contract.payments.map((payment: any) => (
+                        <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || payment.payment_number || 'N/A'}</td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {payment.billingPeriodStart || payment.billing_period_start 
+                              ? new Date(payment.billingPeriodStart || payment.billing_period_start).toLocaleDateString()
+                              : 'N/A'
+                            }
+                            {' - '}
+                            {payment.billingPeriodEnd || payment.billing_period_end 
+                              ? new Date(payment.billingPeriodEnd || payment.billing_period_end).toLocaleDateString()
+                              : 'N/A'
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {payment.dueDate || payment.due_date 
+                              ? new Date(payment.dueDate || payment.due_date).toLocaleDateString()
+                              : 'N/A'
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-gray-900">
+                            ₱{((payment.amountDue || payment.amount_due) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-red-600">
+                            ₱{((payment.interestAmount || payment.interest_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-blue-600">
+                            ₱{((payment.totalAmount || payment.total_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-green-600">
+                            ₱{((payment.amountPaid || payment.amount_paid) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              (payment.status || '').toLowerCase() === 'paid' 
+                                ? 'bg-green-100 text-green-800'
+                                : (payment.status || '').toLowerCase() === 'overdue'
+                                ? 'bg-red-100 text-red-800'
+                                : (payment.status || '').toLowerCase() === 'partial'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {(payment.status || 'pending').toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
