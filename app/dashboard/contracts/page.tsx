@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import apiClient from '@/lib/api-client'
 import { Contract } from '@/types'
 
-export default function ContractsPage() {
+function ContractsPageContent() {
   const searchParams = useSearchParams()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -351,5 +351,18 @@ export default function ContractsPage() {
         )}
       </div>
     </ProtectedRoute>
+  )
+}
+
+export default function ContractsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="h-12 bg-slate-200 rounded-lg animate-pulse" />
+        <div className="h-96 bg-slate-200 rounded-lg animate-pulse" />
+      </div>
+    }>
+      <ContractsPageContent />
+    </Suspense>
   )
 }

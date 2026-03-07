@@ -379,8 +379,8 @@ class ApiClient {
 
   // Export reports
   async exportReportPDF(reportType: string, params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const queryParams = new URLSearchParams(cleanParams || {})
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : {}
+    const queryParams = new URLSearchParams(cleanParams as Record<string, string>)
     queryParams.append('format', 'pdf')
     const query = `?${queryParams.toString()}`
     
@@ -404,8 +404,8 @@ class ApiClient {
   }
 
   async exportReportCSV(reportType: string, params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const queryParams = new URLSearchParams(cleanParams || {})
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : {}
+    const queryParams = new URLSearchParams(cleanParams as Record<string, string>)
     queryParams.append('format', 'csv')
     const query = `?${queryParams.toString()}`
     
