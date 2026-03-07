@@ -1,9 +1,6 @@
 // API Client for communicating with backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
 
-console.log('🔧 API Client initialized with URL:', API_URL)
-console.log('🔧 Environment Variable NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
-
 interface ApiError {
   message: string
   status: number
@@ -159,11 +156,6 @@ class ApiClient {
       // Transform snake_case keys to camelCase
       return transformKeysToCAmelCase(data) as T
     } catch (error: any) {
-      console.error('🔴 API Request Error:', error)
-      console.error('🔴 Error Type:', error?.name)
-      console.error('🔴 Error Message:', error?.message)
-      console.error('🔴 Error Stack:', error?.stack)
-      
       // Network errors (backend not running)
       if (error.name === 'TypeError' && error.message?.includes('fetch')) {
         const err = new Error(`Cannot connect to backend at ${this.baseUrl}. Make sure backend is running.`)
