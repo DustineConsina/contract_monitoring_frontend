@@ -256,43 +256,44 @@ class ApiClient {
 
   // Reports
   async getContractsReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/contracts${query}`)
   }
 
   async getPaymentsReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/payments${query}`)
   }
 
   async getDelinquencyReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/delinquency${query}`)
   }
 
   async getRevenueReport(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/revenue${query}`)
   }
 
   async getTenantsReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/tenants${query}`)
   }
 
   async getExpiringContractsReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/expiring-contracts${query}`)
   }
 
   async getAuditLogReport(params?: any) {
-    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')) : null
-    const query = cleanParams ? `?${new URLSearchParams(cleanParams)}` : ''
+    const cleanParams = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])) : null
+    const query = cleanParams ? `?${new URLSearchParams(cleanParams as Record<string, string>)}` : ''
     return this.request<any>(`/reports/audit-log${query}`)
   }
 
