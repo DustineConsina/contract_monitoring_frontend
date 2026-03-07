@@ -43,7 +43,7 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = Array.isArray(payments) ? payments.filter((payment) => {
-    const contractNumber = payment.contract?.contract_number || payment.contract?.contractNumber || ''
+    const contractNumber = payment.contract?.contractNumber || ''
     const matchesSearch = contractNumber.toLowerCase().includes(searchTerm.toLowerCase())
     // Handle both uppercase and lowercase status from backend
     const paymentStatus = (payment.status || '').toLowerCase()
@@ -53,7 +53,7 @@ export default function PaymentsPage() {
     // Filter by month
     let matchesMonth = true
     if (monthFilter) {
-      const dueDate = new Date(payment.due_date || payment.dueDate || '')
+      const dueDate = new Date(payment.dueDate || '')
       const [year, month] = monthFilter.split('-')
       matchesMonth = dueDate.getFullYear() === parseInt(year) && (dueDate.getMonth() + 1) === parseInt(month)
     }
@@ -64,20 +64,20 @@ export default function PaymentsPage() {
 
     switch (sortColumn) {
       case 'contract':
-        aValue = a.contract?.contract_number || a.contract?.contractNumber || ''
-        bValue = b.contract?.contract_number || b.contract?.contractNumber || ''
+        aValue = a.contract?.contractNumber || ''
+        bValue = b.contract?.contractNumber || ''
         break
       case 'due_date':
-        aValue = new Date(a.due_date || a.dueDate || '').getTime()
-        bValue = new Date(b.due_date || b.dueDate || '').getTime()
+        aValue = new Date(a.dueDate || '').getTime()
+        bValue = new Date(b.dueDate || '').getTime()
         break
       case 'amount':
-        aValue = parseFloat(String(a.amount_due || a.amount || 0))
-        bValue = parseFloat(String(b.amount_due || b.amount || 0))
+        aValue = parseFloat(String(a.amountDue || 0))
+        bValue = parseFloat(String(b.amountDue || 0))
         break
       case 'total':
-        aValue = parseFloat(String(a.total_amount || a.totalAmount || 0))
-        bValue = parseFloat(String(b.total_amount || b.totalAmount || 0))
+        aValue = parseFloat(String(a.totalAmount || 0))
+        bValue = parseFloat(String(b.totalAmount || 0))
         break
       case 'status':
         aValue = a.status || ''
@@ -125,7 +125,7 @@ export default function PaymentsPage() {
 
   const totalPaid = filteredPayments
     .filter((p) => (p.status || '').toLowerCase() === 'paid')
-    .reduce((sum, p) => sum + parseFloat(String(p.amount_paid || p.amountPaid || 0)), 0)
+    .reduce((sum, p) => sum + parseFloat(String(p.amountPaid || 0)), 0)
 
   const totalPending = filteredPayments
     .filter((p) => {
@@ -238,7 +238,7 @@ export default function PaymentsPage() {
                       Contract Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment For
+                      Billing Period (Payment For)
                     </th>
                     <th 
                       onClick={() => handleSort('due_date')}
@@ -250,10 +250,10 @@ export default function PaymentsPage() {
                       onClick={() => handleSort('amount')}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                     >
-                      Amount Due
+                      Amount Due (₱)
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Interest (3%)
+                      Interest 3% (₱)
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Total Balance
@@ -289,19 +289,19 @@ export default function PaymentsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {payment.billing_period_start && payment.billing_period_end
-                          ? `${new Date(payment.billing_period_start).toLocaleDateString()} - ${new Date(payment.billing_period_end).toLocaleDateString()}`
+                        {payment.billingPeriodStart && payment.billingPeriodEnd
+                          ? `${new Date(payment.billingPeriodStart).toLocaleDateString()} - ${new Date(payment.billingPeriodEnd).toLocaleDateString()}`
                           : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(payment.due_date || payment.dueDate || '').toLocaleDateString()}
+                        {payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₱{parseFloat(String(payment.amount_due || payment.amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        ₱{parseFloat(String(payment.amountDue || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                         <span className="text-red-600">
-                          ₱{(parseFloat(String(payment.amount_due || payment.amount || 0)) * 0.03).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ₱{(parseFloat(String(payment.interestAmount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
