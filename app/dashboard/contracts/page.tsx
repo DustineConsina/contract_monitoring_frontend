@@ -276,7 +276,7 @@ function ContractsPageContent() {
                         </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
-                        {contract.tenant?.contact_person || contract.tenant?.firstName || 'N/A'}
+                        {contract.tenant?.user?.name || contract.tenant?.contact_person || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                         {(() => {

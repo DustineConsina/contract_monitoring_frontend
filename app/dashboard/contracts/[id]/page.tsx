@@ -265,19 +265,19 @@ export default function ContractDetailsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {contract.tenant?.firstName} {contract.tenant?.lastName || ''}
+                      {contract.tenant?.user?.name || contract.tenant?.contact_person || 'N/A'}
                     </p>
-                    <p className="text-sm text-gray-600">{contract.tenant?.email}</p>
+                    <p className="text-sm text-gray-600">{contract.tenant?.user?.email || 'N/A'}</p>
                   </div>
                 </div>
-                {contract.tenant?.contactNumber && (
+                {(contract.tenant?.user?.phone || contract.tenant?.contactNumber) && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Phone:</span> {contract.tenant?.contactNumber}
+                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.contactNumber}
                   </div>
                 )}
-                {contract.tenant?.address && (
+                {(contract.tenant?.user?.address || contract.tenant?.address) && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Address:</span> {contract.tenant?.address}
+                    <span className="font-medium">Address:</span> {contract.tenant?.user?.address || contract.tenant?.address}
                   </div>
                 )}
               </div>
