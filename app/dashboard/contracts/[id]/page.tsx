@@ -33,6 +33,10 @@ export default function ContractDetailsPage() {
       // API returns {success, data} structure - extract the actual contract data
       const contractData = response.data || response
       
+      console.log('🔍 Contract API Response:', contractData)
+      console.log('📊 Tenant data:', contractData.tenant)
+      console.log('💰 Payments data:', contractData.payments)
+      
       // Map numeric fields to numbers for proper formatting
       const mappedContract = {
         ...contractData,
@@ -41,8 +45,11 @@ export default function ContractDetailsPage() {
         interestRate: parseFloat(contractData.interestRate || 0),
       }
       
+      console.log('✅ Mapped contract:', mappedContract)
+      
       setContract(mappedContract)
     } catch (err: any) {
+      console.error('❌ Error loading contract:', err)
       alert(err.message || 'Failed to load contract')
     } finally {
       setIsLoading(false)
@@ -288,16 +295,16 @@ export default function ContractDetailsPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
                 <div className="space-y-3">
-                  {contract.tenant.business_name && (
+                  {contract.tenant.businessName && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Name:</span>
-                      <span className="font-medium">{contract.tenant.business_name}</span>
+                      <span className="font-medium">{contract.tenant.businessName}</span>
                     </div>
                   )}
-                  {contract.tenant.business_type && (
+                  {contract.tenant.businessType && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Type:</span>
-                      <span className="font-medium">{contract.tenant.business_type}</span>
+                      <span className="font-medium">{contract.tenant.businessType}</span>
                     </div>
                   )}
                   {contract.tenant.tin && (
@@ -306,19 +313,19 @@ export default function ContractDetailsPage() {
                       <span className="font-medium">{contract.tenant.tin}</span>
                     </div>
                   )}
-                  {contract.tenant.business_address && (
+                  {contract.tenant.businessAddress && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Business Address:</span>
-                      <span className="font-medium">{contract.tenant.business_address}</span>
+                      <span className="font-medium">{contract.tenant.businessAddress}</span>
                     </div>
                   )}
-                  {contract.tenant.contact_number && (
+                  {contract.tenant.contactNumber && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Contact Number:</span>
-                      <span className="font-medium">{contract.tenant.contact_number}</span>
+                      <span className="font-medium">{contract.tenant.contactNumber}</span>
                     </div>
                   )}
-                  {!contract.tenant.business_name && !contract.tenant.business_type && !contract.tenant.tin && !contract.tenant.business_address && (
+                  {!contract.tenant.businessName && !contract.tenant.businessType && !contract.tenant.tin && !contract.tenant.businessAddress && (
                     <p className="text-gray-500 text-sm">No business details available</p>
                   )}
                 </div>
@@ -379,35 +386,35 @@ export default function ContractDetailsPage() {
                     <tbody>
                       {contract.payments.map((payment: any) => (
                         <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || payment.payment_number || 'N/A'}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || 'N/A'}</td>
                           <td className="px-4 py-3 text-gray-600">
-                            {payment.billingPeriodStart || payment.billing_period_start 
-                              ? new Date(payment.billingPeriodStart || payment.billing_period_start).toLocaleDateString()
+                            {payment.billingPeriodStart 
+                              ? new Date(payment.billingPeriodStart).toLocaleDateString()
                               : 'N/A'
                             }
                             {' - '}
-                            {payment.billingPeriodEnd || payment.billing_period_end 
-                              ? new Date(payment.billingPeriodEnd || payment.billing_period_end).toLocaleDateString()
+                            {payment.billingPeriodEnd 
+                              ? new Date(payment.billingPeriodEnd).toLocaleDateString()
                               : 'N/A'
                             }
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {payment.dueDate || payment.due_date 
-                              ? new Date(payment.dueDate || payment.due_date).toLocaleDateString()
+                            {payment.dueDate 
+                              ? new Date(payment.dueDate).toLocaleDateString()
                               : 'N/A'
                             }
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-gray-900">
-                            ₱{((payment.amountDue || payment.amount_due) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.amountDue) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-red-600">
-                            ₱{((payment.interestAmount || payment.interest_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.interestAmount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-blue-600">
-                            ₱{((payment.totalAmount || payment.total_amount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.totalAmount) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-green-600">
-                            ₱{((payment.amountPaid || payment.amount_paid) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            ₱{(parseFloat(payment.amountPaid) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${

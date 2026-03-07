@@ -9,11 +9,16 @@ export interface User {
   firstName?: string
   lastName?: string
   contact_person?: string
+  contactPerson?: string
   business_name?: string
+  businessName?: string
   business_address?: string
+  businessAddress?: string
   business_type?: string
+  businessType?: string
   tin?: string
   tenant_code?: string
+  tenantCode?: string
   role?: UserRole
   phone?: string
   contactNumber?: string
@@ -110,6 +115,7 @@ export interface Payment {
   tenant?: User
   amount?: number
   amount_due?: number
+  amountDue?: number
   amount_paid?: number
   amountPaid?: number
   paymentDate?: string
@@ -129,6 +135,7 @@ export interface Payment {
   late_fee?: number
   interest?: number
   interest_amount?: number
+  interestAmount?: number
   totalAmount?: number
   total_amount?: number
   status?: PaymentStatus
