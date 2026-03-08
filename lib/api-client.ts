@@ -388,12 +388,6 @@ class ApiClient {
     })
   }
 
-  // Audit Logs
-  async getAuditLogs(params?: any) {
-    const query = params ? `?${new URLSearchParams(params)}` : ''
-    return this.request<any>(`/reports/audit-log${query}`)
-  }
-
   // Tenants/Users
   async getTenants(params?: any) {
     const query = params ? `?${new URLSearchParams(params)}` : ''
