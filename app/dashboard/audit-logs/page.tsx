@@ -40,24 +40,16 @@ export default function AuditLogsPage() {
         setIsLoading(true)
         const response = await apiClient.getAuditLogs()
         
-        // Log response structure for debugging
-        console.log('🔍 Audit Logs Response:', response)
+        console.log('🔍 RAW Audit Response:', response)
+        console.log('🔍 Response.data:', response.data)
         
-        // Try multiple possible response structures
-        let logsData = []
-        if (response.data) {
-          if (Array.isArray(response.data)) {
-            logsData = response.data
-          } else if (response.data.data) {
-            logsData = Array.isArray(response.data.data) ? response.data.data : (response.data.data.audit_logs || [])
-          } else if (response.data.audit_logs) {
-            logsData = response.data.audit_logs
-          }
-        } else if (Array.isArray(response)) {
-          logsData = response
-        }
+        // The backend returns: { success: true, data: { auditLogs: [...], summary: {...} } }
+        // After camelCase transformation, audit_logs becomes auditLogs
+        const logsData = response.data?.auditLogs || response.data?.audit_logs || []
         
-        console.log('✅ Parsed Audit Logs:', logsData)
+        console.log('✅ Extracted Logs:', logsData)
+        console.log('✅ Is Array:', Array.isArray(logsData))
+        
         setLogs(Array.isArray(logsData) ? logsData : [])
         setError(null)
       } catch (err: any) {
@@ -76,7 +68,8 @@ export default function AuditLogsPage() {
     try {
       setIsRefreshing(true)
       const response = await apiClient.getAuditLogs()
-      const logsData = response.data?.data?.audit_logs || response.data?.audit_logs || []
+      // After camelCase transformation: audit_logs becomes auditLogs
+      const logsData = response.data?.auditLogs || response.data?.audit_logs || []
       setLogs(Array.isArray(logsData) ? logsData : [])
       setError(null)
     } catch (err: any) {
