@@ -418,11 +418,12 @@ export default function ContractDetailsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Size:</span>
+                    <span className="text-gray-600">Space Size:</span>
                     <span className="font-medium">
-                      {(contract.rentalSpace || contract.rental_space)?.squareMeters 
+                      {(contract.rentalSpace || contract.rental_space)?.sizeSqm 
+                        || (contract.rentalSpace || contract.rental_space)?.squareMeters 
                         || (contract.rentalSpace || contract.rental_space)?.size_sqm 
-                        || 'N/A'} sqm
+                        || 'N/A'} m²
                     </span>
                   </div>
                 </div>
