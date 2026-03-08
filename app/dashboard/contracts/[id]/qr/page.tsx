@@ -24,13 +24,34 @@ export default function ContractQRPage() {
       // Fetch contract details first
       const contractResponse = await apiClient.getContract(params.id as string)
       const contractData = contractResponse.data || contractResponse
-      setContract(contractData)
+      
+      // Log the response structure to debug field mapping
+      console.log('🔍 QR Page Contract Response:', {
+        keys: Object.keys(contractData),
+        rentalSpace: contractData.rentalSpace || contractData.rental_space,
+        monthlyRental: contractData.monthlyRental || contractData.monthly_rental,
+        sizeData: (contractData.rentalSpace || contractData.rental_space)?.size_sqm
+      })
+      
+      // Ensure proper field mapping
+      const mappedData = {
+        ...contractData,
+        rentalSpace: contractData.rentalSpace || contractData.rental_space,
+        contractNumber: contractData.contractNumber || contractData.contract_number,
+        startDate: contractData.startDate || contractData.start_date,
+        endDate: contractData.endDate || contractData.end_date,
+        monthlyRent: contractData.monthlyRental || contractData.monthly_rental || contractData.monthlyRent || 0,
+      }
+      
+      setContract(mappedData)
       
       // Then fetch QR code
       try {
         const qrResponse = await apiClient.getContractQRCode(params.id as string)
         if (qrResponse.qrCode) {
           setQrCode(qrResponse.qrCode)
+        } else {
+          console.warn('No QR code in response:', qrResponse)
         }
       } catch (qrError) {
         console.error('QR Code fetch error:', qrError)
@@ -176,13 +197,13 @@ export default function ContractQRPage() {
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Contract Period:</td>
                     <td className="py-2 text-gray-900">
-                      {(contract.startDate || contract.start_date) ? new Date(contract.startDate || contract.start_date).toLocaleDateString() : 'N/A'} to{' '}
-                      {(contract.endDate || contract.end_date) ? new Date(contract.endDate || contract.end_date).toLocaleDateString() : 'N/A'}
+                      {contract?.startDate ? new Date(contract.startDate).toLocaleDateString() : 'N/A'} to{' '}
+                      {contract?.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Monthly Rent:</td>
-                    <td className="py-2 text-gray-900">₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}</td>
+                    <td className="py-2 text-gray-900">₱{(contract?.monthlyRent || 0).toLocaleString()}</td>
                   </tr>
                   <tr>
                     <td className="py-2 font-medium text-gray-700">Status:</td>

@@ -336,6 +336,12 @@ class ApiClient {
     return this.request<any>(`/reports/audit-log${query}`)
   }
 
+  // Audit Logs
+  async getAuditLogs(params?: any) {
+    const query = params ? `?${new URLSearchParams(params)}` : ''
+    return this.request<any>(`/audit-logs${query}`)
+  }
+
   async getActiveContracts() {
     return this.request<any>('/reports/active-contracts')
   }
