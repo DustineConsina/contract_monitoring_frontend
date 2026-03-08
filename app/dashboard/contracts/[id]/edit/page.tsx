@@ -72,6 +72,33 @@ export default function EditContractPage() {
     }
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    
+    // Special handling for rental space selection to auto-populate monthly rent
+    if (name === 'rentalSpaceId') {
+      const selectedSpace = spaces.find((s: any) => s.id == value)
+      let newMonthlyRent = formData.monthlyRent
+      
+      if (selectedSpace && (selectedSpace.base_rental_rate || selectedSpace.baseRentalRate)) {
+        const baseRate = selectedSpace.base_rental_rate || selectedSpace.baseRentalRate
+        newMonthlyRent = String(baseRate)
+        console.log(`✅ Auto-populated monthly rent: ₱${baseRate} from space ${selectedSpace.space_code}`)
+      }
+      
+      setFormData({
+        ...formData,
+        [name]: value,
+        monthlyRent: newMonthlyRent,
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -135,9 +162,10 @@ export default function EditContractPage() {
               Tenant <span className="text-red-500">*</span>
             </label>
             <select
+              name="tenantId"
               required
               value={formData.tenantId}
-              onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="">Select tenant</option>
@@ -155,9 +183,10 @@ export default function EditContractPage() {
               Rental Space <span className="text-red-500">*</span>
             </label>
             <select
+              name="rentalSpaceId"
               required
               value={formData.rentalSpaceId}
-              onChange={(e) => setFormData({ ...formData, rentalSpaceId: e.target.value })}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-border-transparent outline-none"
             >
               <option value="">Select rental space</option>
@@ -166,6 +195,9 @@ export default function EditContractPage() {
                 .map((space: any) => (
                   <option key={space.id} value={space.id}>
                     {space.space_code || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
+                    {(space.base_rental_rate || space.baseRentalRate) && (
+                      <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
+                    )}
                   </option>
                 ))}
             </select>
@@ -179,9 +211,10 @@ export default function EditContractPage() {
               </label>
               <input
                 type="date"
+                name="startDate"
                 required
                 value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
@@ -192,9 +225,10 @@ export default function EditContractPage() {
               </label>
               <input
                 type="date"
+                name="endDate"
                 required
                 value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
@@ -208,13 +242,15 @@ export default function EditContractPage() {
               </label>
               <input
                 type="number"
+                name="monthlyRent"
                 required
                 step="0.01"
                 min="0"
                 value={formData.monthlyRent}
-                onChange={(e) => setFormData({ ...formData, monthlyRent: e.target.value })}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
+              <p className="text-xs text-gray-500 mt-1">💡 Automatically filled from the selected rental space rate</p>
             </div>
 
             <div>
@@ -223,11 +259,12 @@ export default function EditContractPage() {
               </label>
               <input
                 type="number"
+                name="securityDeposit"
                 required
                 step="0.01"
                 min="0"
                 value={formData.securityDeposit}
-                onChange={(e) => setFormData({ ...formData, securityDeposit: e.target.value })}
+                onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
@@ -239,9 +276,10 @@ export default function EditContractPage() {
               Status <span className="text-red-500">*</span>
             </label>
             <select
+              name="status"
               required
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="ACTIVE">Active</option>
@@ -256,9 +294,10 @@ export default function EditContractPage() {
               Terms and Conditions
             </label>
             <textarea
+              name="terms"
               rows={6}
               value={formData.terms}
-              onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
               placeholder="Enter contract terms and conditions..."
             />
