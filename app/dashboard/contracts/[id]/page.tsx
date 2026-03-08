@@ -32,15 +32,24 @@ export default function ContractDetailsPage() {
     try {
       const response = await apiClient.getContract(contractId)
       
-      console.log('🔍 Contract Response:', response)
+      console.log('🔍 RAW Contract Response:', response)
+      console.log('   Response.data:', response.data)
+      console.log('   Response.data type:', typeof response.data)
+      console.log('   Is array?', Array.isArray(response.data))
       
       // API structure: {success: true, data: {contract object}}
       let contractData = response.data
       
       if (!contractData) {
         console.error('❌ No data in response!')
+        console.log('   Keys in response:', Object.keys(response))
         throw new Error('Invalid API response: missing data field')
       }
+      
+      console.log('📋 ContractData keys:', Object.keys(contractData))
+      console.log('   tenant:', contractData.tenant, '| Type:', typeof contractData.tenant)
+      console.log('   rentalSpace:', contractData.rentalSpace, '| Type:', typeof contractData.rentalSpace)
+      console.log('   rental_space:', contractData.rental_space, '| Type:', typeof contractData.rental_space)
       
       // Ensure arrays are arrays
       if (contractData.payments && !Array.isArray(contractData.payments)) {
@@ -72,6 +81,8 @@ export default function ContractDetailsPage() {
       }
       
       console.log('✅ Mapped Contract:', mappedContract)
+      console.log('   Tenant in mapped:', mappedContract.tenant)
+      console.log('   RentalSpace in mapped:', mappedContract.rentalSpace)
       setContract(mappedContract)
     } catch (err: any) {
       console.error('❌ Error loading contract:', err)
