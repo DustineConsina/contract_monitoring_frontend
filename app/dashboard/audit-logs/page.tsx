@@ -6,15 +6,22 @@ import apiClient from '@/lib/api-client'
 
 interface AuditLog {
   id: number
-  user_id: number
+  user_id?: number
+  userId?: number
   action: string
-  model_type: string
-  model_id: number | null
+  model_type?: string
+  modelType?: string
+  model_id?: number | null
+  modelId?: number | null
   description: string
-  old_values: any
-  new_values: any
-  ip_address: string | null
-  created_at: string
+  old_values?: any
+  oldValues?: any
+  new_values?: any
+  newValues?: any
+  ip_address?: string | null
+  ipAddress?: string | null
+  created_at?: string
+  createdAt?: string
   user?: {
     id: number
     name: string
@@ -83,7 +90,8 @@ export default function AuditLogsPage() {
   const filteredLogs = (Array.isArray(logs) ? logs : [])
     .filter((log) => {
       const matchesAction = filterAction === 'all' || log.action.toLowerCase() === filterAction.toLowerCase()
-      const matchesEntity = filterEntity === 'all' || (log.modelType || log.model_type) === filterEntity
+      const entityType = log.modelType || log.model_type || 'Unknown'
+      const matchesEntity = filterEntity === 'all' || entityType === filterEntity
       const matchesSearch =
         log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (log.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,8 +99,8 @@ export default function AuditLogsPage() {
       return matchesAction && matchesEntity && matchesSearch
     })
     .sort((a, b) => {
-      const aTime = new Date(a.created_at).getTime()
-      const bTime = new Date(b.created_at).getTime()
+      const aTime = new Date(a.createdAt || a.created_at || '').getTime()
+      const bTime = new Date(b.createdAt || b.created_at || '').getTime()
       return sortOrder === 'desc' ? bTime - aTime : aTime - bTime
     })
 
