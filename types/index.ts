@@ -60,6 +60,10 @@ export interface RentalSpace {
   space_type?: string
   sizeSqm?: number
   status?: SpaceStatus
+  base_rental_rate?: number
+  baseRentalRate?: number
+  rental_amount?: number
+  rentalAmount?: number
   createdAt?: string
   created_at?: string
   updatedAt?: string

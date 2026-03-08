@@ -113,6 +113,26 @@ export default function NewContractPage() {
     })
   }
 
+  const handleRentalSpaceSelect = (spaceId: string) => {
+    // Find the selected space
+    const selectedSpace = spaces.find((s: any) => s.id == spaceId)
+    
+    // Auto-populate monthly rent from the rental space's base rental rate
+    let newMonthlyRent = formData.monthlyRent
+    if (selectedSpace && (selectedSpace.base_rental_rate || selectedSpace.baseRentalRate)) {
+      const baseRate = selectedSpace.base_rental_rate || selectedSpace.baseRentalRate
+      newMonthlyRent = String(baseRate)
+      console.log(`✅ Auto-populated monthly rent: ₱${baseRate} from space ${selectedSpace.space_code}`)
+    }
+    
+    setFormData({
+      ...formData,
+      rentalSpaceId: spaceId,
+      monthlyRent: newMonthlyRent,
+    })
+    setShowSpaceDropdown(false)
+  }
+
   return (
     <ProtectedRoute>
       <div className="space-y-6">
@@ -213,12 +233,16 @@ export default function NewContractPage() {
                         key={space.id}
                         className="px-4 py-2 text-sm cursor-pointer hover:bg-blue-100 border-b border-gray-100"
                         onClick={() => {
-                          setFormData({ ...formData, rentalSpaceId: space.id })
-                          setShowSpaceDropdown(false)
+                          handleRentalSpaceSelect(space.id)
                         }}
                       >
                         <div className="font-medium">{space.space_code} - {space.name}</div>
-                        <div className="text-gray-500 text-xs">{space.size_sqm} sqm • {space.status}</div>
+                        <div className="text-gray-500 text-xs">
+                          {space.size_sqm} sqm • {space.status}
+                          {(space.base_rental_rate || space.baseRentalRate) && (
+                            <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -279,6 +303,7 @@ export default function NewContractPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">💡 Automatically filled from the selected rental space rate</p>
                 </div>
 
                 <div>
