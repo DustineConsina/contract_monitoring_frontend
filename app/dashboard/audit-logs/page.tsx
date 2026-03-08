@@ -271,10 +271,10 @@ export default function AuditLogsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {new Date(log.createdAt || log.created_at).toLocaleDateString()}
+                            {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleDateString() : 'N/A'}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {new Date(log.createdAt || log.created_at).toLocaleTimeString()}
+                            {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleTimeString() : 'N/A'}
                           </span>
                         </div>
                       </td>
