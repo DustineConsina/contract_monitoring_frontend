@@ -324,37 +324,46 @@ export default function ContractDetailsPage() {
             {/* Tenant Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tenant Information</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-xl">👤</span>
+              {contract.tenant ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-xl">👤</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {contract.tenant?.user?.name 
+                          || contract.tenant?.name 
+                          || contract.tenant?.contact_person 
+                          || contract.tenant?.contactPerson 
+                          || 'N/A'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {contract.tenant?.user?.email 
+                          || contract.tenant?.email 
+                          || 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {contract.tenant?.user?.name 
-                        || contract.tenant?.name 
-                        || contract.tenant?.contact_person 
-                        || contract.tenant?.contactPerson 
-                        || 'N/A'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {contract.tenant?.user?.email 
-                        || contract.tenant?.email 
-                        || 'N/A'}
-                    </p>
-                  </div>
+                  {(contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number) && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number}
+                    </div>
+                  )}
+                  {(contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address) && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Address:</span> {contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address}
+                    </div>
+                  )}
                 </div>
-                {(contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number) && (
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number}
-                  </div>
-                )}
-                {(contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address) && (
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Address:</span> {contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address}
-                  </div>
-                )}
-              </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                  <p className="text-yellow-800">
+                    ⚠️ Tenant information not loaded (tenant_id: {contract.tenantId || 'unknown'})
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-2">Please wait for database to sync or contact administrator</p>
+                </div>
+              )}
             </div>
 
             {/* Business Details */}
