@@ -320,14 +320,22 @@ export default function ContractDetailsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {contract.tenant?.user?.name || contract.tenant?.contact_person || 'N/A'}
+                      {contract.tenant?.user?.name 
+                        || contract.tenant?.name 
+                        || contract.tenant?.contact_person 
+                        || contract.tenant?.contactPerson 
+                        || 'N/A'}
                     </p>
-                    <p className="text-sm text-gray-600">{contract.tenant?.user?.email || 'N/A'}</p>
+                    <p className="text-sm text-gray-600">
+                      {contract.tenant?.user?.email 
+                        || contract.tenant?.email 
+                        || 'N/A'}
+                    </p>
                   </div>
                 </div>
-                {(contract.tenant?.user?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number) && (
+                {(contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number) && (
                   <div className="text-sm text-gray-600">
-                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number}
+                    <span className="font-medium">Phone:</span> {contract.tenant?.user?.phone || contract.tenant?.phone || contract.tenant?.contactNumber || contract.tenant?.contact_number}
                   </div>
                 )}
                 {(contract.tenant?.user?.address || contract.tenant?.address || contract.tenant?.business_address) && (
@@ -383,25 +391,43 @@ export default function ContractDetailsPage() {
             {/* Rental Space Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Space</h3>
-              {(contract.rentalSpace || contract.rental_space) && (
+              {(contract.rentalSpace || contract.rental_space) ? (
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Code:</span>
-                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.spaceCode || (contract.rentalSpace || contract.rental_space)?.space_code || (contract.rentalSpace || contract.rental_space)?.spaceNumber || 'N/A'}</span>
+                    <span className="font-medium">
+                      {(contract.rentalSpace || contract.rental_space)?.spaceCode 
+                        || (contract.rentalSpace || contract.rental_space)?.space_code 
+                        || (contract.rentalSpace || contract.rental_space)?.spaceNumber 
+                        || 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Name:</span>
-                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.name || 'N/A'}</span>
+                    <span className="font-medium">
+                      {(contract.rentalSpace || contract.rental_space)?.name || 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Type:</span>
-                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.type?.name || (contract.rentalSpace || contract.rental_space)?.spaceType || (contract.rentalSpace || contract.rental_space)?.space_type || 'N/A'}</span>
+                    <span className="font-medium">
+                      {(contract.rentalSpace || contract.rental_space)?.type?.name 
+                        || (contract.rentalSpace || contract.rental_space)?.spaceType 
+                        || (contract.rentalSpace || contract.rental_space)?.space_type 
+                        || 'N/A'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Size:</span>
-                    <span className="font-medium">{(contract.rentalSpace || contract.rental_space)?.squareMeters || (contract.rentalSpace || contract.rental_space)?.size_sqm || 'N/A'} sqm</span>
+                    <span className="font-medium">
+                      {(contract.rentalSpace || contract.rental_space)?.squareMeters 
+                        || (contract.rentalSpace || contract.rental_space)?.size_sqm 
+                        || 'N/A'} sqm
+                    </span>
                   </div>
                 </div>
+              ) : (
+                <p className="text-gray-500">No rental space information available</p>
               )}
             </div>
 
