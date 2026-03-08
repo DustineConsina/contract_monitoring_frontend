@@ -39,10 +39,29 @@ export default function AuditLogsPage() {
       try {
         setIsLoading(true)
         const response = await apiClient.getAuditLogs()
-        const logsData = response.data?.data?.audit_logs || response.data?.audit_logs || []
+        
+        // Log response structure for debugging
+        console.log('🔍 Audit Logs Response:', response)
+        
+        // Try multiple possible response structures
+        let logsData = []
+        if (response.data) {
+          if (Array.isArray(response.data)) {
+            logsData = response.data
+          } else if (response.data.data) {
+            logsData = Array.isArray(response.data.data) ? response.data.data : (response.data.data.audit_logs || [])
+          } else if (response.data.audit_logs) {
+            logsData = response.data.audit_logs
+          }
+        } else if (Array.isArray(response)) {
+          logsData = response
+        }
+        
+        console.log('✅ Parsed Audit Logs:', logsData)
         setLogs(Array.isArray(logsData) ? logsData : [])
         setError(null)
       } catch (err: any) {
+        console.error('❌ Audit Logs Error:', err)
         setError(err.message || 'Failed to load audit logs')
         setLogs([])
       } finally {

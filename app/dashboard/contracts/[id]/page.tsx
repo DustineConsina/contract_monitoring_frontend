@@ -32,10 +32,7 @@ export default function ContractDetailsPage() {
     try {
       const response = await apiClient.getContract(contractId)
       
-      console.log('🔍 RAW API Response:', response)
-      console.log('🔍 Response keys:', Object.keys(response))
-      console.log('🔍 response.success:', response.success)
-      console.log('🔍 response.data:', response.data)
+      console.log('🔍 Contract Response:', response)
       
       // API structure: {success: true, data: {contract object}}
       let contractData = response.data
@@ -45,48 +42,36 @@ export default function ContractDetailsPage() {
         throw new Error('Invalid API response: missing data field')
       }
       
-      // Log all numeric fields to see what we're working with
-      console.log('🔍 RAW NUMERIC FIELDS:', {
-        monthlyRental: contractData.monthlyRental,
-        depositAmount: contractData.depositAmount,
-        interestRate: contractData.interestRate,
-      })
-      
-      console.log('✅ CONTRACT DATA:', {
-        id: contractData.id,
-        contractNumber: contractData.contractNumber || contractData.contract_number,
-        hasTenant: !!contractData.tenant,
-        hasPayments: !!contractData.payments,
-        paymentCount: contractData.payments?.length || 0,
-        hasRentalSpace: !!contractData.rentalSpace || !!contractData.rental_space,
-      })
-      
       // Ensure arrays are arrays
       if (contractData.payments && !Array.isArray(contractData.payments)) {
         contractData.payments = [contractData.payments]
       }
       
-      // Map numeric fields to numbers for proper formatting
-      const monthlyRentValue = parseFloat(String(contractData.monthlyRental || 0))
-      const securityDepositValue = parseFloat(String(contractData.depositAmount || 0))
-      const interestRateValue = parseFloat(String(contractData.interestRate || 0))
+      // Map numeric fields with proper fallbacks for both camelCase and snake_case
+      const monthlyRentValue = parseFloat(String(contractData.monthlyRental || contractData.monthly_rental || contractData.monthlyRent || 0))
+      const securityDepositValue = parseFloat(String(contractData.depositAmount || contractData.deposit_amount || contractData.securityDeposit || 0))
+      const interestRateValue = parseFloat(String(contractData.interestRate || contractData.interest_rate || 0))
       
-      console.log('✅ PARSED VALUES:', {
-        monthlyRent: monthlyRentValue,
-        securityDeposit: securityDepositValue,
-        interestRate: interestRateValue,
-      })
-      
+      // Map all fields including date fields and rental space with proper fallbacks
       const mappedContract = {
         ...contractData,
+        // Numeric fields - converted to proper numbers
         monthlyRent: monthlyRentValue,
+        monthlyRental: monthlyRentValue,
+        depositAmount: securityDepositValue,
         securityDeposit: securityDepositValue,
         interestRate: interestRateValue,
+        // Date fields - with fallbacks
         startDate: contractData.startDate || contractData.start_date,
         endDate: contractData.endDate || contractData.end_date,
+        // String identifiers
+        contractNumber: contractData.contractNumber || contractData.contract_number,
+        // Nested objects - with fallbacks
+        rentalSpace: contractData.rentalSpace || contractData.rental_space,
+        tenant: contractData.tenant || contractData.renter,
       }
       
-      console.log('✅ FINAL MAPPED CONTRACT:', mappedContract)
+      console.log('✅ Mapped Contract:', mappedContract)
       setContract(mappedContract)
     } catch (err: any) {
       console.error('❌ Error loading contract:', err)
