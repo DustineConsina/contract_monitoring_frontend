@@ -83,7 +83,7 @@ export default function AuditLogsPage() {
   const filteredLogs = (Array.isArray(logs) ? logs : [])
     .filter((log) => {
       const matchesAction = filterAction === 'all' || log.action.toLowerCase() === filterAction.toLowerCase()
-      const matchesEntity = filterEntity === 'all' || log.model_type === filterEntity
+      const matchesEntity = filterEntity === 'all' || (log.modelType || log.model_type) === filterEntity
       const matchesSearch =
         log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (log.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,7 +98,7 @@ export default function AuditLogsPage() {
 
   // Get unique actions and entity types for filters
   const uniqueActions = Array.from(new Set(logs.map((log) => log.action).filter(Boolean)))
-  const uniqueEntities = Array.from(new Set(logs.map((log) => log.model_type).filter(Boolean)))
+  const uniqueEntities = Array.from(new Set(logs.map((log) => log.modelType || log.model_type).filter(Boolean)))
 
   const getActionBadge = (action: string) => {
     const colors: Record<string, string> = {
@@ -262,8 +262,12 @@ export default function AuditLogsPage() {
                     <tr key={log.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex flex-col">
-                          <span className="font-medium">{new Date(log.created_at).toLocaleDateString()}</span>
-                          <span className="text-xs text-gray-500">{new Date(log.created_at).toLocaleTimeString()}</span>
+                          <span className="font-medium">
+                            {new Date(log.createdAt || log.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.createdAt || log.created_at).toLocaleTimeString()}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -278,24 +282,24 @@ export default function AuditLogsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEntityBadge(log.model_type)}`}>
-                          {log.model_type || 'N/A'}
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEntityBadge(log.modelType || log.model_type || 'N/A')}`}>
+                          {log.modelType || log.model_type || 'N/A'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <p className="break-words max-w-md">{log.description}</p>
-                        {log.old_values && Object.keys(log.old_values).length > 0 && (
+                        {(log.oldValues || log.old_values) && Object.keys(log.oldValues || log.old_values || {}).length > 0 && (
                           <details className="mt-2 text-xs text-gray-500 cursor-pointer">
                             <summary className="font-semibold hover:text-gray-700">View changes</summary>
                             <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-200 space-y-2">
-                              {Object.entries(log.old_values)
+                              {Object.entries(log.oldValues || log.old_values || {})
                                 .filter(([key, oldValue]: [string, any]) => {
                                   // Only show fields that actually changed
-                                  const newValue = log.new_values?.[key]
+                                  const newValue = (log.newValues || log.new_values)?.[key]
                                   return String(oldValue) !== String(newValue)
                                 })
                                 .map(([key, oldValue]: [string, any]) => {
-                                  const newValue = log.new_values?.[key]
+                                  const newValue = (log.newValues || log.new_values)?.[key]
                                   const displayOld = oldValue === null ? '(empty)' : String(oldValue)
                                   const displayNew = newValue === null ? '(empty)' : String(newValue)
                                   
