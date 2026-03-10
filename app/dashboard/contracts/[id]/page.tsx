@@ -359,11 +359,21 @@ export default function ContractDetailsPage() {
                   )}
                 </div>
               ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                  <p className="text-yellow-800">
-                    ⚠️ Tenant information not yet loaded (ID: {contract.tenantId || 'unknown'})
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4 space-y-2">
+                  <p className="text-yellow-800 font-medium">
+                    ⚠️ Tenant data not available
                   </p>
-                  <p className="text-xs text-yellow-700 mt-2">The tenant record may not be available in the system. Please contact the administrator to set up the tenant account.</p>
+                  {contract.tenantId && (
+                    <p className="text-sm text-yellow-700">
+                      Tenant ID {contract.tenantId} is referenced by this contract, but the tenant record could not be found in the system.
+                    </p>
+                  )}
+                  {!contract.tenantId && (
+                    <p className="text-sm text-yellow-700">
+                      This contract does not have a tenant assigned.
+                    </p>
+                  )}
+                  <p className="text-xs text-yellow-600 mt-2">Please contact the administrator to assign or create the tenant account.</p>
                 </div>
               )}
             </div>
@@ -451,11 +461,21 @@ export default function ContractDetailsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                  <p className="text-yellow-800">
-                    ⚠️ Rental space information not yet assigned (ID: {contract.rentalSpaceId || contract.rental_space_id || 'unknown'})
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4 space-y-2">
+                  <p className="text-yellow-800 font-medium">
+                    ⚠️ Rental space data not available
                   </p>
-                  <p className="text-xs text-yellow-700 mt-2">The rental space may not be available or may not have been linked to this contract. Please contact the administrator to assign a rental space.</p>
+                  {(contract.rentalSpaceId || contract.rental_space_id) && (
+                    <p className="text-sm text-yellow-700">
+                      Rental Space ID {contract.rentalSpaceId || contract.rental_space_id} is referenced by this contract, but the space record could not be found in the system.
+                    </p>
+                  )}
+                  {!(contract.rentalSpaceId || contract.rental_space_id) && (
+                    <p className="text-sm text-yellow-700">
+                      This contract does not have a rental space assigned.
+                    </p>
+                  )}
+                  <p className="text-xs text-yellow-600 mt-2">Please contact the administrator to assign a rental space to this contract.</p>
                 </div>
               )}
             </div>
