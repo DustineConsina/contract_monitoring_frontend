@@ -428,7 +428,6 @@ export default function ContractDetailsPage() {
                     <span className="text-gray-600">Space Name:</span>
                     <span className="font-medium">
                       {(contract.rentalSpace || contract.rental_space)?.name 
-                        || (contract.rentalSpace || contract.rental_space)?.spaceName
                         || 'Not assigned'}
                     </span>
                   </div>
