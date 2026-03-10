@@ -324,7 +324,7 @@ export default function ContractDetailsPage() {
             {/* Tenant Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Tenant Information</h3>
-              {contract.tenant ? (
+              {contract.tenant && (typeof contract.tenant === 'object' && Object.keys(contract.tenant).length > 0) ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -336,12 +336,14 @@ export default function ContractDetailsPage() {
                           || contract.tenant?.name 
                           || contract.tenant?.contact_person 
                           || contract.tenant?.contactPerson 
-                          || 'N/A'}
+                          || contract.tenant?.businessName 
+                          || contract.tenant?.business_name
+                          || 'Unnamed Tenant'}
                       </p>
                       <p className="text-sm text-gray-600">
                         {contract.tenant?.user?.email 
                           || contract.tenant?.email 
-                          || 'N/A'}
+                          || 'No email'}
                       </p>
                     </div>
                   </div>
@@ -359,15 +361,15 @@ export default function ContractDetailsPage() {
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
                   <p className="text-yellow-800">
-                    ⚠️ Tenant information not loaded (tenant_id: {contract.tenantId || 'unknown'})
+                    ⚠️ Tenant information not yet loaded (ID: {contract.tenantId || 'unknown'})
                   </p>
-                  <p className="text-xs text-yellow-700 mt-2">Please wait for database to sync or contact administrator</p>
+                  <p className="text-xs text-yellow-700 mt-2">The tenant record may not be available in the system. Please contact the administrator to set up the tenant account.</p>
                 </div>
               )}
             </div>
 
             {/* Business Details */}
-            {contract.tenant && (
+            {contract.tenant && (typeof contract.tenant === 'object' && Object.keys(contract.tenant).length > 0) && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
                 <div className="space-y-3">
@@ -402,7 +404,7 @@ export default function ContractDetailsPage() {
                     </div>
                   )}
                   {!(contract.tenant.businessName || contract.tenant.business_name) && !(contract.tenant.businessType || contract.tenant.business_type) && !contract.tenant.tin && !(contract.tenant.businessAddress || contract.tenant.business_address) && (
-                    <p className="text-gray-500 text-sm">No business details available</p>
+                    <p className="text-gray-500 text-sm italic">No additional business details available</p>
                   )}
                 </div>
               </div>
@@ -411,7 +413,7 @@ export default function ContractDetailsPage() {
             {/* Rental Space Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rental Space</h3>
-              {(contract.rentalSpace || contract.rental_space) ? (
+              {(contract.rentalSpace || contract.rental_space) && (typeof (contract.rentalSpace || contract.rental_space) === 'object') ? (
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Code:</span>
@@ -419,13 +421,15 @@ export default function ContractDetailsPage() {
                       {(contract.rentalSpace || contract.rental_space)?.spaceCode 
                         || (contract.rentalSpace || contract.rental_space)?.space_code 
                         || (contract.rentalSpace || contract.rental_space)?.spaceNumber 
-                        || 'N/A'}
+                        || 'Not assigned'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Space Name:</span>
                     <span className="font-medium">
-                      {(contract.rentalSpace || contract.rental_space)?.name || 'N/A'}
+                      {(contract.rentalSpace || contract.rental_space)?.name 
+                        || (contract.rentalSpace || contract.rental_space)?.spaceName
+                        || 'Not assigned'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -434,7 +438,7 @@ export default function ContractDetailsPage() {
                       {(contract.rentalSpace || contract.rental_space)?.type?.name 
                         || (contract.rentalSpace || contract.rental_space)?.spaceType 
                         || (contract.rentalSpace || contract.rental_space)?.space_type 
-                        || 'N/A'}
+                        || 'Not specified'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -443,12 +447,17 @@ export default function ContractDetailsPage() {
                       {(contract.rentalSpace || contract.rental_space)?.sizeSqm 
                         || (contract.rentalSpace || contract.rental_space)?.squareMeters 
                         || (contract.rentalSpace || contract.rental_space)?.size_sqm 
-                        || 'N/A'} m²
+                        || 'Not specified'} m²
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500">No rental space information available</p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                  <p className="text-yellow-800">
+                    ⚠️ Rental space information not yet assigned (ID: {contract.rentalSpaceId || contract.rental_space_id || 'unknown'})
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-2">The rental space may not be available or may not have been linked to this contract. Please contact the administrator to assign a rental space.</p>
+                </div>
               )}
             </div>
 
