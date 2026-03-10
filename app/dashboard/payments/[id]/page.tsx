@@ -46,26 +46,46 @@ export default function PaymentDetailPage() {
 
   const fetchPayment = async () => {
     try {
-      const data = await apiClient.getPayments()
-      // Extract payments from paginated response
-      const paymentsArray = data.data?.data || data.data || data
-      const found = Array.isArray(paymentsArray) ? paymentsArray.find((p: Payment) => p.id && parseInt(p.id) === parseInt(paymentId)) : null
-      if (found) {
-        // Map the payment to ensure numeric fields are properly set
+      // First try to get payment details with contract data from the specific endpoint
+      try {
+        const response = await apiClient.request<any>(`/payments/${paymentId}`)
+        const paymentData = response.data?.data || response.data
+        
+        console.log('Raw payment data from API:', paymentData)
+        
+        // Extract contract if available
+        const contract = paymentData.contract || {}
+        const monthlyRental = parseFloat(String(contract.monthly_rental || contract.monthlyRent || 0))
+        
+        // Calculate missing values if not provided by API
+        const amountDue = parseFloat(String(paymentData.amount_due || paymentData.amountDue || monthlyRental || 0))
+        const interestAmount = parseFloat(String(paymentData.interest_amount || paymentData.interestAmount || (amountDue * 0.03) || 0))
+        const totalAmount = parseFloat(String(paymentData.total_amount || paymentData.totalAmount || (amountDue + interestAmount) || 0))
+        const amountPaid = parseFloat(String(paymentData.amount_paid || paymentData.amountPaid || 0))
+        const balance = parseFloat(String(paymentData.balance || (totalAmount - amountPaid) || 0))
+        
+        // Map the payment with all available fields
         const mappedPayment = {
-          ...found,
-          amountDue: parseFloat(String(found.amountDue || found.amount_due || 0)),
-          interestAmount: parseFloat(String(found.interestAmount || found.interest_amount || 0)),
-          totalAmount: parseFloat(String(found.totalAmount || found.total_amount || 0)),
-          amountPaid: parseFloat(String(found.amountPaid || found.amount_paid || 0)),
-          dueDate: found.dueDate || found.due_date,
-          billingPeriodStart: found.billingPeriodStart || found.billing_period_start,
-          billingPeriodEnd: found.billingPeriodEnd || found.billing_period_end,
-          paymentNumber: found.paymentNumber || found.payment_number,
-          paymentMethod: found.paymentMethod || found.payment_method,
-          referenceNumber: found.referenceNumber || found.reference_number,
+          ...paymentData,
+          id: paymentData.id || paymentId,
+          amountDue,
+          interestAmount,
+          totalAmount,
+          amountPaid,
+          balance,
+          dueDate: paymentData.dueDate || paymentData.due_date,
+          billingPeriodStart: paymentData.billingPeriodStart || paymentData.billing_period_start,
+          billingPeriodEnd: paymentData.billingPeriodEnd || paymentData.billing_period_end,
+          paymentNumber: paymentData.paymentNumber || paymentData.payment_number,
+          paymentMethod: paymentData.paymentMethod || paymentData.payment_method,
+          referenceNumber: paymentData.referenceNumber || paymentData.reference_number,
+          contract: contract,
+          contractNumber: contract?.contractNumber || contract?.contract_number || paymentData.contractNumber || paymentData.contract_number,
         }
+        
+        console.log('Mapped payment:', mappedPayment)
         setPayment(mappedPayment)
+        
         // Auto-open edit modal if edit query param is present
         if (searchParams.get('edit') === 'true') {
           setTimeout(() => {
@@ -77,10 +97,54 @@ export default function PaymentDetailPage() {
             setIsEditingModalOpen(true)
           }, 100)
         }
-      } else {
-        alert('Payment not found')
+      } catch (specificError) {
+        console.warn('Could not fetch specific payment, trying list endpoint:', specificError)
+        
+        // Fallback: get all payments and find the one we need
+        const data = await apiClient.getPayments()
+        const paymentsArray = data.data?.data || data.data || data
+        const found = Array.isArray(paymentsArray) ? paymentsArray.find((p: Payment) => p.id && parseInt(p.id) === parseInt(paymentId)) : null
+        
+        if (found) {
+          const monthlyRental = parseFloat(String(found.contract?.monthly_rental || found.contract?.monthlyRent || 0))
+          const amountDue = parseFloat(String(found.amountDue || found.amount_due || monthlyRental || 0))
+          const interestAmount = parseFloat(String(found.interestAmount || found.interest_amount || (amountDue * 0.03) || 0))
+          const totalAmount = parseFloat(String(found.totalAmount || found.total_amount || (amountDue + interestAmount) || 0))
+          const amountPaid = parseFloat(String(found.amountPaid || found.amount_paid || 0))
+          const balance = parseFloat(String(found.balance || (totalAmount - amountPaid) || 0))
+          
+          const mappedPayment = {
+            ...found,
+            amountDue,
+            interestAmount,
+            totalAmount,
+            amountPaid,
+            balance,
+            dueDate: found.dueDate || found.due_date,
+            billingPeriodStart: found.billingPeriodStart || found.billing_period_start,
+            billingPeriodEnd: found.billingPeriodEnd || found.billing_period_end,
+            paymentNumber: found.paymentNumber || found.payment_number,
+            paymentMethod: found.paymentMethod || found.payment_method,
+            referenceNumber: found.referenceNumber || found.reference_number,
+          }
+          setPayment(mappedPayment)
+          
+          if (searchParams.get('edit') === 'true') {
+            setTimeout(() => {
+              setEditFormData({
+                amount_to_pay: '',
+                payment_method: mappedPayment.paymentMethod || mappedPayment.payment_method || '',
+                remarks: '',
+              })
+              setIsEditingModalOpen(true)
+            }, 100)
+          }
+        } else {
+          alert('Payment not found')
+        }
       }
     } catch (err: any) {
+      console.error('Failed to load payment:', err)
       alert(err.message || 'Failed to load payment')
     } finally {
       setIsLoading(false)
