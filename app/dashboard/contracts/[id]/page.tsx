@@ -24,6 +24,22 @@ export default function ContractDetailsPage() {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
 
+  // Safe date formatter
+  const formatDate = (dateInput: any): string => {
+    try {
+      if (!dateInput) return 'N/A'
+      
+      const date = new Date(dateInput)
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date'
+      }
+      return date.toLocaleDateString()
+    } catch (e) {
+      console.warn('Error formatting date:', dateInput, e)
+      return 'Invalid Date'
+    }
+  }
+
   useEffect(() => {
     fetchContract()
   }, [contractId])
@@ -316,7 +332,7 @@ export default function ContractDetailsPage() {
                   {contract.status?.toUpperCase() || 'PENDING'}
                 </span>
                 <div className="text-sm text-gray-600">
-                  Created on {contract.createdAt ? new Date(contract.createdAt).toLocaleDateString() : 'N/A'}
+                  Created on {formatDate(contract.createdAt)}
                 </div>
               </div>
             </div>
@@ -511,21 +527,10 @@ export default function ContractDetailsPage() {
                         <tr key={payment.id} className="border-b border-gray-200 hover:bg-gray-50">
                           <td className="px-4 py-3 font-medium text-gray-900">{payment.paymentNumber || payment.payment_number || 'N/A'}</td>
                           <td className="px-4 py-3 text-gray-600">
-                            {(payment.billingPeriodStart || payment.billing_period_start)
-                              ? new Date(String(payment.billingPeriodStart || payment.billing_period_start)).toLocaleDateString()
-                              : 'N/A'
-                            }
-                            {' - '}
-                            {(payment.billingPeriodEnd || payment.billing_period_end)
-                              ? new Date(String(payment.billingPeriodEnd || payment.billing_period_end)).toLocaleDateString()
-                              : 'N/A'
-                            }
+                            {formatDate(payment.billingPeriodStart || payment.billing_period_start)} - {formatDate(payment.billingPeriodEnd || payment.billing_period_end)}
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {(payment.dueDate || payment.due_date)
-                              ? new Date(String(payment.dueDate || payment.due_date)).toLocaleDateString()
-                              : 'N/A'
-                            }
+                            {formatDate(payment.dueDate || payment.due_date)}
                           </td>
                           <td className="px-4 py-3 text-right font-medium text-gray-900">
                             ₱{(parseFloat(payment.amountDue || payment.amount_due) || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -570,13 +575,13 @@ export default function ContractDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Start Date</p>
                   <p className="font-medium text-gray-900">
-                    {(contract.startDate || contract.start_date) ? new Date(String(contract.startDate || contract.start_date)).toLocaleDateString() : 'N/A'}
+                    {formatDate(contract.startDate || contract.start_date)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">End Date</p>
                   <p className="font-medium text-gray-900">
-                    {(contract.endDate || contract.end_date) ? new Date(String(contract.endDate || contract.end_date)).toLocaleDateString() : 'N/A'}
+                    {formatDate(contract.endDate || contract.end_date)}
                   </p>
                 </div>
               </div>
