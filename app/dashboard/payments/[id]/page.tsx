@@ -24,6 +24,22 @@ export default function PaymentDetailPage() {
     remarks: '',
   })
 
+  // Safe date formatter
+  const formatDate = (dateInput: any): string => {
+    try {
+      if (!dateInput) return 'N/A'
+      
+      const date = new Date(dateInput)
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date'
+      }
+      return date.toLocaleDateString()
+    } catch (e) {
+      console.warn('Error formatting date:', dateInput, e)
+      return 'Invalid Date'
+    }
+  }
+
   useEffect(() => {
     fetchPayment()
   }, [paymentId])
@@ -267,7 +283,7 @@ export default function PaymentDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
-                  <p className="text-gray-900">{new Date(payment.dueDate || payment.due_date || '').toLocaleDateString()}</p>
+                  <p className="text-gray-900">{formatDate(payment.dueDate || payment.due_date)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Payment Method</label>
@@ -347,7 +363,7 @@ export default function PaymentDetailPage() {
                   <label className="block text-sm font-medium text-gray-600 mb-1">Billing Period</label>
                   <p className="text-gray-900">
                     {(payment.billingPeriodStart || payment.billing_period_start) && (payment.billingPeriodEnd || payment.billing_period_end)
-                      ? `${new Date(String(payment.billingPeriodStart || payment.billing_period_start)).toLocaleDateString()} - ${new Date(String(payment.billingPeriodEnd || payment.billing_period_end)).toLocaleDateString()}`
+                      ? `${formatDate(payment.billingPeriodStart || payment.billing_period_start)} - ${formatDate(payment.billingPeriodEnd || payment.billing_period_end)}`
                       : 'N/A'}
                   </p>
                 </div>
