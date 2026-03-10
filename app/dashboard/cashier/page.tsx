@@ -47,6 +47,60 @@ export default function CashierDashboard() {
   const [trendMonth, setTrendMonth] = useState('')
   const [loading, setLoading] = useState(true)
 
+  // Helper to safely parse and format dates
+  const formatDate = (dateInput: any): string => {
+    try {
+      let date: Date | null = null
+      
+      // Handle string dates (ISO format, timestamp strings, etc)
+      if (typeof dateInput === 'string') {
+        // Try parsing ISO format or other standard formats
+        date = new Date(dateInput)
+      } else if (typeof dateInput === 'number') {
+        // Timestamp
+        date = new Date(dateInput)
+      } else if (dateInput instanceof Date) {
+        date = dateInput
+      }
+      
+      if (!date || isNaN(date.getTime())) {
+        return 'Invalid date'
+      }
+      
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      })
+    } catch (e) {
+      console.warn('Error formatting date:', dateInput, e)
+      return 'Invalid date'
+    }
+  }
+
+  const getMonthFromDate = (dateInput: any): string => {
+    try {
+      let date: Date | null = null
+      
+      if (typeof dateInput === 'string') {
+        date = new Date(dateInput)
+      } else if (typeof dateInput === 'number') {
+        date = new Date(dateInput)
+      } else if (dateInput instanceof Date) {
+        date = dateInput
+      }
+      
+      if (!date || isNaN(date.getTime())) {
+        return 'Unknown'
+      }
+      
+      return date.toLocaleString('en-US', { year: 'numeric', month: 'short' })
+    } catch (e) {
+      console.warn('Error getting month from date:', dateInput, e)
+      return 'Unknown'
+    }
+  }
+
   useEffect(() => {
     loadCashierData()
     loadPaymentTrends()
@@ -79,19 +133,19 @@ export default function CashierDashboard() {
       const monthlyData: Record<string, { paid: number; pending: number; overdue: number; total: number }> = {}
       
       payments.forEach((payment: any) => {
-        const dueDate = new Date(payment.due_date)
-        if (isNaN(dueDate.getTime())) {
-          console.warn('Invalid date for payment:', payment)
+        // Get the month key using the safe helper
+        const monthKey = getMonthFromDate(payment.due_date || payment.dueDate || payment.created_at)
+        
+        if (!monthKey || monthKey === 'Unknown') {
+          console.warn('Could not extract month from payment:', payment)
           return
         }
-        
-        const monthKey = dueDate.toLocaleString('en-US', { year: 'numeric', month: 'short' })
         
         if (!monthlyData[monthKey]) {
           monthlyData[monthKey] = { paid: 0, pending: 0, overdue: 0, total: 0 }
         }
         
-        const amount = parseFloat(payment.total_amount || payment.totalAmount || payment.amount || 0)
+        const amount = parseFloat(payment.total_amount || payment.totalAmount || payment.amount || payment.total || 0)
         monthlyData[monthKey].total += amount
         
         const status = (payment.status || '').toLowerCase()
@@ -486,7 +540,7 @@ export default function CashierDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600">
-                        {payment.contract_number} • Due: {payment.due_date}
+                        {payment.contract_number} • Due: {formatDate(payment.due_date)}
                       </p>
                       <p className="text-sm text-gray-600">
                         Amount: ₱{payment.amount_due.toLocaleString()} + Interest: ₱
