@@ -28,9 +28,34 @@ export default function NewPaymentPage() {
 
   const fetchData = async () => {
     try {
+      console.log('Fetching contracts...')
       // Fetch contracts
       const contractsDataResp = await apiClient.getContracts()
-      let contractsArray = contractsDataResp.data?.data || contractsDataResp.data || contractsDataResp
+      console.log('Raw contracts response:', contractsDataResp)
+      
+      // Handle paginated response structure
+      let contractsArray = []
+      if (contractsDataResp.data?.data && Array.isArray(contractsDataResp.data.data)) {
+        contractsArray = contractsDataResp.data.data
+        console.log('Extracted from data.data (paginated):', contractsArray.length)
+      } else if (contractsDataResp.data && Array.isArray(contractsDataResp.data)) {
+        contractsArray = contractsDataResp.data
+        console.log('Extracted from data (direct array):', contractsArray.length)
+      } else if (Array.isArray(contractsDataResp)) {
+        contractsArray = contractsDataResp
+        console.log('Extracted from root (direct array):', contractsArray.length)
+      }
+      
+      // Log first contract to see structure
+      if (contractsArray.length > 0) {
+        console.log('First contract structure:', {
+          id: contractsArray[0].id,
+          contract_number: contractsArray[0].contract_number,
+          monthly_rental: contractsArray[0].monthly_rental,
+          monthlyRental: contractsArray[0].monthlyRental,
+          allKeys: Object.keys(contractsArray[0])
+        })
+      }
       
       // Fetch payments
       const paymentsDataResp = await apiClient.getPayments()
@@ -48,7 +73,12 @@ export default function NewPaymentPage() {
         (c: any) => !contractsWithPayments.has(c.id)
       )
 
-      console.log('Available contracts:', availableContracts)
+      console.log('Available contracts:', availableContracts.map(c => ({
+        id: c.id,
+        contract_number: c.contract_number,
+        monthly_rental: c.monthly_rental
+      })))
+      
       setContracts(availableContracts)
     } catch (err: any) {
       console.error('Error loading contracts:', err)
@@ -106,16 +136,26 @@ export default function NewPaymentPage() {
 
   const handleContractChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const contractId = e.target.value
+    console.log('=== CONTRACT SELECTION ===')
+    console.log('Selected contract ID:', contractId)
     
     // Auto-fill amount from contract
     const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
-    console.log('Contract selected:', contractId)
-    console.log('Selected contract object:', selectedContract)
+    console.log('Found contract:', selectedContract)
     
     if (selectedContract) {
+      console.log('Contract fields:', {
+        id: selectedContract.id,
+        contract_number: selectedContract.contract_number,
+        monthly_rental: selectedContract.monthly_rental,
+        monthlyRental: selectedContract.monthlyRental,
+      })
+      
       // monthly_rental should be on the contract object directly from the backend
-      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
+      let monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
+      
+      console.log('Raw monthly_rent value:', monthlyRent, 'type:', typeof monthlyRent)
       
       // Parse and validate
       let numericRent = 0
@@ -126,15 +166,18 @@ export default function NewPaymentPage() {
             numericRent = 0
           }
         } catch (e) {
+          console.error('Error parsing monthly rent:', e)
           numericRent = 0
         }
       }
       
       const amountString = numericRent > 0 ? numericRent.toFixed(2) : '0.00'
       
-      console.log('Monthly rental value:', monthlyRent)
-      console.log('Parsed numeric rent:', numericRent)
-      console.log('Amount string to fill:', amountString)
+      console.log('Final amount to fill:', {
+        numericRent,
+        amountString,
+        willShow: numericRent > 0 ? `₱${numericRent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
+      })
       
       setFormData({
         ...formData,
@@ -142,6 +185,7 @@ export default function NewPaymentPage() {
         amount: amountString,
       })
     } else {
+      console.warn('Contract not found in list')
       // If no contract selected, clear the form
       setFormData({
         ...formData,
