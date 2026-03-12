@@ -31,6 +31,19 @@ export default function RentalSpacesPage() {
       const spacesData = await apiClient.getRentalSpaces()
       // Handle paginated response from API - extract actual array from nested structure
       const spacesArray = spacesData.data?.data || spacesData.data || []
+      
+      // DEBUG: Log the API response to see what fields are present
+      console.log('📊 Rental Spaces API Response:')
+      console.log('Total spaces received:', spacesArray.length)
+      if (spacesArray.length > 0) {
+        console.log('First space object keys:', Object.keys(spacesArray[0]))
+        console.log('First space full object:', spacesArray[0])
+        console.log('First space status:', spacesArray[0]?.status)
+        console.log('First space occupancyStatus:', spacesArray[0]?.occupancyStatus)
+        console.log('First space active_contracts_count:', spacesArray[0]?.activeContractsCount)
+        console.log('First space is_occupied:', spacesArray[0]?.isOccupied)
+      }
+      
       setSpaces(spacesArray)
       setError(null)
     } catch (err: any) {
