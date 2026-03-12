@@ -48,12 +48,17 @@ export default function NewPaymentPage() {
       
       // Log first contract to see structure
       if (contractsArray.length > 0) {
+        const firstContract = contractsArray[0]
         console.log('First contract structure:', {
-          id: contractsArray[0].id,
-          contract_number: contractsArray[0].contract_number,
-          monthly_rental: contractsArray[0].monthly_rental,
-          monthlyRental: contractsArray[0].monthlyRental,
-          allKeys: Object.keys(contractsArray[0])
+          id: firstContract.id,
+          contract_number: firstContract.contract_number,
+          contractNumber: firstContract.contractNumber,
+          monthly_rental: firstContract.monthly_rental,
+          monthlyRental: firstContract.monthlyRental,
+          rentalSpace: firstContract.rentalSpace,
+          rental_space: firstContract.rental_space,
+          allKeys: Object.keys(firstContract),
+          fullObject: JSON.stringify(firstContract, null, 2)
         })
       }
       
@@ -143,19 +148,35 @@ export default function NewPaymentPage() {
     const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
     console.log('Found contract:', selectedContract)
+    console.log('Looking for monthly rental in:', {
+      monthlyRental: selectedContract?.monthlyRental,
+      monthly_rental: selectedContract?.monthly_rental,
+      rentalSpace: selectedContract?.rentalSpace,
+      rental_space: selectedContract?.rental_space,
+    })
     
     if (selectedContract) {
-      console.log('Contract fields:', {
-        id: selectedContract.id,
-        contract_number: selectedContract.contract_number,
-        monthly_rental: selectedContract.monthly_rental,
-        monthlyRental: selectedContract.monthlyRental,
-      })
+      // Try multiple locations for monthly rental
+      let monthlyRent = 0
       
-      // monthly_rental should be on the contract object directly from the backend
-      let monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
+      // 1. Direct on contract (snake_case from backend or camelCase from api-client)
+      if (selectedContract.monthlyRental) {
+        monthlyRent = selectedContract.monthlyRental
+      } else if (selectedContract.monthly_rental) {
+        monthlyRent = selectedContract.monthly_rental
+      }
+      // 2. Nested in rentalSpace relationship
+      else if (selectedContract.rentalSpace) {
+        monthlyRent = selectedContract.rentalSpace.monthly_rental || selectedContract.rentalSpace.monthlyRental || selectedContract.rentalSpace.base_rental_rate || selectedContract.rentalSpace.baseRentalRate || 0
+        console.log('Found rentalSpace, extracted monthly rental:', monthlyRent)
+      }
+      // 3. Nested in rental_space relationship (snake_case)
+      else if (selectedContract.rental_space) {
+        monthlyRent = selectedContract.rental_space.monthly_rental || selectedContract.rental_space.monthlyRental || selectedContract.rental_space.base_rental_rate || selectedContract.rental_space.baseRentalRate || 0
+        console.log('Found rental_space, extracted monthly rental:', monthlyRent)
+      }
       
-      console.log('Raw monthly_rent value:', monthlyRent, 'type:', typeof monthlyRent)
+      console.log('Located monthly_rent:', monthlyRent)
       
       // Parse and validate
       let numericRent = 0
@@ -176,7 +197,7 @@ export default function NewPaymentPage() {
       console.log('Final amount to fill:', {
         numericRent,
         amountString,
-        willShow: numericRent > 0 ? `₱${numericRent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
+        willShow: numericRent > 0 ? `₱${numericRent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Still 0'
       })
       
       setFormData({
