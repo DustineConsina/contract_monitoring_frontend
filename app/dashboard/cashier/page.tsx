@@ -273,11 +273,11 @@ export default function CashierDashboard() {
               </div>
               <div className="bg-gray-50 p-4 rounded">
                 <p className="text-sm text-gray-600">Amount Due</p>
-                <p className="font-bold">₱{selectedPayment.total.toLocaleString()}</p>
+                <p className="font-bold">₱{parseFloat(String(selectedPayment.total || 0)).toLocaleString()}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded">
                 <p className="text-sm text-gray-600">Outstanding Balance</p>
-                <p className="font-bold text-red-600">₱{selectedPayment.balance.toLocaleString()}</p>
+                <p className="font-bold text-red-600">₱{parseFloat(String(selectedPayment.balance || 0)).toLocaleString()}</p>
               </div>
             </div>
 
@@ -543,8 +543,8 @@ export default function CashierDashboard() {
                         {payment.contract_number} • Due: {formatDate(payment.due_date)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Amount: ₱{payment.amount_due.toLocaleString()} + Interest: ₱
-                        {payment.interest.toLocaleString()}
+                        Amount: ₱{parseFloat(String(payment.amount_due || 0)).toLocaleString()} + Interest: ₱
+                        {parseFloat(String(payment.interest || 0)).toLocaleString()}
                       </p>
                     </div>
                     <div className="text-right">
@@ -556,7 +556,7 @@ export default function CashierDashboard() {
                           payment.status === 'paid' ? 'text-green-600' : 'text-red-600'
                         }`}
                       >
-                        ₱{payment.balance.toLocaleString()}
+                        ₱{parseFloat(String(payment.balance || 0)).toLocaleString()}
                       </p>
                     </div>
                   </div>

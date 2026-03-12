@@ -68,6 +68,17 @@ export default function ContractQRPage() {
     window.print()
   }
 
+  const formatDate = (dateInput: any): string => {
+    try {
+      if (!dateInput) return 'N/A'
+      const date = new Date(dateInput)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      return date.toLocaleDateString()
+    } catch (e) {
+      return 'Invalid Date'
+    }
+  }
+
   const handleDownload = () => {
     if (!qrCode) return
     const link = document.createElement('a')
@@ -167,7 +178,9 @@ export default function ContractQRPage() {
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Tenant:</td>
                     <td className="py-2 text-gray-900">
-                      {contract.tenant?.contact_person || 'N/A'}
+                      {contract.tenant && (typeof contract.tenant === 'object' && Object.keys(contract.tenant).length > 0)
+                        ? `${contract.tenant.business_name || contract.tenant.contact_person || 'N/A'}`
+                        : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
@@ -185,25 +198,28 @@ export default function ContractQRPage() {
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Type:</td>
                     <td className="py-2 text-gray-900">
-                      {contract.rentalSpace?.space_type || contract.rentalSpace?.type?.name || 'N/A'}
+                      {contract.rentalSpace && (typeof contract.rentalSpace === 'object' && Object.keys(contract.rentalSpace).length > 0)
+                        ? (contract.rentalSpace?.space_type || contract.rentalSpace?.type?.name || 'N/A')
+                        : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Space Size:</td>
                     <td className="py-2 text-gray-900">
-                      {(contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters) || 'N/A'} m²
+                      {contract.rentalSpace && (typeof contract.rentalSpace === 'object' && Object.keys(contract.rentalSpace).length > 0)
+                        ? `${(contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters) || 'N/A'} m²`
+                        : 'N/A'}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Contract Period:</td>
                     <td className="py-2 text-gray-900">
-                      {contract?.startDate ? new Date(contract.startDate).toLocaleDateString() : 'N/A'} to{' '}
-                      {contract?.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
+                      {formatDate(contract?.startDate)} to {formatDate(contract?.endDate)}
                     </td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-2 font-medium text-gray-700">Monthly Rent:</td>
-                    <td className="py-2 text-gray-900">₱{(contract?.monthlyRent || 0).toLocaleString()}</td>
+                    <td className="py-2 text-gray-900">₱{((contract?.monthlyRent || contract?.monthly_rental || 0) as number).toLocaleString()}</td>
                   </tr>
                   <tr>
                     <td className="py-2 font-medium text-gray-700">Status:</td>
@@ -220,14 +236,20 @@ export default function ContractQRPage() {
             {/* Space Map Placeholder */}
             <div className="mt-6 border-t pt-6">
               <h4 className="font-semibold text-gray-900 mb-3">Rental Space Location Map</h4>
-              <div className="bg-gray-100 rounded p-4 text-center">
-                <div className="border-2 border-dashed border-gray-300 rounded h-48 flex items-center justify-center">
-                  <div className="text-gray-500">
-                    <p className="mb-2">📍 {contract.rentalSpace?.name || 'Location'}</p>
-                    <p className="text-sm">Space: {contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters || 'N/A'} square meters</p>
+              {contract.rentalSpace && (typeof contract.rentalSpace === 'object' && Object.keys(contract.rentalSpace).length > 0) ? (
+                <div className="bg-gray-100 rounded p-4 text-center">
+                  <div className="border-2 border-dashed border-gray-300 rounded h-48 flex items-center justify-center">
+                    <div className="text-gray-500">
+                      <p className="mb-2">📍 {contract.rentalSpace?.name || 'Location'}</p>
+                      <p className="text-sm">Space: {contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters || 'N/A'} square meters</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-center">
+                  <p className="text-yellow-800">⚠️ Rental space information not available</p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
