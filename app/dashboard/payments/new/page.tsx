@@ -28,15 +28,28 @@ export default function NewPaymentPage() {
 
   const fetchData = async () => {
     try {
-      // Fetch all contracts and payments
-      const [contractsData, paymentsData] = await Promise.all([
-        apiClient.getContracts(),
-        apiClient.getPayments(),
-      ])
-
-      // Extract contracts array from paginated response
-      const contractsArray = contractsData.data?.data || contractsData.data || contractsData
-      const paymentsArray = paymentsData.data?.data || paymentsData.data || paymentsData
+      // Fetch contracts with rental space details
+      const contractsDataResp = await apiClient.getContracts()
+      let contractsArray = contractsDataResp.data?.data || contractsDataResp.data || contractsDataResp
+      
+      // Ensure contracts have rental space data with monthly_rental
+      if (Array.isArray(contractsArray)) {
+        contractsArray = contractsArray.map((c: any) => {
+          // Get monthly rental from rentalSpace or rental_space
+          const rentalSpace = c.rentalSpace || c.rental_space
+          const monthlyRental = rentalSpace?.monthly_rental || rentalSpace?.monthlyRental || c.monthly_rental || c.monthlyRental || 0
+          
+          return {
+            ...c,
+            monthly_rental: monthlyRental,
+            monthlyRent: monthlyRental
+          }
+        })
+      }
+      
+      // Fetch payments
+      const paymentsDataResp = await apiClient.getPayments()
+      const paymentsArray = paymentsDataResp.data?.data || paymentsDataResp.data || paymentsDataResp
 
       // Get contract IDs that already have payments
       const contractsWithPayments = new Set(
@@ -45,13 +58,15 @@ export default function NewPaymentPage() {
           .filter(Boolean)
       )
 
-      // Filter contracts: exclude those with payments
+      // Filter contracts: exclude those with payments  
       const availableContracts = (Array.isArray(contractsArray) ? contractsArray : []).filter(
         (c: any) => !contractsWithPayments.has(c.id)
       )
 
+      console.log('Available contracts:', availableContracts)
       setContracts(availableContracts)
     } catch (err: any) {
+      console.error('Error loading contracts:', err)
       alert(err.message || 'Failed to load contracts')
     } finally {
       setLoadingData(false)
@@ -111,9 +126,20 @@ export default function NewPaymentPage() {
     const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
     if (selectedContract) {
-      // Get monthly rental - try multiple field name variations
-      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
-      const amountString = monthlyRent ? parseFloat(monthlyRent.toString()).toFixed(2) : '0.00'
+      // Get monthly rental from multiple possible locations
+      let monthlyRent = selectedContract.monthly_rental || 
+                        selectedContract.monthlyRent || 
+                        selectedContract.rental_space?.monthly_rental ||
+                        selectedContract.rentalSpace?.monthly_rental ||
+                        0
+      
+      // Ensure it's a number
+      monthlyRent = parseFloat(String(monthlyRent || 0))
+      
+      const amountString = monthlyRent > 0 ? monthlyRent.toFixed(2) : '0.00'
+      
+      console.log('Selected contract:', selectedContract)
+      console.log('Monthly rent to fill:', monthlyRent, 'String:', amountString)
       
       setFormData({
         ...formData,
