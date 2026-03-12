@@ -45,8 +45,8 @@ export default function RentalSpacesPage() {
 
   const filteredSpaces = Array.isArray(spaces) ? spaces.filter((space: any) => {
     const matchesType = selectedType === 'all' || space.space_type === selectedType
-    // Use occupancy_status if available (new API field), fallback to status for backward compatibility
-    const occupancyStatus = space.occupancy_status || space.status || ''
+    // Use occupancyStatus (camelCase - api client transforms snake_case to camelCase), fallback to status
+    const occupancyStatus = space.occupancyStatus || space.status || ''
     const spaceStatus = String(occupancyStatus || '').toUpperCase()
     const matchesStatus = statusFilter === 'all' || spaceStatus === statusFilter.toUpperCase()
     return matchesType && matchesStatus
@@ -75,15 +75,15 @@ export default function RentalSpacesPage() {
   const stats = {
     total: spaces.length,
     available: Array.isArray(spaces) ? spaces.filter((s: any) => {
-      const occupancyStatus = s.occupancy_status || s.status || ''
+      const occupancyStatus = s.occupancyStatus || s.status || ''
       return String(occupancyStatus || '').toUpperCase() === 'AVAILABLE'
     }).length : 0,
     occupied: Array.isArray(spaces) ? spaces.filter((s: any) => {
-      const occupancyStatus = s.occupancy_status || s.status || ''
+      const occupancyStatus = s.occupancyStatus || s.status || ''
       return String(occupancyStatus || '').toUpperCase() === 'OCCUPIED'
     }).length : 0,
     maintenance: Array.isArray(spaces) ? spaces.filter((s: any) => {
-      const occupancyStatus = s.occupancy_status || s.status || ''
+      const occupancyStatus = s.occupancyStatus || s.status || ''
       return String(occupancyStatus || '').toUpperCase() === 'MAINTENANCE'
     }).length : 0,
   }
@@ -194,7 +194,7 @@ export default function RentalSpacesPage() {
             </div>
           ) : (
             filteredSpaces.map((space: any) => {
-              const occupancyStatus = space.occupancy_status || space.status || ''
+              const occupancyStatus = space.occupancyStatus || space.status || ''
               return (
               <div
                 key={space.id}
