@@ -28,24 +28,9 @@ export default function NewPaymentPage() {
 
   const fetchData = async () => {
     try {
-      // Fetch contracts with rental space details
+      // Fetch contracts
       const contractsDataResp = await apiClient.getContracts()
       let contractsArray = contractsDataResp.data?.data || contractsDataResp.data || contractsDataResp
-      
-      // Ensure contracts have rental space data with monthly_rental
-      if (Array.isArray(contractsArray)) {
-        contractsArray = contractsArray.map((c: any) => {
-          // Get monthly rental from rentalSpace or rental_space
-          const rentalSpace = c.rentalSpace || c.rental_space
-          const monthlyRental = rentalSpace?.monthly_rental || rentalSpace?.monthlyRental || c.monthly_rental || c.monthlyRental || 0
-          
-          return {
-            ...c,
-            monthly_rental: monthlyRental,
-            monthlyRent: monthlyRental
-          }
-        })
-      }
       
       // Fetch payments
       const paymentsDataResp = await apiClient.getPayments()
@@ -126,11 +111,9 @@ export default function NewPaymentPage() {
     const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
     if (selectedContract) {
-      // Get monthly rental from multiple possible locations
+      // Get monthly rental directly from contract (the source of truth)
       let monthlyRent = selectedContract.monthly_rental || 
                         selectedContract.monthlyRent || 
-                        selectedContract.rental_space?.monthly_rental ||
-                        selectedContract.rentalSpace?.monthly_rental ||
                         0
       
       // Ensure it's a number
