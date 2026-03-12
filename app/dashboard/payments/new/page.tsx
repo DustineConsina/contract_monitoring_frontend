@@ -48,7 +48,7 @@ export default function NewPaymentPage() {
       
       // Log first contract to see structure
       if (contractsArray.length > 0) {
-        const firstContract = contractsArray[0]
+        const firstContract = contractsArray[0] as any
         console.log('First contract structure:', {
           id: firstContract.id,
           contract_number: firstContract.contract_number,
@@ -149,32 +149,35 @@ export default function NewPaymentPage() {
     
     console.log('Found contract:', selectedContract)
     console.log('Looking for monthly rental in:', {
-      monthlyRental: selectedContract?.monthlyRental,
-      monthly_rental: selectedContract?.monthly_rental,
-      rentalSpace: selectedContract?.rentalSpace,
-      rental_space: selectedContract?.rental_space,
+      monthly_rental: (selectedContract as any)?.monthly_rental,
+      monthlyRental: (selectedContract as any)?.monthlyRental,
+      rentalSpace: (selectedContract as any)?.rentalSpace,
+      rental_space: (selectedContract as any)?.rental_space,
     })
     
     if (selectedContract) {
+      const contract = selectedContract as any  // Cast to allow runtime exploration of all properties
+      
       // Try multiple locations for monthly rental
       let monthlyRent = 0
       
       // 1. Direct on contract (snake_case from backend or camelCase from api-client)
-      if (selectedContract.monthlyRental) {
-        monthlyRent = selectedContract.monthlyRental
-      } else if (selectedContract.monthly_rental) {
-        monthlyRent = selectedContract.monthly_rental
+      if (contract.monthlyRental) {
+        monthlyRent = contract.monthlyRental
+      } else if (contract.monthly_rental) {
+        monthlyRent = contract.monthly_rental
       }
       // 2. Nested in rentalSpace relationship
-      else if (selectedContract.rentalSpace) {
-        monthlyRent = selectedContract.rentalSpace.monthly_rental || selectedContract.rentalSpace.monthlyRental || selectedContract.rentalSpace.base_rental_rate || selectedContract.rentalSpace.baseRentalRate || 0
+      else if (contract.rentalSpace) {
+        monthlyRent = contract.rentalSpace.monthly_rental || contract.rentalSpace.monthlyRental || contract.rentalSpace.base_rental_rate || contract.rentalSpace.baseRentalRate || 0
         console.log('Found rentalSpace, extracted monthly rental:', monthlyRent)
       }
       // 3. Nested in rental_space relationship (snake_case)
-      else if (selectedContract.rental_space) {
-        monthlyRent = selectedContract.rental_space.monthly_rental || selectedContract.rental_space.monthlyRental || selectedContract.rental_space.base_rental_rate || selectedContract.rental_space.baseRentalRate || 0
+      else if (contract.rental_space) {
+        monthlyRent = contract.rental_space.monthly_rental || contract.rental_space.monthlyRental || contract.rental_space.base_rental_rate || contract.rental_space.baseRentalRate || 0
         console.log('Found rental_space, extracted monthly rental:', monthlyRent)
       }
+      
       
       console.log('Located monthly_rent:', monthlyRent)
       
