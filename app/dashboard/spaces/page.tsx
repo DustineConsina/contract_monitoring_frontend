@@ -45,7 +45,9 @@ export default function RentalSpacesPage() {
 
   const filteredSpaces = Array.isArray(spaces) ? spaces.filter((space: any) => {
     const matchesType = selectedType === 'all' || space.space_type === selectedType
-    const spaceStatus = String(space.status || '').toUpperCase()
+    // Use occupancy_status if available (new API field), fallback to status for backward compatibility
+    const occupancyStatus = space.occupancy_status || space.status || ''
+    const spaceStatus = String(occupancyStatus || '').toUpperCase()
     const matchesStatus = statusFilter === 'all' || spaceStatus === statusFilter.toUpperCase()
     return matchesType && matchesStatus
   }) : []
@@ -72,9 +74,18 @@ export default function RentalSpacesPage() {
 
   const stats = {
     total: spaces.length,
-    available: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'AVAILABLE').length : 0,
-    occupied: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'OCCUPIED').length : 0,
-    maintenance: Array.isArray(spaces) ? spaces.filter((s: any) => String(s.status || '').toUpperCase() === 'MAINTENANCE').length : 0,
+    available: Array.isArray(spaces) ? spaces.filter((s: any) => {
+      const occupancyStatus = s.occupancy_status || s.status || ''
+      return String(occupancyStatus || '').toUpperCase() === 'AVAILABLE'
+    }).length : 0,
+    occupied: Array.isArray(spaces) ? spaces.filter((s: any) => {
+      const occupancyStatus = s.occupancy_status || s.status || ''
+      return String(occupancyStatus || '').toUpperCase() === 'OCCUPIED'
+    }).length : 0,
+    maintenance: Array.isArray(spaces) ? spaces.filter((s: any) => {
+      const occupancyStatus = s.occupancy_status || s.status || ''
+      return String(occupancyStatus || '').toUpperCase() === 'MAINTENANCE'
+    }).length : 0,
   }
 
   return (
@@ -182,20 +193,22 @@ export default function RentalSpacesPage() {
               <p className="text-gray-500">No rental spaces found</p>
             </div>
           ) : (
-            filteredSpaces.map((space: any) => (
+            filteredSpaces.map((space: any) => {
+              const occupancyStatus = space.occupancy_status || space.status || ''
+              return (
               <div
                 key={space.id}
                 className={`bg-white rounded-lg shadow hover:shadow-lg transition p-4 border-2 ${
-                  String(space.status || '').toUpperCase() === 'AVAILABLE'
+                  String(occupancyStatus || '').toUpperCase() === 'AVAILABLE'
                     ? 'border-green-200'
-                    : String(space.status || '').toUpperCase() === 'OCCUPIED'
+                    : String(occupancyStatus || '').toUpperCase() === 'OCCUPIED'
                     ? 'border-blue-200'
                     : 'border-orange-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-gray-900">{space.space_code || space.spaceCode || 'N/A'}</h3>
-                  <span className="text-2xl">{getStatusIcon(space.status)}</span>
+                  <span className="text-2xl">{getStatusIcon(occupancyStatus)}</span>
                 </div>
                 <div className="space-y-2 text-sm mb-4">
                   <div className="text-gray-700 font-medium">
@@ -218,14 +231,14 @@ export default function RentalSpacesPage() {
                 <div>
                   <span
                     className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                      space.status
+                      occupancyStatus
                     )}`}
                   >
-                    {String(space.status || '').toUpperCase()}
+                    {String(occupancyStatus || '').toUpperCase()}
                   </span>
                 </div>
               </div>
-            ))
+            )})
           )}
         </div>
 
