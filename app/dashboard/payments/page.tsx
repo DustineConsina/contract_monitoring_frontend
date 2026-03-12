@@ -30,29 +30,62 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     try {
-      const response = await apiClient.getPayments()
-      console.log('Payments API Response:', response)
+      // Fetch both payments and contracts for amount calculations
+      const [paymentsResp, contractsResp] = await Promise.all([
+        apiClient.getPayments(),
+        apiClient.getContracts(),
+      ])
       
-      // Handle various response structures
+      console.log('Payments API Response:', paymentsResp)
+      console.log('Contracts API Response:', contractsResp)
+      
+      // Extract and map contracts by ID
+      let contractsArray = []
+      if (contractsResp.data?.data && Array.isArray(contractsResp.data.data)) {
+        contractsArray = contractsResp.data.data
+      } else if (Array.isArray(contractsResp.data)) {
+        contractsArray = contractsResp.data
+      } else if (Array.isArray(contractsResp)) {
+        contractsArray = contractsResp
+      }
+      
+      const contractMap = new Map(contractsArray.map((c: any) => [c.id, c]))
+      
+      // Extract payments
       let paymentsData = []
-      
-      if (response.data) {
-        if (response.data.data && Array.isArray(response.data.data)) {
-          paymentsData = response.data.data
-        } else if (Array.isArray(response.data)) {
-          paymentsData = response.data
-        }
-      } else if (Array.isArray(response)) {
-        paymentsData = response
+      if (paymentsResp.data?.data && Array.isArray(paymentsResp.data.data)) {
+        paymentsData = paymentsResp.data.data
+      } else if (Array.isArray(paymentsResp.data)) {
+        paymentsData = paymentsResp.data
+      } else if (Array.isArray(paymentsResp)) {
+        paymentsData = paymentsResp
       }
       
       console.log('Extracted payments array:', paymentsData.length)
       
-      // Ensure payments have required fields
+      // Map payments with proper amount calculations using contract fallback
       const mappedPayments = paymentsData.map((p: any) => {
-        const amountDue = parseFloat(p.amountDue || p.amount_due || 0)
-        const interestAmount = parseFloat(p.interestAmount || p.interest_amount || 0)
-        const totalAmount = parseFloat(p.totalAmount || p.total_amount || 0)
+        // Get the contract to use for fallback amounts
+        const contract = p.contract || contractMap.get(p.contract_id)
+        
+        // Get amount_due - use payment value, fallback to contract's monthly_rental
+        let amountDue = parseFloat(p.amountDue || p.amount_due || 0)
+        if (amountDue === 0 && contract) {
+          amountDue = parseFloat(contract.monthly_rental || contract.monthlyRental || 0)
+        }
+        
+        // Calculate interest (3%) if not in database
+        let interestAmount = parseFloat(p.interestAmount || p.interest_amount || 0)
+        if (interestAmount === 0 && amountDue > 0) {
+          interestAmount = amountDue * 0.03
+        }
+        
+        // Calculate total if not in database
+        let totalAmount = parseFloat(p.totalAmount || p.total_amount || 0)
+        if (totalAmount === 0) {
+          totalAmount = amountDue + interestAmount
+        }
+        
         const amountPaid = parseFloat(p.amountPaid || p.amount_paid || 0)
         
         return {

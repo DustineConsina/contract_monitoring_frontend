@@ -110,19 +110,31 @@ export default function NewPaymentPage() {
     // Auto-fill amount from contract
     const selectedContract = contracts.find((c) => c.id && c.id.toString() === contractId)
     
+    console.log('Contract selected:', contractId)
+    console.log('Selected contract object:', selectedContract)
+    
     if (selectedContract) {
-      // Get monthly rental directly from contract (the source of truth)
-      let monthlyRent = selectedContract.monthly_rental || 
-                        selectedContract.monthlyRent || 
-                        0
+      // monthly_rental should be on the contract object directly from the backend
+      const monthlyRent = selectedContract.monthly_rental || selectedContract.monthlyRent || 0
       
-      // Ensure it's a number
-      monthlyRent = parseFloat(String(monthlyRent || 0))
+      // Parse and validate
+      let numericRent = 0
+      if (monthlyRent) {
+        try {
+          numericRent = parseFloat(String(monthlyRent))
+          if (isNaN(numericRent)) {
+            numericRent = 0
+          }
+        } catch (e) {
+          numericRent = 0
+        }
+      }
       
-      const amountString = monthlyRent > 0 ? monthlyRent.toFixed(2) : '0.00'
+      const amountString = numericRent > 0 ? numericRent.toFixed(2) : '0.00'
       
-      console.log('Selected contract:', selectedContract)
-      console.log('Monthly rent to fill:', monthlyRent, 'String:', amountString)
+      console.log('Monthly rental value:', monthlyRent)
+      console.log('Parsed numeric rent:', numericRent)
+      console.log('Amount string to fill:', amountString)
       
       setFormData({
         ...formData,
