@@ -12,7 +12,7 @@ export default function TenantDetailsPage() {
   const router = useRouter()
   const tenantId = parseInt(params.id as string)
 
-  const [tenant, setTenant] = useState<User | null>(null)
+  const [tenant, setTenant] = useState<any | null>(null)
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
