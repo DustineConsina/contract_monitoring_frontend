@@ -135,12 +135,13 @@ export default function TenantDetailsPage() {
       const formData = new FormData()
       formData.append('profile_picture', file)
 
-      console.log('Uploading to:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/tenants/${tId}/upload-picture`)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
+      console.log('Uploading to:', `${apiUrl}/tenants/${tId}/upload-picture`)
       console.log('Token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing')
 
       // Upload to backend
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/tenants/${tId}/upload-picture`,
+        `${apiUrl}/tenants/${tId}/upload-picture`,
         {
           method: 'POST',
           headers: {
@@ -446,7 +447,7 @@ export default function TenantDetailsPage() {
                         {new Date(contract.end_date || contract.endDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        ₱{(contract.monthly_rental || contract.monthlyRent || 0).toLocaleString()}
+                        ₱{parseFloat(String(contract.monthly_rental || contract.monthlyRent || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
