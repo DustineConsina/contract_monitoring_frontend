@@ -165,8 +165,7 @@ export default function TenantDetailsPage() {
         throw new Error(errorMsg)
       }
 
-      try {
-        const result = JSON.parse(responseText)
+      const result = JSON.parse(responseText)
       
       // Re-fetch to get latest data with updated picture
       await fetchTenantData()
