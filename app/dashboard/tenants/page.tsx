@@ -245,17 +245,17 @@ export default function TenantsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {tenant.profile_picture || tenant.profilePicture ? (
+                      {tenant.profilePicture || tenant.profile_picture ? (
                         <img
                           src={
-                            tenant.profilePicture || 
-                            tenant.profile_picture ||
-                            (tenant.profile_picture 
-                              ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenant.profile_picture}`
-                              : '')
+                            tenant.profilePicture ||  `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenant.profile_picture}?t=${Date.now()}`
                           }
                           alt={tenant.contact_person || 'Tenant'}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error('Failed to load image:', e)
+                            e.currentTarget.style.display = 'none'
+                          }}
                         />
                       ) : (
                         <span className="text-lg font-bold text-white">
