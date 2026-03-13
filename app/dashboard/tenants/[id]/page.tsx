@@ -65,14 +65,14 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // Picture field - use the url if available, otherwise build it
-        profilePicture: tenantData.profilePicture_url || tenantData.profile_picture_url ||
-          (tenantData.profilePicture || tenantData.profile_picture
-            ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profilePicture || tenantData.profile_picture}`
-            : null),
-        profile_picture: tenantData.profile_picture_url || tenantData.profilePicture_url ||
-          (tenantData.profile_picture || tenantData.profilePicture
-            ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profile_picture || tenantData.profilePicture}`
+        // Picture field - use the API endpoint to serve files
+        profilePicture: 
+          (tenantData.profilePicture || tenantData.profile_picture)
+            ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenantData.profilePicture || tenantData.profile_picture}`
+            : null,
+        profile_picture: 
+          (tenantData.profile_picture || tenantData.profilePicture)
+            ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenantData.profile_picture || tenantData.profilePicture}`
             : null),
         // Keep snake_case for backward compatibility
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
@@ -187,8 +187,9 @@ export default function TenantDetailsPage() {
           notification.remove()
         }, 3000)
         
-        // Update tenant with new picture URL
-        const newUrl = result.data.url || `https://contractmonitoringbackend-production.up.railway.app${result.data.url || result.data.profilePicture || result.data.profile_picture}`
+        // Update tenant with new picture URL using the API storage endpoint
+        const photoPath = result.data.profilePicture || result.data.profile_picture
+        const newUrl = `https://contractmonitoringbackend-production.up.railway.app/api/storage/${photoPath}`
         setTenant((prev: any) => ({
           ...prev,
           profilePicture: newUrl,
