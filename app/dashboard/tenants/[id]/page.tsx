@@ -153,15 +153,7 @@ export default function TenantDetailsPage() {
 
       const result = await response.json()
       
-      // Update tenant with new picture URL
-      if (tenant) {
-        setTenant({
-          ...tenant,
-          profilePicture: result.data?.profilePicture || result.data?.profile_picture,
-        })
-      }
-
-      // Re-fetch to get latest data
+      // Re-fetch to get latest data with updated picture
       await fetchTenantData()
     } catch (err: any) {
       console.error('Error uploading picture:', err)
