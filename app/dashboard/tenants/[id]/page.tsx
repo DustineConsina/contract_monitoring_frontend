@@ -287,13 +287,9 @@ export default function TenantDetailsPage() {
           <h3 className="text-lg font-semibold mb-4">Photo</h3>
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative group">
-              {tenant.profilePicture ? (
-                <img src={tenant.profilePicture} alt="Tenant" className="w-full h-full rounded-lg object-cover" />
-              ) : (
-                <span className="text-4xl font-bold text-white">
-                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-                </span>
-              )}
+              <span className="text-4xl font-bold text-white">
+                {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+              </span>
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-center justify-center">
                 <label className="cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
                   📷 Change
