@@ -258,95 +258,99 @@ export default function TenantDetailsPage() {
     <ProtectedRoute>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               {tenant.firstName} {tenant.lastName}
             </h2>
             <p className="text-gray-600">Tenant Details</p>
           </div>
-          <div className="flex items-start gap-4">
-            {/* Profile Picture in Upper Right */}
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {tenant.profilePicture || tenant.profile_picture ? (
-                <img
-                  src={tenant.profilePicture || tenant.profile_picture}
-                  alt={tenant.firstName || 'Tenant'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-2xl font-bold text-white">
-                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => router.push('/dashboard/tenants')}
-                title="Back to Tenants"
-                className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                🔙
-              </button>
-              <Link
-                href={`/dashboard/tenants/${tenantId}/edit`}
-                title="Edit Tenant"
-                className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
+          <div className="flex gap-2">
+            <button
+              onClick={() => router.push('/dashboard/tenants')}
+              title="Back to Tenants"
+              className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              🔙
+            </button>
+            <Link
+              href={`/dashboard/tenants/${tenantId}/edit`}
+              title="Edit Tenant"
+              className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
               ✏️
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
 
         {/* Tenant Information */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Full Name
-              </label>
-              <p className="text-gray-900">
-                {tenant.firstName} {tenant.lastName}
-              </p>
+          <h3 className="text-lg font-semibold mb-6">Personal Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Profile Picture - Bigger */}
+            <div className="md:col-span-1 flex justify-center">
+              <div className="w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow-lg">
+                {tenant.profilePicture || tenant.profile_picture ? (
+                  <img
+                    src={tenant.profilePicture || tenant.profile_picture}
+                    alt={tenant.firstName || 'Tenant'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-6xl font-bold text-white">
+                    {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Email Address
-              </label>
-              <p className="text-gray-900">{tenant.email}</p>
-            </div>
+            {/* Details */}
+            <div className="md:col-span-2 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Full Name
+                </label>
+                <p className="text-gray-900">
+                  {tenant.firstName} {tenant.lastName}
+                </p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Phone Number
-              </label>
-              <p className="text-gray-900">{tenant.contactNumber || 'N/A'}</p>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Email Address
+                </label>
+                <p className="text-gray-900">{tenant.email}</p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Role
-              </label>
-              <p className="text-gray-900">{tenant.role}</p>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Phone Number
+                </label>
+                <p className="text-gray-900">{tenant.contactNumber || 'N/A'}</p>
+              </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Address
-              </label>
-              <p className="text-gray-900">{tenant.address || 'N/A'}</p>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Role
+                </label>
+                <p className="text-gray-900">{tenant.role}</p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Member Since
-              </label>
-              <p className="text-gray-900">
-                {new Date(tenant.createdAt || '').toLocaleDateString()}
-              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Address
+                </label>
+                <p className="text-gray-900">{tenant.address || 'N/A'}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Member Since
+                </label>
+                <p className="text-gray-900">
+                  {new Date(tenant.createdAt || '').toLocaleDateString()}
+                </p>
+              </div>
             </div>
           </div>
         </div>
