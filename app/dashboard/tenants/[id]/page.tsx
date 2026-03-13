@@ -65,8 +65,13 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // Picture field
-        profilePicture: tenantData.profilePicture || tenantData.profile_picture || tenantData.profile_photo || null,
+        // Picture field - build full storage URL
+        profilePicture: tenantData.profilePicture || tenantData.profile_picture
+          ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profilePicture || tenantData.profile_picture}`
+          : null,
+        profile_picture: tenantData.profile_picture || tenantData.profilePicture
+          ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profile_picture || tenantData.profilePicture}`
+          : null,
         // Keep snake_case for backward compatibility
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
@@ -301,10 +306,18 @@ export default function TenantDetailsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Photo</h3>
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative group">
-              <span className="text-4xl font-bold text-white">
-                {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-              </span>
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative group overflow-hidden">
+              {tenant.profilePicture || tenant.profile_picture ? (
+                <img
+                  src={tenant.profilePicture || tenant.profile_picture}
+                  alt={tenant.firstName || 'Tenant'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-4xl font-bold text-white">
+                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+                </span>
+              )}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-center justify-center">
                 <label className="cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
                   📷 Change
