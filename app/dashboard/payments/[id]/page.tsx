@@ -62,12 +62,14 @@ export default function PaymentDetailPage() {
         const contract = paymentData.contract || {}
         const monthlyRental = parseFloat(String(contract.monthly_rental || contract.monthlyRent || 0))
         
-        // Calculate missing values if not provided by API
-        const amountDue = parseFloat(String(paymentData.amount_due || paymentData.amountDue || monthlyRental || 0))
-        const interestAmount = parseFloat(String(paymentData.interest_amount || paymentData.interestAmount || (amountDue * 0.03) || 0))
-        const totalAmount = parseFloat(String(paymentData.total_amount || paymentData.totalAmount || (amountDue + interestAmount) || 0))
-        const amountPaid = parseFloat(String(paymentData.amount_paid || paymentData.amountPaid || 0))
-        const balance = parseFloat(String(paymentData.balance || (totalAmount - amountPaid) || 0))
+        // Calculate missing values if not provided by API - use contract monthly_rental as default
+        const amountDue = parseFloat(String(paymentData.amount_due || paymentData.amountDue || monthlyRental || 0)) || monthlyRental
+        const interestAmount = parseFloat(String(paymentData.interest_amount || paymentData.interestAmount || (amountDue * 0.03) || 0)) || (amountDue * 0.03)
+        const totalAmount = parseFloat(String(paymentData.total_amount || paymentData.totalAmount || (amountDue + interestAmount) || 0)) || (amountDue + interestAmount)
+        const amountPaid = parseFloat(String(paymentData.amount_paid || paymentData.amountPaid || 0)) || 0
+        const balance = parseFloat(String(paymentData.balance || (totalAmount - amountPaid) || 0)) || (totalAmount - amountPaid)
+        
+        console.log('Calculated financial values:', { amountDue, interestAmount, totalAmount, amountPaid, balance })
         
         // Map the payment with all available fields
         const mappedPayment = {
@@ -386,7 +388,7 @@ export default function PaymentDetailPage() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-red-700">Balance Remaining</label>
-                  <p className="font-bold text-2xl text-red-600">₱{parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="font-bold text-2xl text-red-600">₱{(typeof payment?.balance === 'number' ? payment.balance : parseFloat(String(payment?.balance || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
               </div>
 
@@ -394,28 +396,28 @@ export default function PaymentDetailPage() {
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Due (Original)</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.amountDue || payment.amount_due || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{(typeof payment?.amountDue === 'number' ? payment.amountDue : parseFloat(String(payment?.amountDue || payment?.amount_due || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Interest (3%)</label>
-                    <p className="font-semibold text-blue-600">₱{parseFloat(String(payment.interestAmount || payment.interest_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-blue-600">₱{(typeof payment?.interestAmount === 'number' ? payment.interestAmount : parseFloat(String(payment?.interestAmount || payment?.interest_amount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Total Amount Due</label>
-                    <p className="font-semibold text-gray-900">₱{parseFloat(String(payment.totalAmount || payment.total_amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{(typeof payment?.totalAmount === 'number' ? payment.totalAmount : parseFloat(String(payment?.totalAmount || payment?.total_amount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Paid</label>
-                    <p className="font-semibold text-green-600">₱{parseFloat(String(payment.amountPaid || payment.amount_paid || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-green-600">₱{(typeof payment?.amountPaid === 'number' ? payment.amountPaid : parseFloat(String(payment?.amountPaid || payment?.amount_paid || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
               </div>
