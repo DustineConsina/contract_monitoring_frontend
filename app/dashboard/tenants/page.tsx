@@ -206,10 +206,24 @@ export default function TenantsPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-bold text-white">
-                        {tenant.contact_person?.[0]?.toUpperCase() || tenant.user?.name?.[0]?.toUpperCase() || '?'}
-                      </span>
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {tenant.profile_picture || tenant.profilePicture ? (
+                        <img
+                          src={
+                            tenant.profilePicture || 
+                            tenant.profile_picture ||
+                            (tenant.profile_picture 
+                              ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenant.profile_picture}`
+                              : '')
+                          }
+                          alt={tenant.contact_person || 'Tenant'}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-bold text-white">
+                          {tenant.contact_person?.[0]?.toUpperCase() || tenant.user?.name?.[0]?.toUpperCase() || '?'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 truncate">
