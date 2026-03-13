@@ -20,6 +20,7 @@ export default function EditTenantPage() {
     businessType: '',
     businessAddress: '', // Business address (tenant table)
     tin: '',
+    profilePicture: null as File | null,
   })
 
   const [isLoading, setIsLoading] = useState(true)
@@ -68,6 +69,21 @@ export default function EditTenantPage() {
     }
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target
+    
+    // Handle file input separately
+    if (e.target instanceof HTMLInputElement && e.target.type === 'file') {
+      setFormData((prev) => ({ 
+        ...prev, 
+        [name]: (e.target as HTMLInputElement).files?.[0] || null 
+      }))
+    } else {
+      const { value } = e.target
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -96,6 +112,26 @@ export default function EditTenantPage() {
       
       const response = await apiClient.updateTenant(tenantId, submitData)
       console.log('Update response:', response)
+      
+      // Upload profile picture if provided
+      if (formData.profilePicture) {
+        try {
+          const profileFormData = new FormData()
+          profileFormData.append('profile_picture', formData.profilePicture)
+          
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
+          await fetch(`${apiUrl}/tenants/${tenantId}/upload-picture`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            },
+            body: profileFormData,
+          })
+        } catch (uploadErr) {
+          console.error('Failed to upload profile picture:', uploadErr)
+          // Don't fail the whole operation if picture upload fails
+        }
+      }
       
       router.push(`/dashboard/tenants/${tenantId}`)
     } catch (err: any) {
@@ -167,9 +203,10 @@ export default function EditTenantPage() {
                 </label>
                 <input
                   type="text"
+                  name="firstName"
                   required
                   value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Juan"
                 />
@@ -181,9 +218,10 @@ export default function EditTenantPage() {
                 </label>
                 <input
                   type="text"
+                  name="lastName"
                   required
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="Dela Cruz"
                 />
@@ -201,9 +239,10 @@ export default function EditTenantPage() {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   placeholder="juan@example.com"
                 />
@@ -296,6 +335,30 @@ export default function EditTenantPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
                   placeholder="Enter complete business address"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Picture Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture (Optional)</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Photo
+                </label>
+                <input
+                  type="file"
+                  name="profilePicture"
+                  accept="image/*"
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                />
+                <p className="text-xs text-gray-500 mt-1">Accepts all image formats. Max file size: 5MB</p>
+                {formData.profilePicture && (
+                  <p className="text-xs text-green-600 mt-1">✓ File selected: {formData.profilePicture.name}</p>
+                )}
               </div>
             </div>
           </div>

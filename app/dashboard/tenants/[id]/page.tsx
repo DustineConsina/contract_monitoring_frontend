@@ -258,28 +258,44 @@ export default function TenantDetailsPage() {
     <ProtectedRoute>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               {tenant.firstName} {tenant.lastName}
             </h2>
             <p className="text-gray-600">Tenant Details</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push('/dashboard/tenants')}
-              title="Back to Tenants"
-              className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              🔙
-            </button>
-            <Link
-              href={`/dashboard/tenants/${tenantId}/edit`}
-              title="Edit Tenant"
-              className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
+          <div className="flex items-start gap-4">
+            {/* Profile Picture in Upper Right */}
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {tenant.profilePicture || tenant.profile_picture ? (
+                <img
+                  src={tenant.profilePicture || tenant.profile_picture}
+                  alt={tenant.firstName || 'Tenant'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-2xl font-bold text-white">
+                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => router.push('/dashboard/tenants')}
+                title="Back to Tenants"
+                className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                🔙
+              </button>
+              <Link
+                href={`/dashboard/tenants/${tenantId}/edit`}
+                title="Edit Tenant"
+                className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
               ✏️
-            </Link>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -331,49 +347,6 @@ export default function TenantDetailsPage() {
               <p className="text-gray-900">
                 {new Date(tenant.createdAt || '').toLocaleDateString()}
               </p>
-            </div>
-          </div>
-        </div>
-
-            {/* Tenant Picture */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Photo</h3>
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative group overflow-hidden">
-              {tenant.profilePicture || tenant.profile_picture ? (
-                <img
-                  src={tenant.profilePicture || tenant.profile_picture}
-                  alt={tenant.firstName || 'Tenant'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-4xl font-bold text-white">
-                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-                </span>
-              )}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-center justify-center">
-                <label className="cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
-                  📷 Change
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleProfilePictureUpload(e, tenantId)}
-                  />
-                </label>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Recommended: Square image, at least 400x400px</p>
-              <label className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer text-sm">
-                Upload Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleProfilePictureUpload(e, tenantId)}
-                />
-              </label>
             </div>
           </div>
         </div>
