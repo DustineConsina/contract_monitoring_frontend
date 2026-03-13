@@ -65,13 +65,15 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // Picture field - build full storage URL
-        profilePicture: tenantData.profilePicture || tenantData.profile_picture
-          ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profilePicture || tenantData.profile_picture}`
-          : null,
-        profile_picture: tenantData.profile_picture || tenantData.profilePicture
-          ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profile_picture || tenantData.profilePicture}`
-          : null,
+        // Picture field - use the url if available, otherwise build it
+        profilePicture: tenantData.profilePicture_url || tenantData.profile_picture_url ||
+          (tenantData.profilePicture || tenantData.profile_picture
+            ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profilePicture || tenantData.profile_picture}`
+            : null),
+        profile_picture: tenantData.profile_picture_url || tenantData.profilePicture_url ||
+          (tenantData.profile_picture || tenantData.profilePicture
+            ? `https://contractmonitoringbackend-production.up.railway.app/storage/${tenantData.profile_picture || tenantData.profilePicture}`
+            : null),
         // Keep snake_case for backward compatibility
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
@@ -172,12 +174,42 @@ export default function TenantDetailsPage() {
       }
 
       const result = JSON.parse(responseText)
+      console.log('Upload result:', result)
+      
+      if (result.success && result.data) {
+        // Show success notification
+        const notification = document.createElement('div')
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50'
+        notification.innerHTML = '✓ Profile picture uploaded successfully'
+        document.body.appendChild(notification)
+        
+        setTimeout(() => {
+          notification.remove()
+        }, 3000)
+        
+        // Update tenant with new picture URL
+        const newUrl = result.data.url || `https://contractmonitoringbackend-production.up.railway.app${result.data.url || result.data.profilePicture || result.data.profile_picture}`
+        setTenant((prev: any) => ({
+          ...prev,
+          profilePicture: newUrl,
+          profile_picture: newUrl,
+        }))
+      }
       
       // Re-fetch to get latest data with updated picture
       await fetchTenantData()
     } catch (err: any) {
       console.error('Error uploading picture:', err)
-      alert('Failed to upload picture: ' + err.message)
+      
+      // Show error notification
+      const notification = document.createElement('div')
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50'
+      notification.innerHTML = '✗ Failed to upload picture: ' + err.message
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        notification.remove()
+      }, 4000)
     }
   }
 
