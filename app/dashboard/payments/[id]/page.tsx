@@ -485,6 +485,7 @@ export default function PaymentDetailPage() {
               </div>
             </div>
           </div>
+          </>
         )}
 
         {/* Success Message */}
@@ -584,7 +585,6 @@ export default function PaymentDetailPage() {
               </div>
             </div>
           </div>
-          </>
         )}
       </div>
     </ProtectedRoute>
