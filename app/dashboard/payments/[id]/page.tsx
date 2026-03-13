@@ -355,25 +355,6 @@ export default function PaymentDetailPage() {
         {/* Payment Details */}
         {!isLoading && payment && (
           <>
-            {/* Debug Info (Remove later) */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
-                <details>
-                  <summary className="cursor-pointer font-semibold text-yellow-800">Debug: Payment Data</summary>
-                  <pre className="text-xs mt-2 p-2 bg-white rounded overflow-auto max-h-48">
-                    {JSON.stringify({
-                      id: payment.id,
-                      amount_due: payment.amount_due || payment.amountDue,
-                      interest_amount: payment.interest_amount || payment.interestAmount,
-                      total_amount: payment.total_amount || payment.totalAmount,
-                      amount_paid: payment.amount_paid || payment.amountPaid,
-                      balance: payment.balance,
-                    }, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            )}
-            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Payment Information */}
             <div className="bg-white rounded-lg shadow p-6 space-y-4">
