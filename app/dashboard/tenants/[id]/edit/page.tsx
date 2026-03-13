@@ -117,10 +117,14 @@ export default function EditTenantPage() {
       // Upload profile picture if provided
       if (formData.profilePicture) {
         try {
+          console.log('Starting profile picture upload...')
           const profileFormData = new FormData()
           profileFormData.append('profile_picture', formData.profilePicture)
           
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
+          console.log('Upload URL:', `${apiUrl}/tenants/${tenantId}/upload-picture`)
+          console.log('File:', formData.profilePicture.name, formData.profilePicture.size)
+          
           const uploadResponse = await fetch(`${apiUrl}/tenants/${tenantId}/upload-picture`, {
             method: 'POST',
             headers: {
@@ -129,13 +133,24 @@ export default function EditTenantPage() {
             body: profileFormData,
           })
           
+          console.log('Upload response status:', uploadResponse.status, uploadResponse.statusText)
+          
+          const responseText = await uploadResponse.text()
+          console.log('Upload response text:', responseText)
+          
           if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.text()
-            console.error('Picture upload failed:', errorData)
-            throw new Error('Failed to upload picture')
+            console.error('Picture upload HTTP error:', uploadResponse.status, responseText)
+            throw new Error(`Upload failed: ${uploadResponse.status} - ${responseText.substring(0, 200)}`)
           }
           
-          const uploadResult = await uploadResponse.json()
+          let uploadResult
+          try {
+            uploadResult = JSON.parse(responseText)
+          } catch (parseErr) {
+            console.error('Failed to parse upload response as JSON:', parseErr)
+            throw new Error('Invalid response from server')
+          }
+          
           console.log('Picture uploaded successfully:', uploadResult)
           
           // Show success notification
@@ -149,19 +164,25 @@ export default function EditTenantPage() {
             notification.remove()
             router.push(`/dashboard/tenants/${tenantId}`)
           }, 2000)
-        } catch (uploadErr) {
+        } catch (uploadErr: any) {
           console.error('Failed to upload profile picture:', uploadErr)
           
-          // Show error notification but still navigate
+          // Show error notification with actual error message
           const notification = document.createElement('div')
-          notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
-          notification.innerHTML = '⚠ Upload completed but picture update failed'
+          notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm'
+          const errorMsg = uploadErr.message || 'Unknown error'
+          notification.innerHTML = `✗ Picture upload failed: ${errorMsg}`
           document.body.appendChild(notification)
+          
+          console.log('Error details:', {
+            message: uploadErr.message,
+            stack: uploadErr.stack
+          })
           
           setTimeout(() => {
             notification.remove()
             router.push(`/dashboard/tenants/${tenantId}`)
-          }, 2000)
+          }, 4000)
         }
       } else {
         // No picture upload, navigate immediately

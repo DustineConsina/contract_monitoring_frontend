@@ -97,17 +97,21 @@ export default function TenantsPage() {
           profileFormData.append('profile_picture', formData.profilePicture)
           
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
-          await fetch(`${apiUrl}/tenants/${response.data.id}/upload-picture`, {
+          const pictureResponse = await fetch(`${apiUrl}/tenants/${response.data.id}/upload-picture`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             },
             body: profileFormData,
           })
-        } catch (uploadErr) {
+          
+          if (!pictureResponse.ok) {
+            const errorData = await pictureResponse.text()
+            console.error('Picture upload failed:', errorData)
+          }
+        } catch (uploadErr: any) {
           console.error('Failed to upload profile picture:', uploadErr)
-          // Don't fail the whole operation if picture upload fails
-        }
+          console.log('Upload error details:', uploadErr.message)
       }
 
       setSuccessMessage('Tenant added successfully! 🎉')
