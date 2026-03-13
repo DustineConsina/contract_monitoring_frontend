@@ -76,13 +76,13 @@ export default function PaymentDetailPage() {
         
         // Extract contract if available
         const contract = paymentData.contract || {}
-        const monthlyRental = parseFloat(String(contract.monthly_rental || contract.monthlyRent || 0))
+        const monthlyRental = parseFloat(String(contract.monthlyRental || 0))
         
-        // Calculate missing values if not provided by API - use contract monthly_rental as default
-        const amountDue = parseFloat(String(paymentData.amount_due || paymentData.amountDue || monthlyRental || 0)) || monthlyRental
-        const interestAmount = parseFloat(String(paymentData.interest_amount || paymentData.interestAmount || (amountDue * 0.03) || 0)) || (amountDue * 0.03)
-        const totalAmount = parseFloat(String(paymentData.total_amount || paymentData.totalAmount || (amountDue + interestAmount) || 0)) || (amountDue + interestAmount)
-        const amountPaid = parseFloat(String(paymentData.amount_paid || paymentData.amountPaid || 0)) || 0
+        // Calculate missing values - apiClient converts snake_case to camelCase, so only use camelCase keys
+        const amountDue = parseFloat(String(paymentData.amountDue || monthlyRental || 0)) || monthlyRental
+        const interestAmount = parseFloat(String(paymentData.interestAmount || (amountDue * 0.03) || 0)) || (amountDue * 0.03)
+        const totalAmount = parseFloat(String(paymentData.totalAmount || (amountDue + interestAmount) || 0)) || (amountDue + interestAmount)
+        const amountPaid = parseFloat(String(paymentData.amountPaid || 0)) || 0
         const balance = parseFloat(String(paymentData.balance || (totalAmount - amountPaid) || 0)) || (totalAmount - amountPaid)
         
         console.log('Calculated financial values:', { amountDue, interestAmount, totalAmount, amountPaid, balance })
@@ -432,28 +432,28 @@ export default function PaymentDetailPage() {
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Due (Original)</label>
-                    <p className="font-semibold text-gray-900">₱{(typeof payment?.amountDue === 'number' ? payment.amountDue : parseFloat(String(payment?.amountDue || payment?.amount_due || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{(typeof payment?.amountDue === 'number' ? payment.amountDue : parseFloat(String(payment?.amountDue || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Interest (3%)</label>
-                    <p className="font-semibold text-blue-600">₱{(typeof payment?.interestAmount === 'number' ? payment.interestAmount : parseFloat(String(payment?.interestAmount || payment?.interest_amount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-blue-600">₱{(typeof payment?.interestAmount === 'number' ? payment.interestAmount : parseFloat(String(payment?.interestAmount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Total Amount Due</label>
-                    <p className="font-semibold text-gray-900">₱{(typeof payment?.totalAmount === 'number' ? payment.totalAmount : parseFloat(String(payment?.totalAmount || payment?.total_amount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-gray-900">₱{(typeof payment?.totalAmount === 'number' ? payment.totalAmount : parseFloat(String(payment?.totalAmount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
                 <div className="border-b pb-4">
                   <div className="flex justify-between mb-2">
                     <label className="text-sm font-medium text-gray-600">Amount Paid</label>
-                    <p className="font-semibold text-green-600">₱{(typeof payment?.amountPaid === 'number' ? payment.amountPaid : parseFloat(String(payment?.amountPaid || payment?.amount_paid || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-green-600">₱{(typeof payment?.amountPaid === 'number' ? payment.amountPaid : parseFloat(String(payment?.amountPaid || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
               </div>
