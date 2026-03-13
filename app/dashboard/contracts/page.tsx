@@ -244,10 +244,10 @@ function ContractsPageContent() {
           </div>
         </div>
 
-        {/* Contracts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Contracts Table */}
+        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
           {isLoading ? (
-            <div className="col-span-full flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="relative w-12 h-12 mx-auto mb-4">
                   <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
@@ -257,7 +257,7 @@ function ContractsPageContent() {
               </div>
             </div>
           ) : filteredContracts.length === 0 ? (
-            <div className="col-span-full text-center py-12">
+            <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No contracts found</p>
               <Link
                 href="/dashboard/contracts/new"
@@ -267,99 +267,85 @@ function ContractsPageContent() {
               </Link>
             </div>
           ) : (
-            filteredContracts.map((contract) => (
-              <div
-                key={contract.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-600"
-              >
-                {/* Header with Contract Number and Status */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <Link
-                      href={`/dashboard/contracts/${contract.id}`}
-                      className="text-lg font-bold text-blue-600 hover:text-blue-700"
-                    >
-                      {contract.contractNumber || contract.contract_number}
-                    </Link>
-                    <p className="text-sm text-gray-600">Contract ID: {contract.id}</p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                      (contract.status || 'PENDING').toUpperCase()
-                    )}`}
-                  >
-                    {(contract.status || 'PENDING').toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Tenant and Space Info */}
-                <div className="space-y-3 mb-4 pb-4 border-b border-gray-200">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">TENANT</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {contract.tenant?.user?.name || contract.tenant?.contactPerson || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">RENTAL SPACE</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {(() => {
-                        const rs = contract.rentalSpace || contract.rentalSpace
-                        return rs?.spaceCode || rs?.space_code || 'N/A'
-                      })()}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {(() => {
-                        const rs = contract.rentalSpace || contract.rentalSpace
-                        return rs?.spaceType || rs?.type?.name || 'N/A'
-                      })()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">RENTAL PERIOD</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'}
-                    </p>
-                    <p className="text-xs text-gray-600">to {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold">MONTHLY RENT</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      ₱{(contract.monthlyRent || 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-4 border-t border-gray-200">
-                  <Link
-                    href={`/dashboard/contracts/${contract.id}`}
-                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-1"
-                  >
-                    View Details
-                  </Link>
-                  <Link
-                    href={`/dashboard/contracts/${contract.id}/qr`}
-                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border border-green-600 text-green-600 hover:bg-green-50 transition flex items-center justify-center gap-1"
-                  >
-                    QR Code
-                  </Link>
-                  {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
-                    <button
-                      onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contractNumber || `Contract ${contract.id}`)}
-                      disabled={activatingId === parseInt(contract.id || '0')}
-                      className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border border-amber-600 text-amber-600 hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Activate
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contract #</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tenant</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Space</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Rental Period</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Monthly Rent</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredContracts.map((contract) => (
+                    <tr key={contract.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          href={`/dashboard/contracts/${contract.id}`}
+                          className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                        >
+                          {contract.contractNumber || contract.contract_number}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {contract.tenant?.user?.name || contract.tenant?.contactPerson || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {(() => {
+                          const rs = contract.rentalSpace
+                          return rs?.spaceCode || rs?.space_code || 'N/A'
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'} to{' '}
+                        {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        ₱{(contract.monthlyRent || 0).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
+                            (contract.status || 'PENDING').toUpperCase()
+                          )}`}
+                        >
+                          {(contract.status || 'PENDING').toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/dashboard/contracts/${contract.id}`}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition"
+                          >
+                            View
+                          </Link>
+                          <Link
+                            href={`/dashboard/contracts/${contract.id}/qr`}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded transition"
+                          >
+                            QR
+                          </Link>
+                          {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
+                            <button
+                              onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contractNumber || `Contract ${contract.id}`)}
+                              disabled={activatingId === parseInt(contract.id || '0')}
+                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-2 py-1 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Activate
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
