@@ -73,7 +73,7 @@ export default function TenantDetailsPage() {
         profile_picture: 
           (tenantData.profile_picture || tenantData.profilePicture)
             ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenantData.profile_picture || tenantData.profilePicture}`
-            : null),
+            : null,
         // Keep snake_case for backward compatibility
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
