@@ -65,6 +65,8 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
+        // Picture field
+        profilePicture: tenantData.profilePicture || tenantData.profile_picture || tenantData.profile_photo || null,
         // Keep snake_case for backward compatibility
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
@@ -80,10 +82,24 @@ export default function TenantDetailsPage() {
       
       setTenant(mappedTenant)
       
-      // Contracts
+      // Contracts - Map with proper field names
       let contractsList = []
       if (tenantData.contracts && Array.isArray(tenantData.contracts)) {
-        contractsList = tenantData.contracts
+        contractsList = tenantData.contracts.map((contract: any) => ({
+          ...contract,
+          // Ensure all field variants are present for safe access
+          contract_number: contract.contract_number || contract.contractNumber,
+          contractNumber: contract.contractNumber || contract.contract_number,
+          start_date: contract.start_date || contract.startDate,
+          startDate: contract.startDate || contract.start_date,
+          end_date: contract.end_date || contract.endDate,
+          endDate: contract.endDate || contract.end_date,
+          monthly_rental: contract.monthly_rental || contract.monthlyRent || contract.monthly_rent,
+          monthlyRent: contract.monthlyRent || contract.monthly_rental || contract.monthly_rent,
+          // Ensure rentalSpace is properly accessible with both formats
+          rentalSpace: contract.rentalSpace || contract.rental_space,
+          rental_space: contract.rental_space || contract.rentalSpace,
+        }))
       } else if (tenantData.contract) {
         contractsList = [tenantData.contract]
       }
@@ -96,6 +112,60 @@ export default function TenantDetailsPage() {
       setError(err.message || 'Failed to load tenant data')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>, tId: number) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('profile_picture', file)
+
+      // Upload to backend
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/tenants/${tId}/upload-picture`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+          body: formData,
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image')
+      }
+
+      const result = await response.json()
+      
+      // Update tenant with new picture URL
+      if (tenant) {
+        setTenant({
+          ...tenant,
+          profilePicture: result.data?.profilePicture || result.data?.profile_picture,
+        })
+      }
+
+      // Re-fetch to get latest data
+      await fetchTenantData()
+    } catch (err: any) {
+      console.error('Error uploading picture:', err)
+      alert('Failed to upload picture: ' + err.message)
     }
   }
 
@@ -220,6 +290,45 @@ export default function TenantDetailsPage() {
           </div>
         </div>
 
+            {/* Tenant Picture */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Photo</h3>
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 relative group">
+              {tenant.profilePicture ? (
+                <img src={tenant.profilePicture} alt="Tenant" className="w-full h-full rounded-lg object-cover" />
+              ) : (
+                <span className="text-4xl font-bold text-white">
+                  {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+                </span>
+              )}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-center justify-center">
+                <label className="cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
+                  📷 Change
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleProfilePictureUpload(e, tenantId)}
+                  />
+                </label>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Recommended: Square image, at least 400x400px</p>
+              <label className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer text-sm">
+                Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleProfilePictureUpload(e, tenantId)}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Business Information */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Business Information</h3>
@@ -326,7 +435,7 @@ export default function TenantDetailsPage() {
                         </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {contract.rentalSpace?.space_code || contract.rentalSpace?.spaceNumber || 'N/A'}
+                        {contract.rentalSpace?.space_code || contract.rentalSpace?.spaceCode || contract.rentalSpace?.name || contract.rental_space?.space_code || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {new Date(contract.start_date || contract.startDate).toLocaleDateString()}
