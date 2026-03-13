@@ -135,6 +135,9 @@ export default function TenantDetailsPage() {
       const formData = new FormData()
       formData.append('profile_picture', file)
 
+      console.log('Uploading to:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/tenants/${tId}/upload-picture`)
+      console.log('Token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing')
+
       // Upload to backend
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/tenants/${tId}/upload-picture`,
@@ -147,11 +150,23 @@ export default function TenantDetailsPage() {
         }
       )
 
+      console.log('Upload response status:', response.status, response.statusText)
+      const responseText = await response.text()
+      console.log('Upload response text:', responseText)
+
       if (!response.ok) {
-        throw new Error('Failed to upload image')
+        let errorMsg = 'Upload failed'
+        try {
+          const errorData = JSON.parse(responseText)
+          errorMsg = errorData.message || errorData.error || errorMsg
+        } catch (e) {
+          errorMsg = `HTTP ${response.status}: ${responseText.substring(0, 200)}`
+        }
+        throw new Error(errorMsg)
       }
 
-      const result = await response.json()
+      try {
+        const result = JSON.parse(responseText)
       
       // Re-fetch to get latest data with updated picture
       await fetchTenantData()
