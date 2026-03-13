@@ -287,23 +287,6 @@ export default function TenantDetailsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Profile Picture - Left Side */}
-            <div className="flex justify-center md:justify-start">
-              <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow">
-                {tenant.profilePicture || tenant.profile_picture ? (
-                  <img
-                    src={`${tenant.profilePicture || tenant.profile_picture}?t=${Date.now()}`}
-                    alt={tenant.firstName || 'Tenant'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-5xl font-bold text-white">
-                    {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-                  </span>
-                )}
-              </div>
-            </div>
-
             {/* Details - 2 Columns */}
             <div className="md:col-span-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -352,6 +335,23 @@ export default function TenantDetailsPage() {
                     {new Date(tenant.createdAt || '').toLocaleDateString()}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Profile Picture - Right Side */}
+            <div className="flex justify-center md:justify-end">
+              <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow">
+                {tenant.profilePicture || tenant.profile_picture ? (
+                  <img
+                    src={`${tenant.profilePicture || tenant.profile_picture}?t=${Date.now()}`}
+                    alt={tenant.firstName || 'Tenant'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-5xl font-bold text-white">
+                    {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
+                  </span>
+                )}
               </div>
             </div>
           </div>
