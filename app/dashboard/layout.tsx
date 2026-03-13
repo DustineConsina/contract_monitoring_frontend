@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLoading } from '@/contexts/LoadingContext'
+import { PFDALogo } from '@/components/PFDALogo'
 import { useState } from 'react'
 
 export default function DashboardLayout({
@@ -70,14 +71,14 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-20 px-4 border-b border-gray-700/50">
-            <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-                <span className="text-white text-xl font-bold">P</span>
+          <div className="flex items-center justify-center h-24 px-4 border-b border-gray-700/50">
+            <Link href="/dashboard" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity w-full">
+              <div className="w-16 h-16" style={{ transform: 'scale(0.7)' }}>
+                <PFDALogo />
               </div>
-              <div className="text-sm">
-                <div className="font-bold text-base">PFDA</div>
-                <div className="text-xs text-gray-400">Contracts</div>
+              <div className="text-center">
+                <div className="font-bold text-sm">PFDA</div>
+                <div className="text-xs text-gray-400">Contract System</div>
               </div>
             </Link>
           </div>

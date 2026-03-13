@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLoading } from '@/contexts/LoadingContext'
+import { PFDALogo } from '@/components/PFDALogo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -33,27 +34,38 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="flex min-h-screen items-center justify-center px-4"
+      className="flex min-h-screen items-center justify-center px-4 relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #072a4d 0%, #0d4a7e 25%, #1e6ba8 50%, #2a89c1 75%, #3ba8d8 100%)',
+        background: 'linear-gradient(180deg, #0a1f3f 0%, #0d4a7e 25%, #1e6ba8 50%, #2a89c1 75%, #1a5a8f 100%)',
         backgroundAttachment: 'fixed',
       }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/10" />
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating circles for water effect */}
+        <div className="absolute top-10 left-10 w-20 h-20 rounded-full bg-blue-400/10 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-20 right-10 w-32 h-32 rounded-full bg-cyan-400/10 blur-3xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        <div className="absolute top-1/3 right-1/4 w-24 h-24 rounded-full bg-blue-300/10 blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+      </div>
+
+      {/* Overlay with wave pattern */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
       
       <div className="w-full max-w-md relative z-10">
         {/* Login Card */}
-        <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-8 border border-white/20">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/30">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-1">PFDA</h1>
-            <p className="text-xs text-gray-600 font-medium mb-4">Philippine Fisheries Development Authority</p>
+            <div className="flex justify-center mb-4">
+              <PFDALogo />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">PFDA</h1>
+            <p className="text-xs text-gray-600 font-semibold mb-2">Philippine Fisheries Development Authority</p>
             <h2 className="text-lg font-semibold text-gray-800">
               Contract Management System
             </h2>
             <p className="text-xs text-gray-500 mt-1">
-              Bulan, Sorsogon
+              Bulan, Sorsogon Fish Port
             </p>
           </div>
 
