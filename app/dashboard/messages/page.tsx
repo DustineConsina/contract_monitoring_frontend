@@ -175,80 +175,95 @@ export default function MessagesPage() {
         )}
 
         {/* Messages Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Messages List */}
-          <div className="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-gray-900">Inbox</h3>
+        <div className="space-y-6">
+          {/* Inbox Messages Grid */}
+          {isLoading ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+              <p className="mt-4 text-gray-600">Loading messages...</p>
             </div>
-            <div className="divide-y max-h-[600px] overflow-y-auto">
-              {isLoading ? (
-                <div className="p-8 text-center">
-                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No messages</div>
-              ) : (
-                messages.map((message) => (
-                  <button
-                    key={message.id}
-                    onClick={() => handleSelectMessage(message)}
-                    className={`w-full text-left p-4 hover:bg-gray-50 transition ${
-                      !message.isRead ? 'bg-blue-50' : ''
-                    } ${selectedMessage?.id === message.id ? 'bg-blue-100' : ''}`}
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <span className="font-medium text-sm text-gray-900">
-                        {message.sender?.firstName} {message.sender?.lastName}
-                      </span>
-                      {!message.isRead && (
-                        <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-700 font-medium mb-1">
+          ) : messages.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <p className="text-gray-600">No messages</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {messages.map((message) => (
+                <button
+                  key={message.id}
+                  onClick={() => handleSelectMessage(message)}
+                  className="text-left bg-white rounded-lg shadow hover:shadow-lg p-6 border-l-4 border-blue-600 transition-all"
+                >
+                  {/* Header with read indicator */}
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-lg font-bold text-blue-600 flex-1">
                       {message.subject || 'No subject'}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {message.content}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-2">
-                      {new Date(message.createdAt || '').toLocaleString()}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Message Detail */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow">
-            {selectedMessage ? (
-              <div className="p-6">
-                <div className="border-b pb-4 mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {selectedMessage.subject || 'No subject'}
-                  </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="font-medium">
-                      From: {selectedMessage.sender?.firstName}{' '}
-                      {selectedMessage.sender?.lastName}
-                    </span>
-                    <span>•</span>
-                    <span>{new Date(selectedMessage.createdAt || '').toLocaleString()}</span>
+                    </h3>
+                    {!message.isRead && (
+                      <span className="w-3 h-3 bg-blue-600 rounded-full flex-shrink-0 ml-2 mt-1"></span>
+                    )}
                   </div>
-                </div>
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {selectedMessage.content}
-                  </p>
+
+                  {/* Sender Info */}
+                  <div className="mb-4 pb-4 border-b border-gray-200">
+                    <div className="text-xs text-gray-600 mb-1">From</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {message.sender?.firstName} {message.sender?.lastName}
+                    </div>
+                  </div>
+
+                  {/* Message preview */}
+                  <div className="mb-4 pb-4 border-b border-gray-200">
+                    <div className="text-xs text-gray-600 mb-2">Message</div>
+                    <p className="text-sm text-gray-700 line-clamp-3">
+                      {message.content}
+                    </p>
+                  </div>
+
+                  {/* Timestamp */}
+                  <div className="text-xs text-gray-500">
+                    {new Date(message.createdAt || '').toLocaleString()}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Message Detail View */}
+          {selectedMessage && (
+            <div className="bg-white rounded-lg shadow p-8">
+              <div className="mb-6 pb-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {selectedMessage.subject || 'No subject'}
+                </h2>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="font-medium">
+                    From: {selectedMessage.sender?.firstName}{' '}
+                    {selectedMessage.sender?.lastName}
+                  </span>
+                  <span>•</span>
+                  <span>{new Date(selectedMessage.createdAt || '').toLocaleString()}</span>
+                  {!selectedMessage.isRead && (
+                    <>
+                      <span>•</span>
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Unread</span>
+                    </>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full p-12 text-gray-500">
-                Select a message to read
+              <div className="prose max-w-none">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedMessage.content}
+                </p>
               </div>
-            )}
-          </div>
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="mt-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                Back to Inbox
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>

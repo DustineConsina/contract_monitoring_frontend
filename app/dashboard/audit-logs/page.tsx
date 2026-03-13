@@ -233,7 +233,7 @@ export default function AuditLogsPage() {
           </p>
         </div>
 
-        {/* Audit Logs Table */}
+        {/* Audit Logs Grid */}
         {isLoading ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-600">Loading audit logs...</p>
@@ -243,93 +243,75 @@ export default function AuditLogsPage() {
             <p className="text-gray-600">No audit logs found</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Timestamp
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Action
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Entity
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleDateString() : 'N/A'}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleTimeString() : 'N/A'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900">{log.user?.name || 'Unknown'}</span>
-                          <span className="text-xs text-gray-500">{log.user?.email || 'N/A'}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getActionBadge(log.action)}`}>
-                          {log.action.charAt(0).toUpperCase() + log.action.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEntityBadge(log.modelType || log.model_type || 'N/A')}`}>
-                          {log.modelType || log.model_type || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        <p className="break-words max-w-md">{log.description}</p>
-                        {(log.oldValues || log.old_values) && Object.keys(log.oldValues || log.old_values || {}).length > 0 && (
-                          <details className="mt-2 text-xs text-gray-500 cursor-pointer">
-                            <summary className="font-semibold hover:text-gray-700">View changes</summary>
-                            <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-200 space-y-2">
-                              {Object.entries(log.oldValues || log.old_values || {})
-                                .filter(([key, oldValue]: [string, any]) => {
-                                  // Only show fields that actually changed
-                                  const newValue = (log.newValues || log.new_values)?.[key]
-                                  return String(oldValue) !== String(newValue)
-                                })
-                                .map(([key, oldValue]: [string, any]) => {
-                                  const newValue = (log.newValues || log.new_values)?.[key]
-                                  const displayOld = oldValue === null ? '(empty)' : String(oldValue)
-                                  const displayNew = newValue === null ? '(empty)' : String(newValue)
-                                  
-                                  return (
-                                    <div key={key} className="py-1 border-b border-gray-200 last:border-0">
-                                      <div className="font-medium text-gray-700 capitalize mb-1">{key.replace(/_/g, ' ')}</div>
-                                      <div className="ml-2 flex gap-4 text-xs">
-                                        <div className="text-red-600"><span className="font-semibold">Before:</span> {displayOld}</div>
-                                        <div className="text-green-600"><span className="font-semibold">After:</span> {displayNew}</div>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredLogs.map((log) => (
+              <div key={log.id} className="bg-white rounded-lg shadow hover:shadow-lg p-6 border-l-4 border-blue-600 transition-all">
+                {/* Header with timestamp and badges */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-600 mb-1">Timestamp</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleDateString() : 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {(log.createdAt || log.created_at) ? new Date(log.createdAt || log.created_at!).toLocaleTimeString() : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getActionBadge(log.action)}`}>
+                      {log.action.charAt(0).toUpperCase() + log.action.slice(1)}
+                    </span>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getEntityBadge(log.modelType || log.model_type || 'N/A')}`}>
+                      {log.modelType || log.model_type || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* User Information */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="text-xs text-gray-600 mb-2">User</div>
+                  <div className="text-sm font-medium text-gray-900">{log.user?.name || 'Unknown'}</div>
+                  <div className="text-xs text-gray-500">{log.user?.email || 'N/A'}</div>
+                </div>
+
+                {/* Description */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="text-xs text-gray-600 mb-2">Description</div>
+                  <p className="text-sm text-gray-900 break-words">{log.description}</p>
+                </div>
+
+                {/* Changes Details */}
+                {(log.oldValues || log.old_values) && Object.keys(log.oldValues || log.old_values || {}).length > 0 && (
+                  <details className="text-xs text-gray-600 cursor-pointer">
+                    <summary className="font-semibold hover:text-gray-900 mb-3">View changes</summary>
+                    <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                      {Object.entries(log.oldValues || log.old_values || {})
+                        .filter(([key, oldValue]: [string, any]) => {
+                          const newValue = (log.newValues || log.new_values)?.[key]
+                          return String(oldValue) !== String(newValue)
+                        })
+                        .map(([key, oldValue]: [string, any]) => {
+                          const newValue = (log.newValues || log.new_values)?.[key]
+                          const displayOld = oldValue === null ? '(empty)' : String(oldValue)
+                          const displayNew = newValue === null ? '(empty)' : String(newValue)
+                          
+                          return (
+                            <div key={key} className="py-1 border-b border-gray-200 last:border-0">
+                              <div className="font-medium text-gray-700 capitalize mb-1">{key.replace(/_/g, ' ')}</div>
+                              <div className="ml-2 space-y-1 text-xs">
+                                <div className="text-red-600"><span className="font-semibold">Before:</span> {displayOld}</div>
+                                <div className="text-green-600"><span className="font-semibold">After:</span> {displayNew}</div>
+                              </div>
                             </div>
-                          </details>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          )
+                        })}
+                    </div>
+                  </details>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

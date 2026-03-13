@@ -599,149 +599,143 @@ export default function ReportsPage() {
           <p className="text-gray-600">Generate and analyze system reports</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Report Selection */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6 sticky top-24">
-              <h3 className="font-semibold text-gray-900 mb-4">Available Reports</h3>
-              <div className="space-y-2">
-                {reports.map((report) => (
-                  <button
-                    key={report.id}
-                    onClick={() => generateReport(report.id)}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition border-2 ${
-                      selectedReport === report.id
-                        ? 'bg-gray-100 border-gray-400'
-                        : 'bg-gray-50 hover:bg-gray-100 border-transparent'
-                    }`}
-                    title={report.description}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{report.icon}</span>
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">{report.name}</span>
-                        <p className="text-xs text-gray-500 hidden lg:block">{report.description}</p>
-                      </div>
+        <div className="space-y-6">
+          {/* Report Selection Cards */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Select a Report</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reports.map((report) => (
+                <button
+                  key={report.id}
+                  onClick={() => generateReport(report.id)}
+                  className={`text-left rounded-lg p-4 border-2 transition ${
+                    selectedReport === report.id
+                      ? 'bg-blue-50 border-blue-400'
+                      : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow'
+                  }`}
+                  title={report.description}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">{report.icon}</span>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{report.name}</h4>
+                      <p className="text-xs text-gray-500 mt-1">{report.description}</p>
                     </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Filters */}
-              {(selectedReport === 'contracts' || selectedReport === 'payments') && (
-                <div className="mt-6 pt-6 border-t">
-                  <h4 className="font-medium text-gray-900 mb-3">Filters</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Status</label>
-                      <select
-                        value={filters.status}
-                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      >
-                        <option value="all">All</option>
-                        {selectedReport === 'contracts' && (
-                          <>
-                            <option value="active">Active</option>
-                            <option value="expired">Expired</option>
-                            <option value="terminated">Terminated</option>
-                            <option value="pending">Pending</option>
-                          </>
-                        )}
-                        {selectedReport === 'payments' && (
-                          <>
-                            <option value="paid">Paid</option>
-                            <option value="pending">Pending</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="partial">Partial</option>
-                          </>
-                        )}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">From Date</label>
-                      <input
-                        type="date"
-                        value={filters.dateFrom}
-                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">To Date</label>
-                      <input
-                        type="date"
-                        value={filters.dateTo}
-                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      />
-                    </div>
-                    <button
-                      onClick={() => generateReport(selectedReport)}
-                      title="Apply Filters"
-                      className="w-full px-4 py-2 flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                    >
-                      ✓ Apply
-                    </button>
                   </div>
-                </div>
-              )}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Report Display */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow">
-              {!selectedReport ? (
-                <div className="flex flex-col items-center justify-center h-96 text-gray-500">
-                  <div className="text-6xl mb-4">📊</div>
-                  <p className="text-lg font-medium">Select a report to generate</p>
-                  <p className="text-sm mt-2">Choose from the available reports on the left</p>
+          {/* Filters (when report selected) */}
+          {(selectedReport === 'contracts' || selectedReport === 'payments') && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h4 className="font-semibold text-gray-900 mb-4">Report Filters</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="all">All</option>
+                    {selectedReport === 'contracts' && (
+                      <>
+                        <option value="active">Active</option>
+                        <option value="expired">Expired</option>
+                        <option value="terminated">Terminated</option>
+                        <option value="pending">Pending</option>
+                      </>
+                    )}
+                    {selectedReport === 'payments' && (
+                      <>
+                        <option value="paid">Paid</option>
+                        <option value="pending">Pending</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="partial">Partial</option>
+                      </>
+                    )}
+                  </select>
                 </div>
-              ) : isLoading ? (
-                <div className="flex items-center justify-center h-96">
-                  <div className="text-center">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
-                    <p className="mt-4 text-gray-600">Generating report...</p>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                  <input
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                 </div>
-              ) : (
-                <div className="p-6">
-                  {/* Report Header */}
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {reports.find((r) => r.id === selectedReport)?.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Generated on {new Date().toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleExport('pdf')}
-                        disabled={isExporting || !reportData}
-                        title="Export as PDF"
-                        className="px-4 py-2 flex items-center justify-center gap-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isExporting ? '⏳' : '📄'} Export PDF
-                      </button>
-                      <button
-                        onClick={() => handleExport('csv')}
-                        disabled={isExporting || !reportData}
-                        title="Export as CSV"
-                        className="px-4 py-2 flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isExporting ? '⏳' : '�'} Export CSV
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Report Content */}
-                  {renderReportContent()}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                  <input
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                 </div>
-              )}
+                <div className="flex items-end">
+                  <button
+                    onClick={() => generateReport(selectedReport)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Report Display */}
+          <div className="bg-white rounded-lg shadow">
+            {!selectedReport ? (
+              <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+                <p className="text-lg font-medium">Select a report to generate</p>
+                <p className="text-sm mt-2">Choose from the available reports above</p>
+              </div>
+            ) : isLoading ? (
+              <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+                  <p className="mt-4 text-gray-600">Generating report...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6">
+                {/* Report Header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {reports.find((r) => r.id === selectedReport)?.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Generated on {new Date().toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleExport('pdf')}
+                      disabled={isExporting || !reportData}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {isExporting ? '⏳' : '📄'} Export PDF
+                    </button>
+                    <button
+                      onClick={() => handleExport('csv')}
+                      disabled={isExporting || !reportData}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {isExporting ? '⏳' : '📊'} Export CSV
+                    </button>
+                  </div>
+                </div>
+
+                {/* Report Content */}
+                {renderReportContent()}
+              </div>
+            )}
           </div>
         </div>
       </div>

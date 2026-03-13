@@ -91,72 +91,72 @@ export default function NotificationsPage() {
           </select>
         </div>
 
-        {/* Notifications List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="text-4xl animate-spin mb-4">🐟</div>
-                <p className="mt-4 text-gray-600">Loading notifications...</p>
-              </div>
+        {/* Notifications Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+              <p className="mt-4 text-gray-600">Loading notifications...</p>
             </div>
-          ) : filteredNotifications.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
-              <div className="text-6xl mb-4">📭</div>
-              <p className="text-gray-500 text-lg">No notifications</p>
-              <p className="text-gray-400 text-sm mt-2">
-                You're all caught up!
-              </p>
-            </div>
-          ) : (
-            filteredNotifications.map((notification) => (
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <p className="text-gray-500 text-lg">No notifications</p>
+            <p className="text-gray-400 text-sm mt-2">You're all caught up!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-white rounded-lg shadow border-l-4 p-6 ${getNotificationColor(
-                  notification.type
-                )}`}
+                className="bg-white rounded-lg shadow hover:shadow-lg p-6 border-l-4 border-blue-600 transition-all"
               >
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl">
-                    {getNotificationIcon(notification.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {notification.subject}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded ${
-                          notification.status === 'SENT'
-                            ? 'bg-green-100 text-green-800'
-                            : notification.status === 'FAILED'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {notification.status}
-                      </span>
-                    </div>
-                    <p className="text-gray-700 mb-3">{notification.message}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>
-                        Contract: {notification.contract?.contractNumber}
-                      </span>
-                      {notification.sentDate && (
-                        <>
-                          <span>•</span>
-                          <span>
-                            Sent: {new Date(notification.sentDate).toLocaleString()}
-                          </span>
-                        </>
-                      )}
+                {/* Header with type and status */}
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-lg font-bold text-blue-600 flex-1">
+                    {notification.subject}
+                  </h3>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ml-2 ${
+                      notification.status === 'SENT'
+                        ? 'bg-green-100 text-green-800'
+                        : notification.status === 'FAILED'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {notification.status}
+                  </span>
+                </div>
+
+                {/* Message */}
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <p className="text-sm text-gray-700">
+                    {notification.message}
+                  </p>
+                </div>
+
+                {/* Contract & Date */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">Contract</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {notification.contract?.contractNumber || 'N/A'}
                     </div>
                   </div>
+                  {notification.sentDate && (
+                    <div>
+                      <div className="text-xs text-gray-600 mb-1">Sent</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {new Date(notification.sentDate).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {!isLoading && filteredNotifications.length > 0 && (
           <div className="text-sm text-gray-600">
