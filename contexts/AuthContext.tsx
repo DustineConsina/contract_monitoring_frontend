@@ -93,7 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
+    // Import here to avoid circular dependency
+    const { useLoading } = await import('./LoadingContext')
+    
     try {
+      // Note: useLoading hook cannot be called here in a promise context
+      // This will be handled at the component level where logout is called
       await apiClient.logout()
     } catch (error) {
       console.error('Logout failed:', error)

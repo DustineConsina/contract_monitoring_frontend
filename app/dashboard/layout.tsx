@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLoading } from '@/contexts/LoadingContext'
 import { useState } from 'react'
 
 export default function DashboardLayout({
@@ -12,7 +13,17 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { setIsLoading } = useLoading()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  const handleLogout = async () => {
+    setIsLoading(true)
+    try {
+      await logout()
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Different navigation based on user role
   let navigation = []
@@ -108,7 +119,7 @@ export default function DashboardLayout({
               </div>
             </div>
             <button
-              onClick={() => logout()}
+              onClick={handleLogout}
               className="w-full px-4 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200"
             >
               Logout

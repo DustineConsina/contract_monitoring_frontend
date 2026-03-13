@@ -187,8 +187,11 @@ export default function TenantsPage() {
           {isLoading ? (
             <div className="col-span-full flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="text-4xl animate-spin mb-4">🐟</div>
-                <p className="mt-4 text-gray-600">Loading tenants...</p>
+                <div className="relative w-12 h-12 mx-auto mb-4">
+                  <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
+                </div>
+                <p className="mt-4 text-gray-600 font-medium">Loading tenants...</p>
               </div>
             </div>
           ) : filteredTenants.length === 0 ? (
@@ -199,67 +202,50 @@ export default function TenantsPage() {
             filteredTenants.map((tenant) => (
               <div
                 key={tenant.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition p-6"
+                className="bg-white rounded-lg shadow hover:shadow-xl transition-shadow p-6 border-l-4 border-blue-600"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-2xl">👤</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">
-                      {tenant.contact_person || tenant.user?.name || 'N/A'}
-                    </h3>
-                    <p className="text-sm text-gray-500">{tenant.business_name}</p>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-bold text-white">
+                        {tenant.contact_person?.[0]?.toUpperCase() || tenant.user?.name?.[0]?.toUpperCase() || '?'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {tenant.contact_person || tenant.user?.name || 'N/A'}
+                      </h3>
+                      <p className="text-sm text-gray-500 truncate">{tenant.business_name}</p>
+                      <p className="text-xs text-gray-400 mt-1 font-mono">{tenant.tenant_code}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2 text-sm">
+                
+                <div className="space-y-2 text-sm mb-4">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <span>📧</span>
+                    <span className="text-gray-400">📧</span>
                     <span className="truncate">{tenant.user?.email || 'N/A'}</span>
                   </div>
                   {(tenant.contact_number || tenant.user?.phone) && (
                     <div className="flex items-center gap-2 text-gray-600">
-                      <span>📱</span>
+                      <span className="text-gray-400">📱</span>
                       <span>{tenant.contact_number || tenant.user?.phone}</span>
                     </div>
                   )}
-                  {(tenant.business_address || tenant.businessAddress) && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span>📍</span>
-                      <span className="truncate">{tenant.business_address || tenant.businessAddress}</span>
-                    </div>
-                  )}
-                  {(tenant.tin) && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span>🆔</span>
-                      <span className="text-xs font-mono">{tenant.tin}</span>
-                    </div>
-                  )}
-                  {(tenant.business_type || tenant.businessType) && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span>🏷️</span>
-                      <span className="capitalize">{tenant.business_type || tenant.businessType}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <span>🏢</span>
-                    <span className="text-xs font-mono">{tenant.tenant_code}</span>
-                  </div>
                 </div>
-                <div className="mt-4 pt-4 border-t flex gap-2">
+
+                <div className="pt-4 border-t flex gap-2">
                   <Link
                     href={`/dashboard/tenants/${tenant.id}`}
-                    title="View Details"
-                    className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 bg-blue-600 text-white hover:bg-blue-700 transition"
+                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-1"
                   >
-                    🔍 View
+                    View Details
                   </Link>
                   <Link
                     href={`/dashboard/contracts?tenantId=${tenant.id}`}
-                    title="Contracts"
-                    className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
+                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 transition flex items-center justify-center gap-1"
                   >
-                    📄 Contracts
+                    Contracts
                   </Link>
                 </div>
               </div>

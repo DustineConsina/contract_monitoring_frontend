@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import Image from 'next/image'
+import { useLoading } from '@/contexts/LoadingContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -11,17 +11,20 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
+  const { setIsLoading: setPageLoading } = useLoading()
   const router = useRouter()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
+    setPageLoading(true)
 
     try {
       await login(email, password)
-      router.push('/dashboard')
+      setPageLoading(false)
     } catch (err: any) {
+      setPageLoading(false)
       setError(err.message || 'Invalid email or password')
     } finally {
       setIsLoading(false)
@@ -30,317 +33,92 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="flex min-h-screen items-center justify-center px-4 relative"
+      className="flex min-h-screen items-center justify-center px-4"
       style={{
-        backgroundImage: 'url(/background.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        background: 'linear-gradient(135deg, #072a4d 0%, #0d4a7e 25%, #1e6ba8 50%, #2a89c1 75%, #3ba8d8 100%)',
         backgroundAttachment: 'fixed',
       }}
     >
-      {/* Minimal Overlay */}
-      <div className="absolute inset-0 bg-black/20" />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/10" />
       
-      <div className="w-full max-w-sm relative z-10">
-        {/* Transparent Blue Ocean Card with Fish */}
-        <div className="relative overflow-hidden rounded-2xl shadow-2xl p-8 border border-blue-300/30">
-          {/* Ocean Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/60 via-blue-500/60 to-cyan-400/60 backdrop-blur-sm" />
-          
-          {/* Swimming Fish Animation */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-            {/* Fish 1 - Pufferfish 🐡 - Diagonal down-right */}
-            <div 
-              className="absolute text-3xl"
-              style={{
-                animation: 'swim-diagonal-1 6s infinite ease-in-out',
-                top: '10%',
-                left: '-40px',
-              }}
-            >
-              🐡
-            </div>
-            
-            {/* Fish 2 - Clownfish 🐠 - Curved up-left */}
-            <div 
-              className="absolute text-4xl"
-              style={{
-                animation: 'swim-curved-1 8s infinite ease-in-out 1s',
-                top: '80%',
-                right: '-50px',
-              }}
-            >
-              🐠
-            </div>
-
-            {/* Fish 3 - Tropical Fish 🐟 - Horizontal fast */}
-            <div 
-              className="absolute text-3xl"
-              style={{
-                animation: 'swim-horizontal-fast 5s infinite ease-in-out 2s',
-                top: '45%',
-                left: '-45px',
-              }}
-            >
-              🐟
-            </div>
-
-            {/* Fish 4 - Blowfish 🐙 - Spiral pattern */}
-            <div 
-              className="absolute text-2xl"
-              style={{
-                animation: 'swim-spiral 10s infinite ease-in-out 3s',
-                top: '25%',
-                right: '-35px',
-              }}
-            >
-              🦐
-            </div>
-
-            {/* Fish 5 - Dolphin 🐬 - Zigzag */}
-            <div 
-              className="absolute text-3xl"
-              style={{
-                animation: 'swim-zigzag 7s infinite ease-in-out 1.5s',
-                top: '65%',
-                left: '-50px',
-              }}
-            >
-              🐬
-            </div>
-
-            {/* Fish 6 - Shark 🦈 - Fast sweep right */}
-            <div 
-              className="absolute text-2xl"
-              style={{
-                animation: 'swim-fast-sweep 4s infinite ease-in-out 4s',
-                top: '35%',
-                left: '-40px',
-              }}
-            >
-              🦈
-            </div>
-
-            {/* Fish 7 - Squid 🦑 - Gentle wave */}
-            <div 
-              className="absolute text-2xl"
-              style={{
-                animation: 'swim-gentle-wave 9s infinite ease-in-out 2.5s',
-                top: '75%',
-                right: '-45px',
-              }}
-            >
-              🦑
-            </div>
-
-            {/* Fish 8 - Tropical Fish 🐠 - Vertical movement */}
-            <div 
-              className="absolute text-3xl"
-              style={{
-                animation: 'swim-vertical 8s infinite ease-in-out 3.5s',
-                top: '20%',
-                left: '50%',
-              }}
-            >
-              🐠
-            </div>
+      <div className="w-full max-w-md relative z-10">
+        {/* Login Card */}
+        <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-8 border border-white/20">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-1">PFDA</h1>
+            <p className="text-xs text-gray-600 font-medium mb-4">Philippine Fisheries Development Authority</p>
+            <h2 className="text-lg font-semibold text-gray-800">
+              Contract Management System
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Bulan, Sorsogon
+            </p>
           </div>
 
-          {/* Content */}
-          <div className="relative z-10">
-            {/* PFDA Header */}
-            <div className="text-center mb-8">
-              <div className="mb-4">
-                <h1 className="text-4xl font-bold text-white drop-shadow-lg">PFDA</h1>
-                <p className="text-xs text-blue-50 mt-1 font-semibold drop-shadow">Philippine Fisheries Development Authority</p>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium flex items-start gap-2">
+                <span>⚠️</span>
+                <span>{error}</span>
               </div>
-              <h2 className="text-xl font-semibold text-white drop-shadow-lg">
-                Contract Management System
-              </h2>
-              <p className="text-xs text-blue-100 mt-1 drop-shadow">
-                Bulan, Sorsogon
-              </p>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white text-gray-900 placeholder-gray-400"
+                placeholder="your.email@example.com"
+              />
             </div>
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="bg-red-500/30 backdrop-blur-sm border border-red-300/50 text-red-100 px-4 py-3 rounded-xl text-xs font-medium flex items-start gap-2">
-                  <span>⚠️</span>
-                  <span>{error}</span>
-                </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white text-gray-900 placeholder-gray-400"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-6"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                  <span>Signing in...</span>
+                </span>
+              ) : (
+                'Sign In'
               )}
+            </button>
+          </form>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-white drop-shadow mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 border border-blue-300/50 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-transparent outline-none transition bg-white/20 text-white placeholder-white/60 backdrop-blur-sm"
-                  placeholder="email@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-white drop-shadow mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 border border-blue-300/50 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-transparent outline-none transition bg-white/20 text-white placeholder-white/60 backdrop-blur-sm"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-white text-blue-600 py-2.5 px-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed mt-6 drop-shadow-lg"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="text-sm">Signing in...</span>
-                  </span>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-xs text-blue-100 pt-4 border-t border-white/20 drop-shadow">
-              <p>Need help? Contact your administrator</p>
-            </div>
+          <div className="mt-6 text-center text-xs text-gray-600 pt-4 border-t border-gray-200">
+            <p>Contact your administrator for account access</p>
           </div>
-
-          {/* CSS Animations */}
-          <style>{`
-            /* Diagonal down-right sweep */
-            @keyframes swim-diagonal-1 {
-              0% { 
-                left: -40px;
-                top: 10%;
-              }
-              50% {
-                left: 70%;
-                top: 70%;
-              }
-              100% {
-                left: 110%;
-                top: 10%;
-              }
-            }
-            
-            /* Curved up-left path */
-            @keyframes swim-curved-1 {
-              0% {
-                right: -50px;
-                top: 80%;
-              }
-              25% {
-                right: 30%;
-                top: 60%;
-              }
-              50% {
-                right: 60%;
-                top: 20%;
-              }
-              75% {
-                right: 20%;
-                top: 50%;
-              }
-              100% {
-                right: 110%;
-                top: 80%;
-              }
-            }
-            
-            /* Fast horizontal */
-            @keyframes swim-horizontal-fast {
-              0% { left: -45px; top: 45%; }
-              100% { left: 110%; top: 45%; }
-            }
-            
-            /* Spiral pattern */
-            @keyframes swim-spiral {
-              0% {
-                right: -35px;
-                top: 25%;
-              }
-              25% {
-                right: 20%;
-                top: 10%;
-              }
-              50% {
-                right: 50%;
-                top: 50%;
-              }
-              75% {
-                right: 80%;
-                top: 80%;
-              }
-              100% {
-                right: 110%;
-                top: 25%;
-              }
-            }
-            
-            /* Zigzag pattern */
-            @keyframes swim-zigzag {
-              0% { left: -50px; top: 65%; }
-              25% { left: 25%; top: 40%; }
-              50% { left: 50%; top: 80%; }
-              75% { left: 75%; top: 30%; }
-              100% { left: 110%; top: 65%; }
-            }
-            
-            /* Fast sweep right */
-            @keyframes swim-fast-sweep {
-              0% { left: -40px; top: 35%; }
-              50% { left: 50%; top: 35%; }
-              100% { left: 110%; top: 35%; }
-            }
-            
-            /* Gentle wave motion */
-            @keyframes swim-gentle-wave {
-              0% { right: -45px; top: 75%; }
-              25% { right: 25%; top: 65%; }
-              50% { right: 50%; top: 75%; }
-              75% { right: 75%; top: 65%; }
-              100% { right: 110%; top: 75%; }
-            }
-            
-            /* Vertical up and down */
-            @keyframes swim-vertical {
-              0% { 
-                left: 50%;
-                top: 20%;
-                transform: translateX(-50%);
-              }
-              50% {
-                left: 50%;
-                top: 80%;
-                transform: translateX(-50%);
-              }
-              100% {
-                left: 50%;
-                top: 20%;
-                transform: translateX(-50%);
-              }
-            }
-          `}</style>
         </div>
 
-        <div className="text-center mt-6 text-xs text-blue-100 drop-shadow-lg">
-          <p>© 2026 PFDA Bulan, Sorsogon</p>
+        <div className="text-center mt-6 text-xs text-white drop-shadow-lg">
+          <p>© 2026 PFDA Bulan, Sorsogon | Contract Monitoring System</p>
         </div>
       </div>
     </div>
