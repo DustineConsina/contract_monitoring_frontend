@@ -285,71 +285,73 @@ export default function TenantDetailsPage() {
 
         {/* Tenant Information */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-6">Personal Information</h3>
+          <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Profile Picture - Bigger */}
-            <div className="md:col-span-1 flex justify-center">
-              <div className="w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow-lg">
+            {/* Profile Picture - Left Side */}
+            <div className="flex justify-center md:justify-start">
+              <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow">
                 {tenant.profilePicture || tenant.profile_picture ? (
                   <img
-                    src={tenant.profilePicture || tenant.profile_picture}
+                    src={`${tenant.profilePicture || tenant.profile_picture}?t=${Date.now()}`}
                     alt={tenant.firstName || 'Tenant'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-6xl font-bold text-white">
+                  <span className="text-5xl font-bold text-white">
                     {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Details */}
-            <div className="md:col-span-2 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Full Name
-                </label>
-                <p className="text-gray-900">
-                  {tenant.firstName} {tenant.lastName}
-                </p>
-              </div>
+            {/* Details - 2 Columns */}
+            <div className="md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Full Name
+                  </label>
+                  <p className="text-gray-900">
+                    {tenant.firstName} {tenant.lastName}
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Email Address
-                </label>
-                <p className="text-gray-900">{tenant.email}</p>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Email Address
+                  </label>
+                  <p className="text-gray-900">{tenant.email}</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Phone Number
-                </label>
-                <p className="text-gray-900">{tenant.contactNumber || 'N/A'}</p>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Phone Number
+                  </label>
+                  <p className="text-gray-900">{tenant.contactNumber || 'N/A'}</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Role
-                </label>
-                <p className="text-gray-900">{tenant.role}</p>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Role
+                  </label>
+                  <p className="text-gray-900">{tenant.role}</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Address
-                </label>
-                <p className="text-gray-900">{tenant.address || 'N/A'}</p>
-              </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Address
+                  </label>
+                  <p className="text-gray-900">{tenant.address || 'N/A'}</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
-                  Member Since
-                </label>
-                <p className="text-gray-900">
-                  {new Date(tenant.createdAt || '').toLocaleDateString()}
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Member Since
+                  </label>
+                  <p className="text-gray-900">
+                    {new Date(tenant.createdAt || '').toLocaleDateString()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

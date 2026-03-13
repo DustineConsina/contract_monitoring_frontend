@@ -121,20 +121,52 @@ export default function EditTenantPage() {
           profileFormData.append('profile_picture', formData.profilePicture)
           
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
-          await fetch(`${apiUrl}/tenants/${tenantId}/upload-picture`, {
+          const uploadResponse = await fetch(`${apiUrl}/tenants/${tenantId}/upload-picture`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             },
             body: profileFormData,
           })
+          
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.text()
+            console.error('Picture upload failed:', errorData)
+            throw new Error('Failed to upload picture')
+          }
+          
+          const uploadResult = await uploadResponse.json()
+          console.log('Picture uploaded successfully:', uploadResult)
+          
+          // Show success notification
+          const notification = document.createElement('div')
+          notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+          notification.innerHTML = '✓ Profile picture updated successfully'
+          document.body.appendChild(notification)
+          
+          // Wait a bit for the server to process, then navigate
+          setTimeout(() => {
+            notification.remove()
+            router.push(`/dashboard/tenants/${tenantId}`)
+          }, 2000)
         } catch (uploadErr) {
           console.error('Failed to upload profile picture:', uploadErr)
-          // Don't fail the whole operation if picture upload fails
+          
+          // Show error notification but still navigate
+          const notification = document.createElement('div')
+          notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+          notification.innerHTML = '⚠ Upload completed but picture update failed'
+          document.body.appendChild(notification)
+          
+          setTimeout(() => {
+            notification.remove()
+            router.push(`/dashboard/tenants/${tenantId}`)
+          }, 2000)
         }
+      } else {
+        // No picture upload, navigate immediately
+        router.push(`/dashboard/tenants/${tenantId}`)
       }
-      
-      router.push(`/dashboard/tenants/${tenantId}`)
     } catch (err: any) {
       console.error('Error updating tenant:', err)
       
