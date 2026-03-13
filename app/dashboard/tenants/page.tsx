@@ -170,10 +170,11 @@ export default function TenantsPage() {
     const searchLower = searchTerm.toLowerCase()
     const contactPerson = tenant.contact_person || tenant.user?.name || ''
     const email = tenant.user?.email || tenant.email || ''
+    const businessName = tenant.business_name || ''
     return (
       contactPerson.toLowerCase().includes(searchLower) ||
       email.toLowerCase().includes(searchLower) ||
-      tenant.business_name.toLowerCase().includes(searchLower)
+      businessName.toLowerCase().includes(searchLower)
     )
   }) : []
 

@@ -201,11 +201,11 @@ export default function PaymentsPage() {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
-  const totalPaid = filteredPayments
+  const totalPaid = payments
     .filter((p) => (p.status || '').toLowerCase() === 'paid')
     .reduce((sum, p) => sum + parseFloat(String(p.amountPaid || 0)), 0)
 
-  const totalPending = filteredPayments
+  const totalPending = payments
     .filter((p) => {
       const status = (p.status || '').toLowerCase()
       return status === 'pending' || status === 'overdue'
