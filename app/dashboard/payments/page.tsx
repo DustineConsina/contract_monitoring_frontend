@@ -253,43 +253,44 @@ export default function PaymentsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <input
-                type="text"
-                placeholder="Search by contract number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none"
-              />
-            </div>
-            <div>
-              <input
-                type="month"
-                value={monthFilter}
-                onChange={(e) => setMonthFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none"
-              />
-            </div>
-            <div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent outline-none"
-              >
-                <option value="all">All Statuses</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-                <option value="overdue">Overdue</option>
-                <option value="partial">Partial</option>
-              </select>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white rounded-lg shadow p-6 border border-gray-100">
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Search</label>
+            <input
+              type="text"
+              placeholder="Search by contract number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Period</label>
+            <input
+              type="month"
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            >
+              <option value="all">All Statuses</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="overdue">Overdue</option>
+              <option value="partial">Partial</option>
+            </select>
           </div>
         </div>
 
-        {/* Payments Table */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+        {/* Payments Grid */}
+        <div>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
@@ -298,130 +299,108 @@ export default function PaymentsPage() {
               </div>
             </div>
           ) : filteredPayments.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
               <p className="text-gray-500">No payments found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th 
-                      onClick={() => handleSort('contract')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    >
-                      Contract #
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contract Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Billing Period (Payment For)
-                    </th>
-                    <th 
-                      onClick={() => handleSort('due_date')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    >
-                      Due Date
-                    </th>
-                    <th 
-                      onClick={() => handleSort('amount')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    >
-                      Amount Due (₱)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Interest 3% (₱)
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Total Balance
-                    </th>
-                    <th 
-                      onClick={() => handleSort('status')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                    >
-                      Payment Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPayments.map((payment) => {
-                    const contractStatus = payment.contract?.status || 'N/A';
-                    const contractStatusColors = {
-                      active: 'bg-green-100 text-green-800',
-                      terminated: 'bg-red-100 text-red-800',
-                      expired: 'bg-orange-100 text-orange-800',
-                      pending: 'bg-blue-100 text-blue-800'
-                    };
-                    return (
-                    <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPayments.map((payment) => {
+                const contractStatus = payment.contract?.status || 'N/A';
+                const contractStatusColors = {
+                  active: 'bg-green-100 text-green-800',
+                  terminated: 'bg-red-100 text-red-800',
+                  expired: 'bg-orange-100 text-orange-800',
+                  pending: 'bg-blue-100 text-blue-800'
+                };
+                const balanceAmount = parseFloat(String(payment.balance || 0));
+                const isOverdue = payment.dueDate && new Date(payment.dueDate) < new Date();
+
+                return (
+                  <div key={payment.id} className={`bg-white rounded-lg shadow hover:shadow-lg p-6 border-l-4 transition-all ${isOverdue && balanceAmount > 0 ? 'border-red-600' : 'border-blue-600'}`}>
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="text-lg font-bold text-blue-600">
                         {payment.contract?.contractNumber || payment.contract?.contract_number || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${contractStatusColors[contractStatus as keyof typeof contractStatusColors] || 'bg-gray-100 text-gray-800'}`}>
-                          {contractStatus.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {payment.billingPeriodStart && payment.billingPeriodEnd
-                          ? `${new Date(payment.billingPeriodStart).toLocaleDateString()} - ${new Date(payment.billingPeriodEnd).toLocaleDateString()}`
-                          : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱{parseFloat(String(payment.amountDue || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        <span className="text-red-600">
-                          ₱{(parseFloat(String(payment.interestAmount || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        <span className={parseFloat(String(payment.balance || 0)) > 0 ? 'text-red-600' : 'text-green-600'}>
-                          ₱{parseFloat(String(payment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                            payment.status || ''
-                          )}`}
-                        >
-                          {payment.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => router.push(`/dashboard/payments/${payment.id}`)}
-                            title="View Payment"
-                            className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition-colors"
-                          >
-                            View
-                          </button>
-                          {canRecordPayments && (
-                            <button 
-                              onClick={() => router.push(`/dashboard/payments/${payment.id}?edit=true`)}
-                              disabled={payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 || contractStatus === 'terminated'}
-                              title={contractStatus === 'terminated' ? "Cannot edit payments for terminated contracts" : payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 ? "This payment is already paid" : "Edit this payment"}
-                              className={`px-3 py-1 rounded text-sm flex items-center justify-center gap-1 transition-colors ${ contractStatus === 'terminated' || payment.balance === 0 || parseFloat(String(payment.balance || 0)) === 0 ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-green-600 hover:text-green-900 hover:bg-green-50'}`}
-                            >
-                              Edit
-                            </button>
-                          )}
+                      </h3>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(payment.status || '')}`}>
+                        {payment.status || 'pending'}
+                      </span>
+                    </div>
+
+                    {/* Contract Status */}
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <div className="text-xs text-gray-600 mb-2">Contract Status</div>
+                      <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${contractStatusColors[contractStatus as keyof typeof contractStatusColors] || 'bg-gray-100 text-gray-800'}`}>
+                        {contractStatus.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-3 mb-4 pb-4 border-b border-gray-200">
+                      <div>
+                        <div className="text-xs text-gray-600">Billing Period</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {payment.billingPeriodStart && payment.billingPeriodEnd
+                            ? `${new Date(payment.billingPeriodStart).toLocaleDateString()} - ${new Date(payment.billingPeriodEnd).toLocaleDateString()}`
+                            : 'N/A'}
                         </div>
-                      </td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600">Due Date</div>
+                        <div className={`text-sm font-medium ${isOverdue && balanceAmount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                          {payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : 'N/A'}
+                          {isOverdue && balanceAmount > 0 && <span className="text-xs text-red-600 ml-2">(OVERDUE)</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Amount Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
+                      <div>
+                        <div className="text-xs text-gray-600">Amount Due</div>
+                        <div className="text-sm font-bold text-gray-900">
+                          ₱{parseFloat(String(payment.amountDue || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600">Interest (3%)</div>
+                        <div className="text-sm font-bold text-red-600">
+                          ₱{parseFloat(String(payment.interestAmount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total Balance */}
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <div className="text-xs text-gray-600">Total Balance</div>
+                      <div className={`text-lg font-bold ${balanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        ₱{balanceAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-4">
+                      <button 
+                        onClick={() => router.push(`/dashboard/payments/${payment.id}`)}
+                        title="View Payment Details"
+                        className="flex-1 px-4 py-2 rounded text-sm font-medium text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition-colors border border-blue-200"
+                      >
+                        View
+                      </button>
+                      {canRecordPayments && (
+                        <button 
+                          onClick={() => router.push(`/dashboard/payments/${payment.id}?edit=true`)}
+                          disabled={balanceAmount === 0 || contractStatus === 'terminated'}
+                          title={contractStatus === 'terminated' ? "Cannot edit payments for terminated contracts" : balanceAmount === 0 ? "This payment is already paid" : "Edit this payment"}
+                          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors border ${balanceAmount === 0 || contractStatus === 'terminated' ? 'text-gray-400 bg-gray-50 cursor-not-allowed border-gray-200' : 'text-green-600 hover:text-green-900 hover:bg-green-50 border-green-200'}`}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

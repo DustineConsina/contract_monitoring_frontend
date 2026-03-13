@@ -213,167 +213,160 @@ function ContractsPageContent() {
         )}
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Search */}
-            <div>
-              <input
-                type="text"
-                placeholder="Search by contract number, tenant, or space..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition shadow-sm"
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-lg shadow p-6 border border-gray-100">
+          {/* Search */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Search</label>
+            <input
+              type="text"
+              placeholder="Search by contract number, tenant, or space..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            />
+          </div>
 
-            {/* Status Filter */}
-            <div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition shadow-sm"
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
-                <option value="terminated">Terminated</option>
-                <option value="renewed">Renewed</option>
-              </select>
-            </div>
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="terminated">Terminated</option>
+              <option value="renewed">Renewed</option>
+            </select>
           </div>
         </div>
 
-        {/* Contracts Table */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Contracts Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="col-span-full flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent" />
-                <p className="mt-4 text-slate-600 font-medium">Loading contracts...</p>
+                <div className="relative w-12 h-12 mx-auto mb-4">
+                  <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
+                </div>
+                <p className="text-gray-600 font-medium">Loading contracts...</p>
               </div>
             </div>
           ) : filteredContracts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-slate-500 font-medium">No contracts found</p>
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 mb-4">No contracts found</p>
               <Link
                 href="/dashboard/contracts/new"
-                className="inline-block mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
-                Create your first contract →
+                + Create Contract
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Contract #
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Tenant
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Rental Space
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Period
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Monthly Rent
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-100">
-                  {filteredContracts.map((contract) => (
-                    <tr key={contract.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        <Link
-                          href={`/dashboard/contracts/${contract.id}`}
-                          className="text-indigo-600 hover:text-indigo-700 hover:underline"
-                        >
-                          {contract.contractNumber || contract.contract_number}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
-                        {contract.tenant?.user?.name || contract.tenant?.contactPerson || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                        {(() => {
-                          const rs = contract.rentalSpace || contract.rentalSpace
-                          return (
-                            <>
-                              {rs?.spaceCode || rs?.space_code || 'N/A'}
-                              {rs && (
-                                <div className="text-xs text-slate-500 mt-1">
-                                  {rs?.type?.name || rs?.spaceType || 'N/A'}
-                                </div>
-                              )}
-                            </>
-                          )
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                        {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'} −{' '}
-                        {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                        ₱{(contract.monthlyRent || 0).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusBadge(
-                            (contract.status || 'PENDING').toUpperCase()
-                          )}`}
-                        >
-                          {(contract.status || 'PENDING').toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex">
-                        <Link
-                          href={`/dashboard/contracts/${contract.id}`}
-                          title="View Contract"
-                          className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors"
-                        >
-                          View
-                        </Link>
-                        <Link
-                          href={`/dashboard/contracts/${contract.id}/qr`}
-                          title="View QR Code"
-                          className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-                        >
-                          QR
-                        </Link>
-                        {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
-                          <button
-                            onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contractNumber || `Contract ${contract.id}`)}
-                            disabled={activatingId === parseInt(contract.id || '0')}
-                            title="Activate Contract"
-                            className="px-3 py-1 rounded text-sm flex items-center justify-center gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Activate
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            filteredContracts.map((contract) => (
+              <div
+                key={contract.id}
+                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-600"
+              >
+                {/* Header with Contract Number and Status */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <Link
+                      href={`/dashboard/contracts/${contract.id}`}
+                      className="text-lg font-bold text-blue-600 hover:text-blue-700"
+                    >
+                      {contract.contractNumber || contract.contract_number}
+                    </Link>
+                    <p className="text-sm text-gray-600">Contract ID: {contract.id}</p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
+                      (contract.status || 'PENDING').toUpperCase()
+                    )}`}
+                  >
+                    {(contract.status || 'PENDING').toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Tenant and Space Info */}
+                <div className="space-y-3 mb-4 pb-4 border-b border-gray-200">
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">TENANT</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {contract.tenant?.user?.name || contract.tenant?.contactPerson || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">RENTAL SPACE</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {(() => {
+                        const rs = contract.rentalSpace || contract.rentalSpace
+                        return rs?.spaceCode || rs?.space_code || 'N/A'
+                      })()}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {(() => {
+                        const rs = contract.rentalSpace || contract.rentalSpace
+                        return rs?.spaceType || rs?.type?.name || 'N/A'
+                      })()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">RENTAL PERIOD</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'}
+                    </p>
+                    <p className="text-xs text-gray-600">to {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold">MONTHLY RENT</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      ₱{(contract.monthlyRent || 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-4 border-t border-gray-200">
+                  <Link
+                    href={`/dashboard/contracts/${contract.id}`}
+                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition flex items-center justify-center gap-1"
+                  >
+                    View Details
+                  </Link>
+                  <Link
+                    href={`/dashboard/contracts/${contract.id}/qr`}
+                    className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border border-green-600 text-green-600 hover:bg-green-50 transition flex items-center justify-center gap-1"
+                  >
+                    QR Code
+                  </Link>
+                  {(contract.status?.toLowerCase() === 'pending' || !['active', 'expired', 'terminated'].includes(contract.status?.toLowerCase() || '')) && (
+                    <button
+                      onClick={() => handleActivateContract(parseInt(contract.id || '0'), contract.contractNumber || `Contract ${contract.id}`)}
+                      disabled={activatingId === parseInt(contract.id || '0')}
+                      className="flex-1 px-3 py-2 rounded-lg text-sm font-medium border border-amber-600 text-amber-600 hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Activate
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </div>
 
         {/* Summary */}
         {!isLoading && filteredContracts.length > 0 && (
-          <div className="text-sm font-medium text-slate-600">
-            Showing <span className="text-slate-900 font-bold">{filteredContracts.length}</span> of <span className="text-slate-900 font-bold">{contracts.length}</span> contracts
+          <div className="text-sm text-gray-600">
+            Showing <span className="font-semibold text-gray-900">{filteredContracts.length}</span> of <span className="font-semibold text-gray-900">{contracts.length}</span> contracts
           </div>
         )}
       </div>
