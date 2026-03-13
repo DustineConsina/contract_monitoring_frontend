@@ -58,6 +58,7 @@ export default function EditTenantPage() {
         businessType: tenant.businessType || '',
         businessAddress: tenant.businessAddress || '', // FIX: Keep business_address separate
         tin: tenant.tin || '',
+        profilePicture: null,
       })
       setError(null)
       setDebugInfo(null)
