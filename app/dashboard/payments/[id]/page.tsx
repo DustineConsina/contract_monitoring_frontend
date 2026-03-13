@@ -54,9 +54,25 @@ export default function PaymentDetailPage() {
       // First try to get payment details with contract data from the specific endpoint
       try {
         const response = await apiClient.request<any>(`/payments/${paymentId}`)
-        const paymentData = response.data?.data || response.data
+        console.log('Full API response:', response)
+        
+        // Handle different response structures
+        let paymentData = response.data?.data || response.data
+        
+        // If we still don't have payment data, try to extract it
+        if (!paymentData || typeof paymentData !== 'object' || !paymentData.id) {
+          console.error('Invalid payment data structure:', paymentData)
+          throw new Error('Payment data not found in response')
+        }
         
         console.log('Raw payment data from API:', paymentData)
+        console.log('Financial fields from API:', {
+          amount_due: paymentData.amount_due,
+          interest_amount: paymentData.interest_amount,
+          total_amount: paymentData.total_amount,
+          amount_paid: paymentData.amount_paid,
+          balance: paymentData.balance,
+        })
         
         // Extract contract if available
         const contract = paymentData.contract || {}
@@ -338,7 +354,27 @@ export default function PaymentDetailPage() {
 
         {/* Payment Details */}
         {!isLoading && payment && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <>
+            {/* Debug Info (Remove later) */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
+                <details>
+                  <summary className="cursor-pointer font-semibold text-yellow-800">Debug: Payment Data</summary>
+                  <pre className="text-xs mt-2 p-2 bg-white rounded overflow-auto max-h-48">
+                    {JSON.stringify({
+                      id: payment.id,
+                      amount_due: payment.amount_due || payment.amountDue,
+                      interest_amount: payment.interest_amount || payment.interestAmount,
+                      total_amount: payment.total_amount || payment.totalAmount,
+                      amount_paid: payment.amount_paid || payment.amountPaid,
+                      balance: payment.balance,
+                    }, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Payment Information */}
             <div className="bg-white rounded-lg shadow p-6 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
@@ -548,6 +584,7 @@ export default function PaymentDetailPage() {
               </div>
             </div>
           </div>
+          </>
         )}
       </div>
     </ProtectedRoute>
