@@ -112,6 +112,7 @@ export default function TenantsPage() {
         } catch (uploadErr: any) {
           console.error('Failed to upload profile picture:', uploadErr)
           console.log('Upload error details:', uploadErr.message)
+        }
       }
 
       setSuccessMessage('Tenant added successfully! 🎉')
