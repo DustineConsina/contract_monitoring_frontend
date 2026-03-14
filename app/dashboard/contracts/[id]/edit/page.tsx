@@ -98,6 +98,7 @@ export default function EditContractPage() {
     if (name === 'rentalSpaceId') {
       console.log(`  🔍 Looking for space ID ${value} in ${spaces.length} spaces`)
       const selectedSpace = spaces.find((s: any) => s.id == value)
+      let newMonthlyRent = formData.monthlyRent
       
       if (selectedSpace) {
         console.log(`  ✅ Found space:`, {
@@ -107,7 +108,6 @@ export default function EditContractPage() {
           base_rental_rate: selectedSpace.base_rental_rate,
         })
         
-        let newMonthlyRent = formData.monthlyRent
         const baseRate = selectedSpace.baseRentalRate || selectedSpace.base_rental_rate
         
         if (baseRate) {
