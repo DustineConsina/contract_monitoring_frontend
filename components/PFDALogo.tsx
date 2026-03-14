@@ -2,13 +2,16 @@ import Image from 'next/image'
 
 export function PFDALogo() {
   return (
-    <Image
-      src="/pfdaalogo.webp"
-      alt="PFDA Logo"
-      width={64}
-      height={64}
-      priority
-      className="w-16 h-16"
-    />
+    <div className="bg-transparent">
+      <Image
+        src="/pfdaalogo.webp"
+        alt="PFDA Logo"
+        width={64}
+        height={64}
+        priority
+        className="w-16 h-16 object-contain"
+        style={{ mixBlendMode: 'screen', backgroundColor: 'transparent' }}
+      />
+    </div>
   )
 }

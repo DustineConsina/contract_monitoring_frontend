@@ -44,6 +44,7 @@ export default function CashierDashboard() {
     method: 'cash',
     remarks: '',
   })
+  const [recordingMessage, setRecordingMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [paymentTrends, setPaymentTrends] = useState<PaymentTrend[]>([])
   const [trendMonth, setTrendMonth] = useState('')
   const [loading, setLoading] = useState(true)
@@ -214,7 +215,7 @@ export default function CashierDashboard() {
 
   const handleRecordPayment = async () => {
     if (!selectedPayment || !recordData.amount) {
-      alert('Please select a payment and enter amount')
+      setRecordingMessage({ type: 'error', message: 'Please enter amount' })
       return
     }
 
@@ -226,12 +227,17 @@ export default function CashierDashboard() {
         remarks: recordData.remarks,
       })
 
-      alert('Payment recorded successfully!')
-      setSelectedPayment(null)
-      setRecordData({ amount: '', method: 'cash', remarks: '' })
-      loadCashierData()
+      setRecordingMessage({ type: 'success', message: 'Payment recorded successfully! Closing...' })
+      
+      // Delay closing the modal to show success message
+      setTimeout(() => {
+        setSelectedPayment(null)
+        setRecordData({ amount: '', method: 'cash', remarks: '' })
+        setRecordingMessage(null)
+        loadCashierData()
+      }, 1000)
     } catch (error: any) {
-      alert(`Error: ${error.response?.data?.message || 'Failed to record payment'}`)
+      setRecordingMessage({ type: 'error', message: error.response?.data?.message || 'Failed to record payment' })
     } finally {
       setIsRecording(false)
     }
@@ -300,6 +306,16 @@ export default function CashierDashboard() {
                 </div>
 
                 <form onSubmit={(e) => { e.preventDefault(); handleRecordPayment(); }} className="p-6 space-y-4">
+                  {/* Success/Error Message */}
+                  {recordingMessage && (
+                    <div className={`p-4 rounded-lg text-sm font-medium ${
+                      recordingMessage.type === 'success' 
+                        ? 'bg-green-50 text-green-700 border border-green-200' 
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
+                      {recordingMessage.type === 'success' ? '✅' : '❌'} {recordingMessage.message}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="bg-gray-50 p-4 rounded">
                       <p className="text-sm text-gray-600">Tenant</p>
