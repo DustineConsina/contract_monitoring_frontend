@@ -64,6 +64,21 @@ export default function EditContractPage() {
         ? spacesResponse 
         : (spacesResponse.data?.data || spacesResponse.data || [])
 
+      console.log('🏢 SPACES LOADED:')
+      spacesArray.slice(0, 3).forEach((space: any) => {
+        console.log(`  Space ${space.id}:`, {
+          spaceCode: space.spaceCode || space.space_code,
+          baseRentalRate: space.baseRentalRate,
+          base_rental_rate: space.base_rental_rate,
+          allRateFields: {
+            baseRentalRate: space.baseRentalRate,
+            base_rental_rate: space.base_rental_rate,
+            rentalAmount: space.rentalAmount,
+            rental_amount: space.rental_amount,
+          }
+        })
+      })
+
       setTenants(tenantsArray)
       setSpaces(spacesArray)
       setError(null)
@@ -77,34 +92,37 @@ export default function EditContractPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     
+    console.log(`🔄 CHANGE EVENT: ${name} = ${value}`)
+    
     // Special handling for rental space selection to auto-populate monthly rent
     if (name === 'rentalSpaceId') {
+      console.log(`  🔍 Looking for space ID ${value} in ${spaces.length} spaces`)
       const selectedSpace = spaces.find((s: any) => s.id == value)
-      let newMonthlyRent = formData.monthlyRent
       
       if (selectedSpace) {
-        // Check for baseRentalRate in both camelCase and snake_case
+        console.log(`  ✅ Found space:`, {
+          id: selectedSpace.id,
+          code: selectedSpace.spaceCode || selectedSpace.space_code,
+          baseRentalRate: selectedSpace.baseRentalRate,
+          base_rental_rate: selectedSpace.base_rental_rate,
+        })
+        
+        let newMonthlyRent = formData.monthlyRent
         const baseRate = selectedSpace.baseRentalRate || selectedSpace.base_rental_rate
         
         if (baseRate) {
           newMonthlyRent = String(baseRate)
-          console.log(`✅ Auto-populated monthly rent: ₱${baseRate} from space ${selectedSpace.spaceCode || selectedSpace.space_code}`)
+          console.log(`  💰 Setting monthly rent to: ${newMonthlyRent} (from baseRate: ${baseRate})`)
         } else {
-          console.log(`ℹ️ No base rental rate found for space ${selectedSpace.spaceCode || selectedSpace.space_code}`, {
+          console.warn(`  ⚠️ No base rental rate found for space`, {
             baseRentalRate: selectedSpace.baseRentalRate,
             base_rental_rate: selectedSpace.base_rental_rate,
-            spaceData: selectedSpace
           })
         }
       } else {
-        console.warn(`❌ Space with ID ${value} not found in spaces list`)
+        console.warn(`  ❌ Space with ID ${value} not found in spaces list`)
+        console.log(`     Available spaces:`, spaces.map((s: any) => ({ id: s.id, code: s.spaceCode || s.space_code })))
       }
-      
-      console.log('📝 Setting form data:', {
-        rentalSpaceId: value,
-        monthlyRent: newMonthlyRent,
-        oldMonthlyRent: formData.monthlyRent
-      })
       
       setFormData({
         ...formData,
@@ -125,30 +143,32 @@ export default function EditContractPage() {
     setError(null)
 
     try {
-      console.log('📤 Submitting contract update:', {
+      const monthlyRentValue = parseFloat(formData.monthlyRent)
+      const securityDepositValue = parseFloat(formData.securityDeposit)
+      
+      console.log('📤 SUBMITTING UPDATE:')
+      console.log(`  Current formData.monthlyRent: "${formData.monthlyRent}" (type: ${typeof formData.monthlyRent})`)
+      console.log(`  Parsed monthlyRent: ${monthlyRentValue}`)
+      console.log(`  Parsed securityDeposit: ${securityDepositValue}`)
+      
+      const updatePayload = {
         tenantId: parseInt(formData.tenantId),
         rentalSpaceId: parseInt(formData.rentalSpaceId),
         startDate: formData.startDate,
         endDate: formData.endDate,
-        monthlyRent: parseFloat(formData.monthlyRent),
-        securityDeposit: parseFloat(formData.securityDeposit),
+        durationMonths: 1,
+        monthlyRent: monthlyRentValue,
+        securityDeposit: securityDepositValue,
         terms: formData.terms,
         status: formData.status,
-      })
+      }
+      
+      console.log(`  Full payload:`, updatePayload)
 
-      await apiClient.updateContract(contractId.toString(), {
-        tenantId: parseInt(formData.tenantId),
-        rentalSpaceId: parseInt(formData.rentalSpaceId),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        durationMonths: 1, // This will be calculated from start/end date on backend
-        monthlyRent: parseFloat(formData.monthlyRent),
-        securityDeposit: parseFloat(formData.securityDeposit),
-        terms: formData.terms,
-        status: formData.status,
-      })
+      await apiClient.updateContract(contractId.toString(), updatePayload)
 
       console.log('✅ Contract updated successfully')
+      alert('✅ Contract updated successfully')
       router.push(`/dashboard/contracts/${contractId}`)
     } catch (err: any) {
       console.error('❌ Error updating contract:', err)
@@ -188,8 +208,12 @@ export default function EditContractPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-          {/* Tenant Selection */}
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">              {/* DEBUG: Current Form State */}
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs font-mono">
+                <div className="text-blue-900">
+                  📋 Form State: monthlyRent={formData.monthlyRent}, startDate={formData.startDate}, endDate={formData.endDate}
+                </div>
+              </div>          {/* Tenant Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tenant <span className="text-red-500">*</span>
