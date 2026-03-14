@@ -71,9 +71,9 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // FIX: Properly handle profile picture - check backend response for correct field
-        profilePicture: tenantData.profilePicture || tenantData.profile_picture,
-        profile_picture: tenantData.profile_picture || tenantData.profilePicture,
+        // FIX: Use the pre-constructed URL from backend (profilePicture_url or profilePicture with full URL)
+        profilePicture: tenantData.profilePicture_url || tenantData.profilePicture || tenantData.profile_picture_url,
+        profile_picture: tenantData.profile_picture_url || tenantData.profile_picture || tenantData.profilePicture,
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
         business_type: tenantData.business_type || tenantData.businessType || '',
@@ -220,11 +220,9 @@ export default function TenantDetailsPage() {
 
   const getProfilePictureUrl = () => {
     if (!tenant?.profilePicture && !tenant?.profile_picture) return null
-
-    const picturePath = tenant.profilePicture || tenant.profile_picture
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
-    // Construct proper URL - add cache busting
-    return `${baseUrl}/storage/${picturePath}?t=${Date.now()}`
+    // Backend already returns full URL, just use it directly with cache busting
+    const url = tenant.profilePicture || tenant.profile_picture
+    return `${url}${url?.includes('?') ? '&' : '?'}t=${Date.now()}`
   }
 
   const getStatusBadge = (status: string) => {

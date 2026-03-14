@@ -246,10 +246,11 @@ export default function TenantsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {tenant.profilePicture || tenant.profile_picture ? (
+                      {tenant.profilePicture || tenant.profile_picture_url || tenant.profile_picture ? (
                         <img
                           src={
-                            tenant.profilePicture ||  `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenant.profile_picture}?t=${Date.now()}`
+                            // Use the pre-constructed URL from backend, add cache busting
+                            (tenant.profilePicture || tenant.profile_picture_url) + `${(tenant.profilePicture || tenant.profile_picture_url)?.includes('?') ? '&' : '?'}t=${Date.now()}`
                           }
                           alt={tenant.contact_person || 'Tenant'}
                           className="w-full h-full object-cover"
