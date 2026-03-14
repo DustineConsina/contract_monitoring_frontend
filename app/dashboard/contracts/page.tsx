@@ -17,6 +17,25 @@ function ContractsPageContent() {
   const [activatingId, setActivatingId] = useState<number | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // Modal state for add/edit contract
+  const [showModal, setShowModal] = useState(false)
+  const [editingContractId, setEditingContractId] = useState<number | null>(null)
+  const [modalLoading, setModalLoading] = useState(false)
+  const [modalError, setModalError] = useState<string | null>(null)
+  const [modalSuccess, setModalSuccess] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [tenants, setTenants] = useState<any[]>([])
+  const [spaces, setSpaces] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    tenantId: '',
+    rentalSpaceId: '',
+    startDate: '',
+    endDate: '',
+    monthlyRent: '',
+    securityDeposit: '',
+    terms: '',
+  })
+
   useEffect(() => {
     fetchContracts()
   }, [statusFilter])
@@ -174,6 +193,132 @@ function ContractsPageContent() {
     }
   }
 
+  const fetchModalData = async () => {
+    try {
+      const [tenantsRes, spacesRes] = await Promise.all([
+        apiClient.getTenants(),
+        apiClient.getRentalSpaces(),
+      ])
+      
+      const tenantsArray = tenantsRes.data?.data || tenantsRes.data || []
+      const spacesArray = spacesRes.data?.data || spacesRes.data || []
+      
+      setTenants(tenantsArray)
+      setSpaces(spacesArray)
+    } catch (err: any) {
+      setModalError('Failed to load form data')
+    }
+  }
+
+  const openAddModal = async () => {
+    setEditingContractId(null)
+    setFormData({
+      tenantId: '',
+      rentalSpaceId: '',
+      startDate: '',
+      endDate: '',
+      monthlyRent: '',
+      securityDeposit: '',
+      terms: '',
+    })
+    setModalError(null)
+    setModalSuccess(null)
+    setModalLoading(true)
+    setShowModal(true)
+    await fetchModalData()
+    setModalLoading(false)
+  }
+
+  const openEditModal = async (contract: any) => {
+    setEditingContractId(contract.id)
+    setFormData({
+      tenantId: contract.tenantId?.toString() || contract.tenant?.id?.toString() || '',
+      rentalSpaceId: contract.rentalSpaceId?.toString() || contract.rentalSpace?.id?.toString() || '',
+      startDate: contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
+      endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
+      monthlyRent: contract.monthlyRental?.toString() || contract.monthlyRent?.toString() || '',
+      securityDeposit: contract.depositAmount?.toString() || contract.securityDeposit?.toString() || '',
+      terms: contract.termsConditions || contract.terms || '',
+    })
+    setModalError(null)
+    setModalSuccess(null)
+    setModalLoading(true)
+    setShowModal(true)
+    await fetchModalData()
+    setModalLoading(false)
+  }
+
+  const closeModal = () => {
+    if (!isSubmitting) {
+      setShowModal(false)
+      setEditingContractId(null)
+      setModalError(null)
+      setModalSuccess(null)
+    }
+  }
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    
+    // Auto-fill monthly rent when rental space changes
+    if (name === 'rentalSpaceId') {
+      const selectedSpace = spaces.find((s: any) => s.id == value)
+      const baseRate = selectedSpace?.baseRentalRate || selectedSpace?.base_rental_rate || formData.monthlyRent
+      
+      setFormData({
+        ...formData,
+        [name]: value,
+        monthlyRent: baseRate ? String(baseRate) : formData.monthlyRent,
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
+  }
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setModalError(null)
+    setModalSuccess(null)
+
+    try {
+      const payload = {
+        tenantId: parseInt(formData.tenantId),
+        rentalSpaceId: parseInt(formData.rentalSpaceId),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        monthlyRent: parseFloat(formData.monthlyRent),
+        securityDeposit: parseFloat(formData.securityDeposit),
+        terms: formData.terms,
+      }
+
+      if (editingContractId) {
+        // Update existing contract
+        await apiClient.updateContract(editingContractId.toString(), payload)
+        setModalSuccess('✅ Contract updated successfully!')
+      } else {
+        // Create new contract
+        await apiClient.createContract(payload)
+        setModalSuccess('✅ Contract created successfully!')
+      }
+
+      // Refresh contracts list
+      await fetchContracts()
+
+      // Close modal after short delay
+      setTimeout(() => {
+        closeModal()
+      }, 1500)
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to save contract')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <ProtectedRoute>
       <div className="space-y-6">
@@ -183,13 +328,13 @@ function ContractsPageContent() {
             <h1 className="text-3xl font-bold text-slate-900">Contracts</h1>
             <p className="text-slate-600 text-base mt-1">Manage rental contracts and agreements</p>
           </div>
-          <Link
-            href="/dashboard/contracts/new"
+          <button
+            onClick={openAddModal}
             title="New Contract"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all"
           >
             + New Contract
-          </Link>
+          </button>
         </div>
 
         {/* Error Message */}
@@ -259,12 +404,12 @@ function ContractsPageContent() {
           ) : filteredContracts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No contracts found</p>
-              <Link
-                href="/dashboard/contracts/new"
+              <button
+                onClick={openAddModal}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
                 + Create Contract
-              </Link>
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -324,6 +469,12 @@ function ContractsPageContent() {
                           >
                             View
                           </Link>
+                          <button
+                            onClick={() => openEditModal(contract)}
+                            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2 py-1 rounded transition"
+                          >
+                            Edit
+                          </button>
                           <Link
                             href={`/dashboard/contracts/${contract.id}/qr`}
                             className="text-green-600 hover:text-green-700 hover:bg-green-50 px-2 py-1 rounded transition"
@@ -353,6 +504,210 @@ function ContractsPageContent() {
         {!isLoading && filteredContracts.length > 0 && (
           <div className="text-sm text-gray-600">
             Showing <span className="font-semibold text-gray-900">{filteredContracts.length}</span> of <span className="font-semibold text-gray-900">{contracts.length}</span> contracts
+          </div>
+        )}
+
+        {/* Add/Edit Contract Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingContractId ? 'Edit Contract' : 'Add New Contract'}
+                </h3>
+                <button
+                  onClick={closeModal}
+                  disabled={isSubmitting}
+                  className="text-gray-500 hover:text-gray-700 text-2xl disabled:opacity-50"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              {modalLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
+                  {/* Success Message */}
+                  {modalSuccess && (
+                    <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                      <p className="text-sm text-green-700">✅ {modalSuccess}</p>
+                    </div>
+                  )}
+
+                  {/* Error Message */}
+                  {modalError && (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                      <p className="text-sm text-red-700">❌ {modalError}</p>
+                    </div>
+                  )}
+
+                  {/* Tenant Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tenant <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="tenantId"
+                      required
+                      value={formData.tenantId}
+                      onChange={handleFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    >
+                      <option value="">Select tenant</option>
+                      {tenants.map((tenant: any) => {
+                        const tenantName = tenant.businessName || tenant.business_name || tenant.contactPerson || 'Unknown'
+                        const tenantIdentifier = tenant.contactPerson || tenant.contact_person || tenant.email || 'N/A'
+                        return (
+                          <option key={tenant.id} value={tenant.id}>
+                            {tenantName} - {tenantIdentifier}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Rental Space Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rental Space <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="rentalSpaceId"
+                      required
+                      value={formData.rentalSpaceId}
+                      onChange={handleFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    >
+                      <option value="">Select rental space</option>
+                      {spaces.map((space: any) => (
+                        <option key={space.id} value={space.id}>
+                          {space.space_code || space.spaceCode || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
+                          {(space.base_rental_rate || space.baseRentalRate) && (
+                            <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
+                          )}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        required
+                        value={formData.startDate}
+                        onChange={handleFormChange}
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        required
+                        value={formData.endDate}
+                        onChange={handleFormChange}
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Financial Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Monthly Rent (₱) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="monthlyRent"
+                        required
+                        step="0.01"
+                        min="0"
+                        value={formData.monthlyRent}
+                        onChange={handleFormChange}
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">💡 Auto-filled from space rate</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Security Deposit (₱) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="securityDeposit"
+                        required
+                        step="0.01"
+                        min="0"
+                        value={formData.securityDeposit}
+                        onChange={handleFormChange}
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Terms and Conditions */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Terms and Conditions
+                    </label>
+                    <textarea
+                      name="terms"
+                      rows={6}
+                      value={formData.terms}
+                      onChange={handleFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100"
+                      placeholder="Enter contract terms and conditions..."
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 justify-end pt-4 border-t">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                    >
+                      {isSubmitting ? 'Saving...' : editingContractId ? 'Update Contract' : 'Create Contract'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         )}
       </div>
