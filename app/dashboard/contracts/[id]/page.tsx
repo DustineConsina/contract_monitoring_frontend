@@ -331,17 +331,6 @@ export default function ContractDetailsPage() {
           </div>
         </div>
 
-        {/* DEBUG: Monthly Rent Values */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-          <p className="text-sm font-mono text-yellow-800">
-            🔍 DEBUG - Monthly Rent: 
-            monthlyRent={contract?.monthlyRent}, 
-            monthlyRental={contract?.monthlyRental}, 
-            monthly_rental={contract?.monthly_rental},
-            monthly_rent={contract?.monthly_rent}
-          </p>
-        </div>
-
         {/* Contract Information */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Details */}

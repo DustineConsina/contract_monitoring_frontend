@@ -96,7 +96,15 @@ export default function EditContractPage() {
             spaceData: selectedSpace
           })
         }
+      } else {
+        console.warn(`❌ Space with ID ${value} not found in spaces list`)
       }
+      
+      console.log('📝 Setting form data:', {
+        rentalSpaceId: value,
+        monthlyRent: newMonthlyRent,
+        oldMonthlyRent: formData.monthlyRent
+      })
       
       setFormData({
         ...formData,
@@ -117,6 +125,17 @@ export default function EditContractPage() {
     setError(null)
 
     try {
+      console.log('📤 Submitting contract update:', {
+        tenantId: parseInt(formData.tenantId),
+        rentalSpaceId: parseInt(formData.rentalSpaceId),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        monthlyRent: parseFloat(formData.monthlyRent),
+        securityDeposit: parseFloat(formData.securityDeposit),
+        terms: formData.terms,
+        status: formData.status,
+      })
+
       await apiClient.updateContract(contractId.toString(), {
         tenantId: parseInt(formData.tenantId),
         rentalSpaceId: parseInt(formData.rentalSpaceId),
@@ -129,8 +148,10 @@ export default function EditContractPage() {
         status: formData.status,
       })
 
+      console.log('✅ Contract updated successfully')
       router.push(`/dashboard/contracts/${contractId}`)
     } catch (err: any) {
+      console.error('❌ Error updating contract:', err)
       setError(err.message || 'Failed to update contract')
     } finally {
       setIsSubmitting(false)
