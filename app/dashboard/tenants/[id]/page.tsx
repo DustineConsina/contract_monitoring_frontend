@@ -157,32 +157,22 @@ export default function TenantDetailsPage() {
     setEditSuccess(null)
 
     try {
-      // Update user data
+      // Combine all user and tenant data into single payload for updateTenant endpoint
       const updatePayload = {
         firstName: editFormData.firstName,
         lastName: editFormData.lastName,
         email: editFormData.email,
         phone: editFormData.contactNumber,
-      }
-
-      if (tenant.user?.id) {
-        const userResult = await apiClient.updateUser(tenant.user.id.toString(), updatePayload)
-        console.log('User update result:', userResult)
-      } else {
-        throw new Error('Cannot update: User ID not found')
-      }
-
-      // Update tenant data
-      const tenantPayload = {
+        address: editFormData.address,
         contactPerson: editFormData.firstName + ' ' + editFormData.lastName,
         businessName: editFormData.businessName,
         businessType: editFormData.businessType,
         businessAddress: editFormData.businessAddress,
-        address: editFormData.address,
         tin: editFormData.tin,
       }
 
-      const tenantResult = await apiClient.updateTenant(tenantId.toString(), tenantPayload)
+      // Update tenant (which also updates associated user data)
+      const tenantResult = await apiClient.updateTenant(tenantId.toString(), updatePayload)
       console.log('Tenant update result:', tenantResult)
 
       // Handle profile picture upload
