@@ -128,15 +128,15 @@ export default function DashboardPage() {
             value={stats?.activeContracts || 0}
             link="/dashboard/contracts?status=active"
           />
+          <RenewalStatsCard
+            title="For Renewal"
+            value={stats?.renewalContracts || 0}
+            link="/dashboard/contracts?status=for_renewal"
+          />
           <StatsCard
             title="Expired Contracts"
             value={stats?.expiredContracts || 0}
             link="/dashboard/contracts?status=expired"
-          />
-          <StatsCard
-            title="Delinquent Contracts"
-            value={stats?.delinquentContracts || 0}
-            link="/dashboard/contracts?status=delinquent"
           />
         </div>
 
@@ -168,9 +168,10 @@ export default function DashboardPage() {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: 'Active', value: stats.activeContracts, color: '#475569' },
-                      { name: 'Expired', value: stats.expiredContracts, color: '#94a3b8' },
-                      { name: 'Delinquent', value: stats.delinquentContracts, color: '#cbd5e1' },
+                      { name: 'Active', value: stats.activeContracts, color: '#10b981' },
+                      { name: 'For Renewal', value: stats.renewalContracts || 0, color: '#f97316' },
+                      { name: 'Expired', value: stats.expiredContracts, color: '#eab308' },
+                      { name: 'Delinquent', value: stats.delinquentContracts || 0, color: '#ef4444' },
                     ]}
                     cx="50%"
                     cy="50%"
@@ -180,9 +181,10 @@ export default function DashboardPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    <Cell fill="#4f46e5" />
-                    <Cell fill="#818cf8" />
-                    <Cell fill="#c7d2fe" />
+                    <Cell fill="#10b981" />
+                    <Cell fill="#f97316" />
+                    <Cell fill="#eab308" />
+                    <Cell fill="#ef4444" />
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -299,6 +301,47 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+
+          {/* Contracts for Renewal */}
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-orange-900">
+                ⏰ For Renewal (2 months)
+              </h3>
+              <Link
+                href="/dashboard/contracts?status=for_renewal"
+                className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+              >
+                View All →
+              </Link>
+            </div>
+            {stats?.renewalContracts && stats.renewalContracts > 0 && stats?.renewalContractsList && stats.renewalContractsList.length > 0 ? (
+              <div className="space-y-3">
+                {stats.renewalContractsList.slice(0, 5).map((contract: any) => (
+                  <div
+                    key={contract.id}
+                    className="flex items-center justify-between py-3 border-b border-orange-200 last:border-0 hover:bg-orange-100 px-2 rounded transition-colors"
+                  >
+                    <div>
+                      <div className="font-semibold text-sm text-orange-900">
+                        {contract.contractNumber}
+                      </div>
+                      <div className="text-xs text-orange-600">
+                        {contract.rentalSpace?.spaceNumber || contract.rentalSpace?.name}
+                      </div>
+                    </div>
+                    <div className="text-xs font-medium text-orange-700">
+                      Expires: {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-orange-600 text-center py-8 font-medium">
+                ✓ No contracts requiring renewal
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -344,6 +387,36 @@ function StatsCard({
       <div>
         <p className="text-sm font-semibold text-indigo-600 mb-2">{title}</p>
         <p className="text-4xl font-bold text-indigo-900">{value}</p>
+      </div>
+    </div>
+  )
+
+  if (link) {
+    return (
+      <Link href={link} className="block">
+        {content}
+      </Link>
+    )
+  }
+
+  return content
+}
+
+function RenewalStatsCard({
+  title,
+  value,
+  link,
+}: {
+  title: string
+  value: string | number
+  link?: string
+}) {
+  const content = (
+    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm p-6 hover:shadow-lg transition-all hover:scale-102 duration-200">
+      <div>
+        <p className="text-sm font-semibold text-orange-600 mb-2">{title} ⏰</p>
+        <p className="text-4xl font-bold text-orange-900">{value}</p>
+        <p className="text-xs text-orange-600 mt-2">Review needed</p>
       </div>
     </div>
   )

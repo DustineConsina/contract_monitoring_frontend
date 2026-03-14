@@ -128,6 +128,7 @@ function ContractsPageContent() {
       TERMINATED: 'bg-rose-100 text-rose-800',
       RENEWED: 'bg-indigo-100 text-indigo-800',
       PENDING: 'bg-blue-100 text-blue-800',
+      FOR_RENEWAL: 'bg-orange-100 text-orange-800 font-bold',
     }
     return colors[status as keyof typeof colors] || 'bg-slate-100 text-slate-800'
   }
@@ -381,6 +382,7 @@ function ContractsPageContent() {
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
+              <option value="for_renewal">For Renewal</option>
               <option value="active">Active</option>
               <option value="expired">Expired</option>
               <option value="terminated">Terminated</option>
@@ -453,13 +455,20 @@ function ContractsPageContent() {
                         ₱{(contract.monthlyRent || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                            (contract.status || 'PENDING').toUpperCase()
-                          )}`}
-                        >
-                          {(contract.status || 'PENDING').toUpperCase()}
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
+                              (contract.status || 'PENDING').toUpperCase()
+                            )}`}
+                          >
+                            {(contract.status || 'PENDING').toUpperCase().replace('_', ' ')}
+                          </span>
+                          {contract.status?.toLowerCase() === 'for_renewal' && (
+                            <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200">
+                              ⏰ Review needed
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
