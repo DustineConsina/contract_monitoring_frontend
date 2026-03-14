@@ -70,7 +70,7 @@ export interface RentalSpace {
   updated_at?: string
 }
 
-export type ContractStatus = 'ACTIVE' | 'EXPIRED' | 'TERMINATED' | 'RENEWED' | 'PENDING'
+export type ContractStatus = 'ACTIVE' | 'FOR_RENEWAL' | 'EXPIRED' | 'TERMINATED' | 'RENEWED' | 'PENDING'
 
 export interface Contract {
   id?: string
@@ -220,15 +220,23 @@ export interface AuditLog {
 export interface DashboardStats {
   totalContracts?: number
   activeContracts?: number
+  renewalContracts?: number
   expiredContracts?: number
   delinquentContracts?: number
+  terminatedContracts?: number
   totalRevenue?: number
+  monthlyRevenue?: number
   pendingPayments?: number
+  overduePayments?: number
+  partialPayments?: number
+  delinquentTenants?: number
   availableSpaces?: number
   occupiedSpaces?: number
   totalRentalSpaces?: number
+  totalTenants?: number
   recentPayments?: Payment[]
   expiringContracts?: Contract[]
+  renewalContractsList?: Contract[]
 }
 
 export interface LoginCredentials {
