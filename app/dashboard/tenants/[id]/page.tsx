@@ -17,47 +17,53 @@ export default function TenantDetailsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editSuccess, setEditSuccess] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    contactNumber: '',
+    address: '',
+    businessName: '',
+    businessType: '',
+    businessAddress: '',
+    tin: '',
+    profilePicture: null as File | null,
+  })
+
   useEffect(() => {
     fetchTenantData()
   }, [tenantId])
 
   const fetchTenantData = async () => {
     try {
-      console.log('Fetching tenant with ID:', tenantId)
       const response = await apiClient.getTenant(tenantId.toString())
-      
-      console.log('Tenant API Response:', response)
-      
-      // API returns {success, data} or just {data} - extract tenant
       let tenantData = response.data || response
-      
-      console.log('Tenant Data:', tenantData)
-      console.log('Tenant ID check:', tenantData?.id, 'Expected:', tenantId)
-      
+
       if (!tenantData || !tenantData.id) {
         throw new Error('Invalid tenant data or not found')
       }
-      
-      // Get full name from various sources (camelCase > snake_case > user.name)
+
       const fullName = tenantData.contactPerson || tenantData.contact_person || tenantData.user?.name || tenantData.name || ''
       const nameParts = fullName.trim().split(/\s+/)
       const firstName = nameParts[0] || ''
       const lastName = nameParts.slice(1).join(' ') || ''
-      
-      // Build mapped tenant with BOTH snake_case and camelCase options
+
       const mappedTenant: any = {
         id: tenantData.id,
-        // Name fields
         name: fullName,
         firstName: firstName,
         lastName: lastName,
-        // User info
         email: tenantData.email || tenantData.user?.email || '',
         phone: tenantData.phone || tenantData.contactNumber || tenantData.contact_number || tenantData.user?.phone || '',
         contactNumber: tenantData.contactNumber || tenantData.contact_number || tenantData.user?.phone || '',
         address: tenantData.address || tenantData.user?.address || '',
         role: tenantData.role || tenantData.user?.role || 'TENANT',
-        // Business fields - try camelCase first, then snake_case
         businessName: tenantData.businessName || tenantData.business_name || '',
         businessType: tenantData.businessType || tenantData.business_type || '',
         businessAddress: tenantData.businessAddress || tenantData.business_address || '',
@@ -65,153 +71,160 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // Picture field - use the API endpoint to serve files
-        profilePicture: 
-          (tenantData.profilePicture || tenantData.profile_picture)
-            ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenantData.profilePicture || tenantData.profile_picture}`
-            : null,
-        profile_picture: 
-          (tenantData.profile_picture || tenantData.profilePicture)
-            ? `https://contractmonitoringbackend-production.up.railway.app/api/storage/${tenantData.profile_picture || tenantData.profilePicture}`
-            : null,
-        // Keep snake_case for backward compatibility
+        // FIX: Properly handle profile picture - check backend response for correct field
+        profilePicture: tenantData.profilePicture || tenantData.profile_picture,
+        profile_picture: tenantData.profile_picture || tenantData.profilePicture,
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
         business_type: tenantData.business_type || tenantData.businessType || '',
         business_address: tenantData.business_address || tenantData.businessAddress || '',
         tenant_code: tenantData.tenant_code || tenantData.tenantCode || '',
-        // Nested objects
         user: tenantData.user,
         createdAt: tenantData.createdAt || tenantData.created_at,
       }
-      
-      console.log('Mapped tenant:', { id: mappedTenant.id, firstName: mappedTenant.firstName, lastName: mappedTenant.lastName, businessName: mappedTenant.businessName })
-      
+
       setTenant(mappedTenant)
-      
-      // Contracts - Map with proper field names
+
       let contractsList = []
       if (tenantData.contracts && Array.isArray(tenantData.contracts)) {
         contractsList = tenantData.contracts.map((contract: any) => ({
           ...contract,
-          // Ensure all field variants are present for safe access
           contract_number: contract.contract_number || contract.contractNumber,
           contractNumber: contract.contractNumber || contract.contract_number,
           start_date: contract.start_date || contract.startDate,
           startDate: contract.startDate || contract.start_date,
           end_date: contract.end_date || contract.endDate,
           endDate: contract.endDate || contract.end_date,
-          monthly_rental: contract.monthly_rental || contract.monthlyRent || contract.monthly_rent,
-          monthlyRent: contract.monthlyRent || contract.monthly_rental || contract.monthly_rent,
-          // Ensure rentalSpace is properly accessible with both formats
-          rentalSpace: contract.rentalSpace || contract.rental_space,
-          rental_space: contract.rental_space || contract.rentalSpace,
+          monthly_rental: contract.monthly_rental || contract.monthlyRental,
+          monthlyRental: contract.monthlyRental || contract.monthly_rental,
+          monthlyRent: contract.monthlyRental || contract.monthly_rental,
         }))
-      } else if (tenantData.contract) {
-        contractsList = [tenantData.contract]
       }
-      console.log('Setting contracts:', contractsList)
       setContracts(contractsList)
-      
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching tenant:', err)
       setError(err.message || 'Failed to load tenant data')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleProfilePictureUpload = async (event: React.ChangeEvent<HTMLInputElement>, tId: number) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const openEditModal = async () => {
+    if (!tenant) return
+    setEditFormData({
+      firstName: tenant.firstName,
+      lastName: tenant.lastName,
+      email: tenant.email,
+      contactNumber: tenant.contactNumber,
+      address: tenant.address,
+      businessName: tenant.businessName,
+      businessType: tenant.businessType,
+      businessAddress: tenant.businessAddress,
+      tin: tenant.tin,
+      profilePicture: null,
+    })
+    setEditError(null)
+    setEditSuccess(null)
+    setShowEditModal(true)
+  }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file')
-      return
+  const closeEditModal = () => {
+    if (!isSubmitting) {
+      setShowEditModal(false)
+      setEditError(null)
+      setEditSuccess(null)
     }
+  }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB')
-      return
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target
+
+    if (e.target instanceof HTMLInputElement && e.target.type === 'file') {
+      setEditFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).files?.[0] || null,
+      }))
+    } else {
+      const { value } = e.target
+      setEditFormData((prev) => ({ ...prev, [name]: value }))
     }
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setEditError(null)
+    setEditSuccess(null)
 
     try {
-      const formData = new FormData()
-      formData.append('profile_picture', file)
+      // Update user data
+      const updatePayload = {
+        firstName: editFormData.firstName,
+        lastName: editFormData.lastName,
+        email: editFormData.email,
+        phone: editFormData.contactNumber,
+      }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
-      console.log('Uploading to:', `${apiUrl}/tenants/${tId}/upload-picture`)
-      console.log('Token:', localStorage.getItem('auth_token') ? 'Present' : 'Missing')
+      if (tenant.user?.id) {
+        const userResult = await apiClient.updateUser(tenant.user.id.toString(), updatePayload)
+        console.log('User update result:', userResult)
+      } else {
+        throw new Error('Cannot update: User ID not found')
+      }
 
-      // Upload to backend
-      const response = await fetch(
-        `${apiUrl}/tenants/${tId}/upload-picture`,
-        {
+      // Update tenant data
+      const tenantPayload = {
+        contactPerson: editFormData.firstName + ' ' + editFormData.lastName,
+        businessName: editFormData.businessName,
+        businessType: editFormData.businessType,
+        businessAddress: editFormData.businessAddress,
+        address: editFormData.address,
+        tin: editFormData.tin,
+      }
+
+      const tenantResult = await apiClient.updateTenant(tenantId.toString(), tenantPayload)
+      console.log('Tenant update result:', tenantResult)
+
+      // Handle profile picture upload
+      if (editFormData.profilePicture) {
+        const formData = new FormData()
+        formData.append('profile_picture', editFormData.profilePicture)
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
+        const response = await fetch(`${apiUrl}/tenants/${tenantId}/upload-picture`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           },
           body: formData,
-        }
-      )
+        })
 
-      console.log('Upload response status:', response.status, response.statusText)
-      const responseText = await response.text()
-      console.log('Upload response text:', responseText)
-
-      if (!response.ok) {
-        let errorMsg = 'Upload failed'
-        try {
-          const errorData = JSON.parse(responseText)
-          errorMsg = errorData.message || errorData.error || errorMsg
-        } catch (e) {
-          errorMsg = `HTTP ${response.status}: ${responseText.substring(0, 200)}`
+        if (!response.ok) {
+          throw new Error('Failed to upload profile picture')
         }
-        throw new Error(errorMsg)
       }
 
-      const result = JSON.parse(responseText)
-      console.log('Upload result:', result)
-      
-      if (result.success && result.data) {
-        // Show success notification
-        const notification = document.createElement('div')
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50'
-        notification.innerHTML = '✓ Profile picture uploaded successfully'
-        document.body.appendChild(notification)
-        
-        setTimeout(() => {
-          notification.remove()
-        }, 3000)
-        
-        // Update tenant with new picture URL using the API storage endpoint
-        const photoPath = result.data.profilePicture || result.data.profile_picture
-        const newUrl = `https://contractmonitoringbackend-production.up.railway.app/api/storage/${photoPath}`
-        setTenant((prev: any) => ({
-          ...prev,
-          profilePicture: newUrl,
-          profile_picture: newUrl,
-        }))
-      }
-      
-      // Re-fetch to get latest data with updated picture
-      await fetchTenantData()
+      setEditSuccess('✅ Tenant updated successfully!')
+
+      // Refresh data after short delay
+      setTimeout(async () => {
+        await fetchTenantData()
+        closeEditModal()
+      }, 1500)
     } catch (err: any) {
-      console.error('Error uploading picture:', err)
-      
-      // Show error notification
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50'
-      notification.innerHTML = '✗ Failed to upload picture: ' + err.message
-      document.body.appendChild(notification)
-      
-      setTimeout(() => {
-        notification.remove()
-      }, 4000)
+      setEditError(err.message || 'Failed to update tenant')
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  const getProfilePictureUrl = () => {
+    if (!tenant?.profilePicture && !tenant?.profile_picture) return null
+
+    const picturePath = tenant.profilePicture || tenant.profile_picture
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://contractmonitoringbackend-production.up.railway.app/api'
+    // Construct proper URL - add cache busting
+    return `${baseUrl}/storage/${picturePath}?t=${Date.now()}`
   }
 
   const getStatusBadge = (status: string) => {
@@ -255,6 +268,8 @@ export default function TenantDetailsPage() {
     )
   }
 
+  const profilePictureUrl = getProfilePictureUrl()
+
   return (
     <ProtectedRoute>
       <div className="space-y-6">
@@ -274,13 +289,13 @@ export default function TenantDetailsPage() {
             >
               🔙
             </button>
-            <Link
-              href={`/dashboard/tenants/${tenantId}/edit`}
+            <button
+              onClick={openEditModal}
               title="Edit Tenant"
               className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               ✏️
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -342,16 +357,22 @@ export default function TenantDetailsPage() {
             {/* Profile Picture - Right Side */}
             <div className="flex justify-center md:justify-end">
               <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow">
-                {tenant.profilePicture || tenant.profile_picture ? (
+                {profilePictureUrl ? (
                   <img
-                    src={`${tenant.profilePicture || tenant.profile_picture}?t=${Date.now()}`}
+                    src={profilePictureUrl}
                     alt={tenant.firstName || 'Tenant'}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log('Image failed to load:', profilePictureUrl)
+                      // Fallback to initials on error
+                      e.currentTarget.style.display = 'none'
+                    }}
                   />
-                ) : (
-                  <span className="text-5xl font-bold text-white">
-                    {tenant.firstName?.[0]?.toUpperCase()}{tenant.lastName?.[0]?.toUpperCase() || '?'}
-                  </span>
+                ) : null}
+                {(!profilePictureUrl || !document.querySelector('img')) && (
+                  <div className="text-4xl font-bold text-white text-center">
+                    {tenant.firstName?.[0]}{tenant.lastName?.[0]}
+                  </div>
                 )}
               </div>
             </div>
@@ -359,182 +380,300 @@ export default function TenantDetailsPage() {
         </div>
 
         {/* Business Information */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Business Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Business Name
-              </label>
-              <p className="text-gray-900">{tenant.businessName || tenant.business_name || 'N/A'}</p>
-            </div>
+        {(tenant.businessName || tenant.businessType || tenant.businessAddress || tenant.tin) && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Business Name
+                </label>
+                <p className="text-gray-900">{tenant.businessName || 'N/A'}</p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Tenant Code
-              </label>
-              <p className="text-gray-900 font-mono">{tenant.tenantCode || (tenant as any).tenant_code || 'N/A'}</p>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Business Type
+                </label>
+                <p className="text-gray-900">{tenant.businessType || 'N/A'}</p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Tax Identification Number (TIN)
-              </label>
-              <p className="text-gray-900 font-mono">{tenant.tin || 'Not Provided'}</p>
-            </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  Business Address
+                </label>
+                <p className="text-gray-900">{tenant.businessAddress || 'N/A'}</p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Business Type
-              </label>
-              <p className="text-gray-900 capitalize">{(tenant.businessType || tenant.business_type || '').replace(/_/g, ' ')}</p>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Business Address
-              </label>
-              <p className="text-gray-900">{tenant.businessAddress || tenant.business_address || 'Not Provided'}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Status
-              </label>
-              <p className="text-gray-900 capitalize">{tenant.status || 'Active'}</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">
+                  TIN
+                </label>
+                <p className="text-gray-900">{tenant.tin || 'N/A'}</p>
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Tenant Status */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Status</h3>
+          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(tenant.status)}`}>
+            {(tenant.status || 'active').toUpperCase()}
+          </span>
         </div>
 
         {/* Contracts Section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Contracts</h3>
-              <Link
-                href="/dashboard/contracts/new"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-              >
-                + New Contract
-              </Link>
+        {contracts.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-4">Contracts ({contracts.length})</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {contracts.map((contract: any) => (
+                <Link
+                  key={contract.id}
+                  href={`/dashboard/contracts/${contract.id}`}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition block"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-gray-900">{contract.contractNumber || contract.contract_number}</p>
+                      <p className="text-sm text-gray-600">
+                        {contract.startDate ? new Date(contract.startDate || '').toLocaleDateString() : 'N/A'} -{' '}
+                        {contract.endDate ? new Date(contract.endDate || '').toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusBadge(contract.status || 'pending')}`}>
+                      {(contract.status || 'PENDING').toUpperCase()}
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
-
-          {contracts.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No contracts found for this tenant
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contract #
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rental Space
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Start Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      End Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Monthly Rent
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {contracts.map((contract: any) => (
-                    <tr key={contract.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          href={`/dashboard/contracts/${contract.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          {contract.contract_number || contract.contractNumber || 'N/A'}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {contract.rentalSpace?.space_code || contract.rentalSpace?.spaceCode || contract.rentalSpace?.name || contract.rental_space?.space_code || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(contract.start_date || contract.startDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(contract.end_date || contract.endDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        ₱{parseFloat(String(contract.monthlyRental || contract.monthly_rental || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                            contract.status
-                          )}`}
-                        >
-                          {contract.status?.charAt(0).toUpperCase() + (contract.status?.slice(1).toLowerCase() || '')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Link
-                          href={`/dashboard/contracts/${contract.id}`}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h4 className="text-sm font-medium text-gray-500 mb-2">
-              Total Contracts
-            </h4>
-            <p className="text-3xl font-bold text-gray-900">{contracts.length}</p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <h4 className="text-sm font-medium text-gray-500 mb-2">
-              Active Contracts
-            </h4>
-            <p className="text-3xl font-bold text-green-600">
-              {contracts.filter((c) => (c.status || '').toUpperCase() === 'ACTIVE').length}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <h4 className="text-sm font-medium text-gray-500 mb-2">
-              Total Monthly Rent
-            </h4>
-            <p className="text-3xl font-bold text-blue-600">
-              ₱
-              {contracts
-                .filter((c) => (c.status || '').toUpperCase() === 'ACTIVE')
-                .reduce((sum, c) => {
-                  const rent = c.monthlyRent || c.monthly_rental || c.monthly_rent || 0
-                  return sum + (typeof rent === 'string' ? parseFloat(rent) : rent)
-                }, 0)
-                .toLocaleString()}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
+
+      {/* Edit Tenant Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900">Edit Tenant</h3>
+              <button
+                onClick={closeEditModal}
+                disabled={isSubmitting}
+                className="text-gray-500 hover:text-gray-700 text-2xl disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+              {/* Success Message */}
+              {editSuccess && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                  <p className="text-sm text-green-700">{editSuccess}</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {editError && (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                  <p className="text-sm text-red-700">❌ {editError}</p>
+                </div>
+              )}
+
+              {/* Personal Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={editFormData.firstName}
+                      onChange={handleEditFormChange}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={editFormData.lastName}
+                      onChange={handleEditFormChange}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={editFormData.email}
+                      onChange={handleEditFormChange}
+                      required
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="contactNumber"
+                      value={editFormData.contactNumber}
+                      onChange={handleEditFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Residential Address
+                    </label>
+                    <textarea
+                      name="address"
+                      value={editFormData.address}
+                      onChange={handleEditFormChange}
+                      rows={3}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Information Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      name="businessName"
+                      value={editFormData.businessName}
+                      onChange={handleEditFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Type
+                    </label>
+                    <input
+                      type="text"
+                      name="businessType"
+                      value={editFormData.businessType}
+                      onChange={handleEditFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Address
+                    </label>
+                    <textarea
+                      name="businessAddress"
+                      value={editFormData.businessAddress}
+                      onChange={handleEditFormChange}
+                      rows={3}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none disabled:bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      TIN
+                    </label>
+                    <input
+                      type="text"
+                      name="tin"
+                      value={editFormData.tin}
+                      onChange={handleEditFormChange}
+                      disabled={isSubmitting}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Picture Section */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload New Photo (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    name="profilePicture"
+                    onChange={handleEditFormChange}
+                    accept="image/*"
+                    disabled={isSubmitting}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">PNG, JPG or GIF (max. 5MB)</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   )
 }
