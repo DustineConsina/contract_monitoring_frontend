@@ -594,26 +594,26 @@ export default function ContractDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Monthly Rent</p>
                   <p className="text-xl font-bold text-blue-600">
-                    ₱{(contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
+                    ₱{(contract.monthlyRental || contract.monthlyRent || contract.monthly_rental || 0).toLocaleString()}
                   </p>
                 </div>
                 <div className="border-t pt-3">
                   <p className="text-sm text-gray-600">Interest (3%)</p>
                   <p className="text-lg font-semibold text-red-600">
-                    ₱{((contract.monthlyRent || contract.monthly_rental || 0) * 0.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    ₱{((contract.monthlyRental || contract.monthlyRent || contract.monthly_rental || 0) * 0.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                 </div>
                 <div className="border-t pt-3 bg-blue-50 -mx-6 -mb-6 px-6 py-3 rounded-b-lg">
                   <p className="text-sm font-semibold text-gray-700">Total Monthly Charge</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    ₱{((contract.monthlyRent || contract.monthly_rental || 0) * 1.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    ₱{((contract.monthlyRental || contract.monthlyRent || contract.monthly_rental || 0) * 1.03).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                 </div>
-                {(contract.securityDeposit || contract.deposit_amount || 0) > 0 && (
+                {(contract.depositAmount || contract.securityDeposit || contract.deposit_amount || 0) > 0 && (
                   <div className="pt-2">
                     <p className="text-sm text-gray-600">Security Deposit</p>
                     <p className="font-medium text-gray-900">
-                      ₱{(contract.securityDeposit || contract.deposit_amount || 0).toLocaleString()}
+                      ₱{(contract.depositAmount || contract.securityDeposit || contract.deposit_amount || 0).toLocaleString()}
                     </p>
                   </div>
                 )}

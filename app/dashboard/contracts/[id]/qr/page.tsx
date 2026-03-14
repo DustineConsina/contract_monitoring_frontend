@@ -188,7 +188,7 @@ export default function ContractQRPage() {
                     <td className="py-2 text-gray-900">
                       {(() => {
                         const rs = contract.rentalSpace || contract.rental_space
-                        const code = rs?.space_code || rs?.spaceNumber || 'N/A'
+                        const code = rs?.spaceCode || rs?.space_code || rs?.spaceNumber || 'N/A'
                         const name = rs?.name || rs?.location || ''
                         const type = rs?.space_type || rs?.type?.name || 'N/A'
                         return `${code}${name ? ' - ' + name : ''}`

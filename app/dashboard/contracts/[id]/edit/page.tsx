@@ -82,10 +82,20 @@ export default function EditContractPage() {
       const selectedSpace = spaces.find((s: any) => s.id == value)
       let newMonthlyRent = formData.monthlyRent
       
-      if (selectedSpace && (selectedSpace.base_rental_rate || selectedSpace.baseRentalRate)) {
-        const baseRate = selectedSpace.base_rental_rate || selectedSpace.baseRentalRate
-        newMonthlyRent = String(baseRate)
-        console.log(`✅ Auto-populated monthly rent: ₱${baseRate} from space ${selectedSpace.space_code}`)
+      if (selectedSpace) {
+        // Check for baseRentalRate in both camelCase and snake_case
+        const baseRate = selectedSpace.baseRentalRate || selectedSpace.base_rental_rate
+        
+        if (baseRate) {
+          newMonthlyRent = String(baseRate)
+          console.log(`✅ Auto-populated monthly rent: ₱${baseRate} from space ${selectedSpace.spaceCode || selectedSpace.space_code}`)
+        } else {
+          console.log(`ℹ️ No base rental rate found for space ${selectedSpace.spaceCode || selectedSpace.space_code}`, {
+            baseRentalRate: selectedSpace.baseRentalRate,
+            base_rental_rate: selectedSpace.base_rental_rate,
+            spaceData: selectedSpace
+          })
+        }
       }
       
       setFormData({
