@@ -18,7 +18,6 @@ export default function EditContractPage() {
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
-    interestRate: '0',
     terms: '',
   })
 
@@ -47,7 +46,6 @@ export default function EditContractPage() {
         endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
         monthlyRent: contract.monthlyRental?.toString() || contract.monthlyRent?.toString() || '',
         securityDeposit: contract.depositAmount?.toString() || contract.securityDeposit?.toString() || '',
-        interestRate: contract.interestRate?.toString() || contract.interest_rate?.toString() || '0',
         terms: contract.termsConditions || contract.terms || '',
       })
 
@@ -145,12 +143,10 @@ export default function EditContractPage() {
     try {
       const monthlyRentValue = parseFloat(formData.monthlyRent)
       const securityDepositValue = parseFloat(formData.securityDeposit)
-      const interestRateValue = parseFloat(formData.interestRate)
       
       console.log('📤 SUBMITTING UPDATE:')
       console.log(`  Current monthlyRent: "${formData.monthlyRent}" → ${monthlyRentValue}`)
       console.log(`  Current securityDeposit: "${formData.securityDeposit}" → ${securityDepositValue}`)
-      console.log(`  Current interestRate: "${formData.interestRate}" → ${interestRateValue}`)
       
       const updatePayload = {
         tenantId: parseInt(formData.tenantId),
@@ -159,7 +155,6 @@ export default function EditContractPage() {
         endDate: formData.endDate,
         monthlyRent: monthlyRentValue,
         securityDeposit: securityDepositValue,
-        interestRate: interestRateValue,
         terms: formData.terms,
       }
       
@@ -339,22 +334,7 @@ export default function EditContractPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Interest Rate (%) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="interestRate"
-                required
-                step="0.01"
-                min="0"
-                max="100"
-                value={formData.interestRate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+
           </div>
 
           {/* Terms and Conditions */}
