@@ -3,19 +3,20 @@
 import { useEffect, useState } from 'react'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import apiClient from '@/lib/api-client'
+import { PFDALogo } from '@/components/PFDALogo'
 
 interface CollectiblePayment {
   id: number
-  payment_number: string
-  contract_number: string
+  paymentNumber: string
+  contractNumber: string
   tenant: string
-  amount_due: number
+  amountDue: number
   interest: number
   total: number
   balance: number
-  due_date: string
+  dueDate: string
   status: string
-  days_overdue: number
+  daysOverdue: number
 }
 
 interface TodaysCollection {
@@ -133,8 +134,8 @@ export default function CashierDashboard() {
       const monthlyData: Record<string, { paid: number; pending: number; overdue: number; total: number }> = {}
       
       payments.forEach((payment: any) => {
-        // Get the month key using the safe helper
-        const monthKey = getMonthFromDate(payment.due_date || payment.dueDate || payment.created_at)
+        // Get the month key using the safe helper - use camelCase field names
+        const monthKey = getMonthFromDate(payment.dueDate || payment.due_date || payment.createdAt || payment.created_at)
         
         if (!monthKey || monthKey === 'Unknown') {
           console.warn('Could not extract month from payment:', payment)
@@ -145,7 +146,7 @@ export default function CashierDashboard() {
           monthlyData[monthKey] = { paid: 0, pending: 0, overdue: 0, total: 0 }
         }
         
-        const amount = parseFloat(payment.total_amount || payment.totalAmount || payment.amount || payment.total || 0)
+        const amount = parseFloat(payment.totalAmount || payment.total_amount || payment.amount || payment.total || 0)
         monthlyData[monthKey].total += amount
         
         const status = (payment.status || '').toLowerCase()
@@ -187,7 +188,22 @@ export default function CashierDashboard() {
       ])
 
       setTodaysData(todaysRes.data)
-      setCollectibles(collectiblesRes.data.payments || [])
+      // Map backend response to ensure camelCase field names
+      const payments = collectiblesRes.data.payments || []
+      const mappedPayments = payments.map((p: any) => ({
+        id: p.id,
+        paymentNumber: p.paymentNumber || p.payment_number,
+        contractNumber: p.contractNumber || p.contract_number,
+        tenant: p.tenant,
+        amountDue: parseFloat(String(p.amountDue || p.amount_due || 0)),
+        interest: parseFloat(String(p.interest || 0)),
+        total: parseFloat(String(p.total || 0)),
+        balance: parseFloat(String(p.balance || 0)),
+        dueDate: p.dueDate || p.due_date,
+        status: p.status,
+        daysOverdue: p.daysOverdue || p.days_overdue || 0,
+      }))
+      setCollectibles(mappedPayments)
     } catch (error) {
       console.error('Error loading cashier data:', error)
       setCollectibles([])
@@ -242,10 +258,13 @@ export default function CashierDashboard() {
     <ProtectedRoute>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Cashier Dashboard</h1>
-            <p className="text-gray-600">Record payments and track daily collection</p>
+        <div className="flex items-center gap-4 justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20"><PFDALogo /></div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Cashier Dashboard</h1>
+              <p className="text-gray-600">Record payments and track daily collection</p>
+            </div>
           </div>
         </div>
 
@@ -269,7 +288,7 @@ export default function CashierDashboard() {
               </div>
               <div className="bg-gray-50 p-4 rounded">
                 <p className="text-sm text-gray-600">Contract</p>
-                <p className="font-bold">{selectedPayment.contract_number}</p>
+                <p className="font-bold">{selectedPayment.contractNumber}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded">
                 <p className="text-sm text-gray-600">Amount Due</p>
@@ -519,7 +538,7 @@ export default function CashierDashboard() {
                       : 'cursor-pointer hover:shadow-md'
                   } transition ${getUrgencyColor(
                     payment.status,
-                    payment.days_overdue
+                    payment.daysOverdue
                   )}`}
                 >
                   <div className="flex items-center justify-between">
@@ -533,17 +552,17 @@ export default function CashierDashboard() {
                         >
                           {payment.status.toUpperCase()}
                         </span>
-                        {payment.days_overdue > 0 && (
+                        {payment.daysOverdue > 0 && (
                           <span className="px-2 py-1 rounded text-xs font-bold bg-red-600 text-white">
-                            {payment.days_overdue} DAYS OVERDUE
+                            {payment.daysOverdue} DAYS OVERDUE
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-gray-600">
-                        {payment.contract_number} • Due: {formatDate(payment.due_date)}
+                        {payment.contractNumber} • Due: {formatDate(payment.dueDate)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Amount: ₱{parseFloat(String(payment.amount_due || 0)).toLocaleString()} + Interest: ₱
+                        Amount: ₱{parseFloat(String(payment.amountDue || 0)).toLocaleString()} + Interest: ₱
                         {parseFloat(String(payment.interest || 0)).toLocaleString()}
                       </p>
                     </div>

@@ -3,7 +3,7 @@ import React from 'react'
 export function PFDALogo() {
   return (
     <svg
-      className="w-24 h-24 mx-auto mb-4"
+      className="w-16 h-16 mx-auto"
       viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
