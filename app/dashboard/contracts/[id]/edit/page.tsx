@@ -38,14 +38,16 @@ export default function EditContractPage() {
       const contractResponse = await apiClient.getContract(contractId.toString())
       const contract = contractResponse.data || contractResponse
       
+      // NOTE: apiClient converts ALL response keys from snake_case to camelCase
+      // So contract.tenant_id becomes contract.tenantId, etc.
       setFormData({
-        tenantId: contract.tenant_id?.toString() || contract.tenant?.id?.toString() || '',
-        rentalSpaceId: contract.rental_space_id?.toString() || contract.rentalSpace?.id?.toString() || '',
-        startDate: contract.start_date ? new Date(contract.start_date).toISOString().split('T')[0] : '',
-        endDate: contract.end_date ? new Date(contract.end_date).toISOString().split('T')[0] : '',
-        monthlyRent: contract.monthly_rental?.toString() || contract.monthlyRent?.toString() || '',
-        securityDeposit: contract.deposit_amount?.toString() || contract.securityDeposit?.toString() || '',
-        terms: contract.terms_conditions || contract.terms || '',
+        tenantId: contract.tenantId?.toString() || contract.tenant?.id?.toString() || '',
+        rentalSpaceId: contract.rentalSpaceId?.toString() || contract.rentalSpace?.id?.toString() || '',
+        startDate: contract.startDate ? new Date(contract.startDate).toISOString().split('T')[0] : '',
+        endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
+        monthlyRent: contract.monthlyRental?.toString() || contract.monthlyRent?.toString() || '',
+        securityDeposit: contract.depositAmount?.toString() || contract.securityDeposit?.toString() || '',
+        terms: contract.termsConditions || contract.terms || '',
         status: contract.status || 'active',
       })
 
@@ -169,11 +171,16 @@ export default function EditContractPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
               <option value="">Select tenant</option>
-              {tenants.map((tenant: any) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.business_name || `${tenant.firstName} ${tenant.lastName}`} - {tenant.contact_person || tenant.email}
-                </option>
-              ))}
+              {tenants.map((tenant: any) => {
+                // Use businessName (converted from business_name by apiClient), fallback to contactPerson
+                const tenantName = tenant.businessName || tenant.business_name || tenant.contactPerson || 'Unknown'
+                const tenantIdentifier = tenant.contactPerson || tenant.contact_person || tenant.email || 'N/A'
+                return (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenantName} - {tenantIdentifier}
+                  </option>
+                )
+              })}
             </select>
           </div>
 
@@ -191,10 +198,14 @@ export default function EditContractPage() {
             >
               <option value="">Select rental space</option>
               {spaces
-                .filter((space: any) => space.status === 'available' || parseInt(formData.rentalSpaceId) === space.id)
+                .filter((space: any) => {
+                  // Show spaces with no active contracts, OR the currently selected space
+                  const activeContractCount = space.activeContractsCount || space.active_contracts_count || 0
+                  return activeContractCount === 0 || parseInt(formData.rentalSpaceId) === space.id
+                })
                 .map((space: any) => (
                   <option key={space.id} value={space.id}>
-                    {space.space_code || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
+                    {space.space_code || space.spaceCode || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
                     {(space.base_rental_rate || space.baseRentalRate) && (
                       <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
                     )}
