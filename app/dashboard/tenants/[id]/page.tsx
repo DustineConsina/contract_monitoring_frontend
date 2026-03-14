@@ -215,12 +215,13 @@ export default function TenantDetailsPage() {
   }
 
   const getStatusBadge = (status: string) => {
+    const normalizedStatus = (status || '').toUpperCase()
     const colors = {
       ACTIVE: 'bg-green-100 text-green-800',
       EXPIRED: 'bg-yellow-100 text-yellow-800',
       TERMINATED: 'bg-red-100 text-red-800',
     }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+    return colors[normalizedStatus as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
   if (isLoading) {
@@ -472,7 +473,7 @@ export default function TenantDetailsPage() {
                         {new Date(contract.end_date || contract.endDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        ₱{parseFloat(String(contract.monthly_rental || contract.monthlyRent || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ₱{parseFloat(String(contract.monthlyRental || contract.monthly_rental || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -480,7 +481,7 @@ export default function TenantDetailsPage() {
                             contract.status
                           )}`}
                         >
-                          {contract.status}
+                          {contract.status?.charAt(0).toUpperCase() + (contract.status?.slice(1).toLowerCase() || '')}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
