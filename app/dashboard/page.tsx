@@ -169,8 +169,8 @@ export default function DashboardPage() {
                   <Pie
                     data={[
                       { name: 'Active', value: stats.activeContracts, color: '#10b981' },
-                      { name: 'For Renewal', value: stats.renewalContracts || 0, color: '#f97316' },
-                      { name: 'Expired', value: stats.expiredContracts, color: '#eab308' },
+                      { name: 'For Renewal', value: stats.renewalContracts || 0, color: '#6366f1' },
+                      { name: 'Expired', value: stats.expiredContracts, color: '#f59e0b' },
                       { name: 'Delinquent', value: stats.delinquentContracts || 0, color: '#ef4444' },
                     ]}
                     cx="50%"
@@ -182,8 +182,8 @@ export default function DashboardPage() {
                     dataKey="value"
                   >
                     <Cell fill="#10b981" />
-                    <Cell fill="#f97316" />
-                    <Cell fill="#eab308" />
+                    <Cell fill="#6366f1" />
+                    <Cell fill="#f59e0b" />
                     <Cell fill="#ef4444" />
                   </Pie>
                   <Tooltip />
@@ -303,14 +303,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Contracts for Renewal */}
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 shadow-sm p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-orange-900">
-                ⏰ For Renewal (2 months)
+              <h3 className="text-lg font-bold text-indigo-900">
+                For Renewal Soon
               </h3>
               <Link
                 href="/dashboard/contracts?status=for_renewal"
-                className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+                className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
                 View All →
               </Link>
@@ -320,24 +320,24 @@ export default function DashboardPage() {
                 {stats.renewalContractsList.slice(0, 5).map((contract: any) => (
                   <div
                     key={contract.id}
-                    className="flex items-center justify-between py-3 border-b border-orange-200 last:border-0 hover:bg-orange-100 px-2 rounded transition-colors"
+                    className="flex items-center justify-between py-3 border-b border-indigo-200 last:border-0 hover:bg-indigo-100 px-2 rounded transition-colors"
                   >
                     <div>
-                      <div className="font-semibold text-sm text-orange-900">
+                      <div className="font-semibold text-sm text-indigo-900">
                         {contract.contractNumber}
                       </div>
-                      <div className="text-xs text-orange-600">
+                      <div className="text-xs text-indigo-600">
                         {contract.rentalSpace?.spaceNumber || contract.rentalSpace?.name}
                       </div>
                     </div>
-                    <div className="text-xs font-medium text-orange-700">
+                    <div className="text-xs font-medium text-indigo-700">
                       Expires: {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-orange-600 text-center py-8 font-medium">
+              <p className="text-sm text-indigo-600 text-center py-8 font-medium">
                 ✓ No contracts requiring renewal
               </p>
             )}
@@ -412,11 +412,11 @@ function RenewalStatsCard({
   link?: string
 }) {
   const content = (
-    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm p-6 hover:shadow-lg transition-all hover:scale-102 duration-200">
+    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 shadow-sm p-6 hover:shadow-lg transition-all hover:scale-102 duration-200">
       <div>
-        <p className="text-sm font-semibold text-orange-600 mb-2">{title} ⏰</p>
-        <p className="text-4xl font-bold text-orange-900">{value}</p>
-        <p className="text-xs text-orange-600 mt-2">Review needed</p>
+        <p className="text-sm font-semibold text-indigo-600 mb-2">{title}</p>
+        <p className="text-4xl font-bold text-indigo-900">{value}</p>
+        <p className="text-xs text-indigo-600 mt-2">Requires review</p>
       </div>
     </div>
   )

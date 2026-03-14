@@ -128,7 +128,7 @@ function ContractsPageContent() {
       TERMINATED: 'bg-rose-100 text-rose-800',
       RENEWED: 'bg-indigo-100 text-indigo-800',
       PENDING: 'bg-blue-100 text-blue-800',
-      FOR_RENEWAL: 'bg-orange-100 text-orange-800 font-bold',
+      FOR_RENEWAL: 'bg-indigo-100 text-indigo-800 font-bold',
     }
     return colors[status as keyof typeof colors] || 'bg-slate-100 text-slate-800'
   }
@@ -464,8 +464,8 @@ function ContractsPageContent() {
                             {(contract.status || 'PENDING').toUpperCase().replace('_', ' ')}
                           </span>
                           {contract.status?.toLowerCase() === 'for_renewal' && (
-                            <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded border border-orange-200">
-                              ⏰ Review needed
+                            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-200">
+                              ⏰ Review renewal
                             </span>
                           )}
                         </div>
