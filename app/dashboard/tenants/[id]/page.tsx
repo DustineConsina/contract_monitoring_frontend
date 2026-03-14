@@ -71,9 +71,9 @@ export default function TenantDetailsPage() {
         tin: tenantData.tin || '',
         tenantCode: tenantData.tenantCode || tenantData.tenant_code || '',
         status: (tenantData.status || tenantData.status || 'active'),
-        // FIX: Use the pre-constructed URL from backend (profilePicture_url or profilePicture with full URL)
-        profilePicture: tenantData.profilePicture_url || tenantData.profilePicture || tenantData.profile_picture_url,
-        profile_picture: tenantData.profile_picture_url || tenantData.profile_picture || tenantData.profilePicture,
+        // FIX: apiClient converts snake_case to camelCase, so profile_picture_url becomes profilePictureUrl
+        profilePicture: tenantData.profilePictureUrl || tenantData.profilePicture || tenantData.profilePicture_url,
+        profile_picture: tenantData.profilePictureUrl || tenantData.profilePicture || tenantData.profile_picture,
         contact_person: tenantData.contact_person || tenantData.contactPerson || '',
         business_name: tenantData.business_name || tenantData.businessName || '',
         business_type: tenantData.business_type || tenantData.businessType || '',
@@ -209,9 +209,18 @@ export default function TenantDetailsPage() {
   }
 
   const getProfilePictureUrl = () => {
-    if (!tenant?.profilePicture && !tenant?.profile_picture) return null
+    // Try to get URL from all possible property names (accounts for camelCase conversion)
+    const url = tenant?.profilePicture || tenant?.profilePictureUrl || tenant?.profile_picture
+    if (!url) {
+      console.log('No profile picture URL found in tenant:', { 
+        profilePicture: tenant?.profilePicture, 
+        profilePictureUrl: tenant?.profilePictureUrl,
+        profile_picture: tenant?.profile_picture 
+      })
+      return null
+    }
+    console.log('Profile picture URL found:', url)
     // Backend already returns full URL, just use it directly with cache busting
-    const url = tenant.profilePicture || tenant.profile_picture
     return `${url}${url?.includes('?') ? '&' : '?'}t=${Date.now()}`
   }
 
@@ -347,17 +356,17 @@ export default function TenantDetailsPage() {
               <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden shadow">
                 {profilePictureUrl ? (
                   <img
+                    key={profilePictureUrl}
                     src={profilePictureUrl}
                     alt={tenant.firstName || 'Tenant'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       console.log('Image failed to load:', profilePictureUrl)
-                      // Fallback to initials on error
-                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.classList.add('hidden')
                     }}
                   />
                 ) : null}
-                {(!profilePictureUrl || !document.querySelector('img')) && (
+                {!profilePictureUrl && (
                   <div className="text-4xl font-bold text-white text-center">
                     {tenant.firstName?.[0]}{tenant.lastName?.[0]}
                   </div>
@@ -443,8 +452,10 @@ export default function TenantDetailsPage() {
 
       {/* Edit Tenant Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <>
+          <div className="fixed inset-0 backdrop-blur-sm z-40" onClick={closeEditModal} />
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
               <h3 className="text-xl font-bold text-gray-900">Edit Tenant</h3>
@@ -661,6 +672,7 @@ export default function TenantDetailsPage() {
             </form>
           </div>
         </div>
+      </>
       )}
     </ProtectedRoute>
   )
