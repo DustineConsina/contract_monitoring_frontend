@@ -88,9 +88,11 @@ export interface Contract {
   endDate?: string
   end_date?: string
   monthlyRent?: number
+  monthlyRental?: number
   monthly_rental?: number
   monthly_rent?: number
   securityDeposit?: number
+  depositAmount?: number
   deposit_amount?: number
   security_deposit?: number
   interestRate?: number
@@ -99,6 +101,7 @@ export interface Contract {
   qrCode?: string
   qr_code?: string
   terms?: string
+  termsConditions?: string
   terms_conditions?: string
   notes?: string
   createdAt?: string
