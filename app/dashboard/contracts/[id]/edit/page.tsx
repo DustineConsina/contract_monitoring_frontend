@@ -26,6 +26,7 @@ export default function EditContractPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -139,14 +140,11 @@ export default function EditContractPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
+    setSuccessMessage(null)
 
     try {
       const monthlyRentValue = parseFloat(formData.monthlyRent)
       const securityDepositValue = parseFloat(formData.securityDeposit)
-      
-      console.log('📤 SUBMITTING UPDATE:')
-      console.log(`  Current monthlyRent: "${formData.monthlyRent}" → ${monthlyRentValue}`)
-      console.log(`  Current securityDeposit: "${formData.securityDeposit}" → ${securityDepositValue}`)
       
       const updatePayload = {
         tenantId: parseInt(formData.tenantId),
@@ -157,20 +155,17 @@ export default function EditContractPage() {
         securityDeposit: securityDepositValue,
         terms: formData.terms,
       }
-      
-      console.log(`  Full payload:`, JSON.stringify(updatePayload, null, 2))
 
-      const response = await apiClient.updateContract(contractId.toString(), updatePayload)
+      await apiClient.updateContract(contractId.toString(), updatePayload)
       
-      console.log('✅ Contract updated successfully')
-      console.log('Response:', response)
-      alert('✅ Contract updated successfully')
-      router.push(`/dashboard/contracts/${contractId}`)
+      setSuccessMessage('✅ Contract updated successfully')
+      
+      // Redirect after showing success for 2 seconds
+      setTimeout(() => {
+        router.push(`/dashboard/contracts/${contractId}`)
+      }, 2000)
     } catch (err: any) {
       console.error('❌ Error updating contract:', err)
-      console.error('Error status:', err.status)
-      console.error('Error errors:', err.errors)
-      console.error('Error debug:', err.debug)
       setError(err.message || 'Failed to update contract')
     } finally {
       setIsSubmitting(false)
@@ -192,165 +187,190 @@ export default function EditContractPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Edit Contract</h2>
-          <p className="text-gray-600">Update contract details</p>
+      {/* Modal Overlay with Blurred Background */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => router.push(`/dashboard/contracts/${contractId}`)} />
+      
+      {/* Success Toast */}
+      {successMessage && (
+        <div className="fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in">
+          <div className="bg-green-50 border border-green-200 rounded-lg shadow-lg p-4">
+            <p className="text-green-700 font-medium">{successMessage}</p>
+          </div>
         </div>
+      )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
-            <p className="text-sm text-red-700">{error}</p>
+      {/* Modal Content */}
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* Modal Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Edit Contract</h2>
+                <p className="text-gray-600 text-sm mt-1">Update contract details</p>
+              </div>
+              <button
+                onClick={() => router.push(`/dashboard/contracts/${contractId}`)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-        )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">              {/* DEBUG: Current Form State */}
-              <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs font-mono">
-                <div className="text-blue-900">
-                  📋 Form State: monthlyRent={formData.monthlyRent}, startDate={formData.startDate}, endDate={formData.endDate}
+          {/* Modal Body */}
+          <div className="p-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded mb-6">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+                  <p className="mt-4 text-gray-600">Loading contract...</p>
                 </div>
-              </div>          {/* Tenant Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tenant <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="tenantId"
-              required
-              value={formData.tenantId}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="">Select tenant</option>
-              {tenants.map((tenant: any) => {
-                // Use businessName (converted from business_name by apiClient), fallback to contactPerson
-                const tenantName = tenant.businessName || tenant.business_name || tenant.contactPerson || 'Unknown'
-                const tenantIdentifier = tenant.contactPerson || tenant.contact_person || tenant.email || 'N/A'
-                return (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenantName} - {tenantIdentifier}
-                  </option>
-                )
-              })}
-            </select>
-          </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Tenant Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tenant <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="tenantId"
+                    required
+                    value={formData.tenantId}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="">Select tenant</option>
+                    {tenants.map((tenant: any) => {
+                      const tenantName = tenant.businessName || tenant.business_name || tenant.contactPerson || 'Unknown'
+                      const tenantIdentifier = tenant.contactPerson || tenant.contact_person || tenant.email || 'N/A'
+                      return (
+                        <option key={tenant.id} value={tenant.id}>
+                          {tenantName} - {tenantIdentifier}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
 
-          {/* Rental Space Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rental Space <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="rentalSpaceId"
-              required
-              value={formData.rentalSpaceId}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-border-transparent outline-none"
-            >
-              <option value="">Select rental space</option>
-              {spaces
-                .filter((space: any) => {
-                  // Show spaces with no active contracts, OR the currently selected space
-                  const activeContractCount = space.activeContractsCount || space.active_contracts_count || 0
-                  return activeContractCount === 0 || parseInt(formData.rentalSpaceId) === space.id
-                })
-                .map((space: any) => (
-                  <option key={space.id} value={space.id}>
-                    {space.space_code || space.spaceCode || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
-                    {(space.base_rental_rate || space.baseRentalRate) && (
-                      <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
-                    )}
-                  </option>
-                ))}
-            </select>
-          </div>
+                {/* Rental Space Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rental Space <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="rentalSpaceId"
+                    required
+                    value={formData.rentalSpaceId}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:ring-border-transparent outline-none"
+                  >
+                    <option value="">Select rental space</option>
+                    {spaces
+                      .filter((space: any) => {
+                        const activeContractCount = space.activeContractsCount || space.active_contracts_count || 0
+                        return activeContractCount === 0 || parseInt(formData.rentalSpaceId) === space.id
+                      })
+                      .map((space: any) => (
+                        <option key={space.id} value={space.id}>
+                          {space.space_code || space.spaceCode || space.spaceNumber} - {space.name || space.location} ({space.size_sqm || space.squareMeters} sqm)
+                          {(space.base_rental_rate || space.baseRentalRate) && (
+                            <> • ₱{(space.base_rental_rate || space.baseRentalRate).toLocaleString()}/month</>
+                          )}
+                        </option>
+                      ))}
+                  </select>
+                </div>
 
-          {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="startDate"
-                required
-                value={formData.startDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+                {/* Date Range */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      required
+                      value={formData.startDate}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="endDate"
-                required
-                value={formData.endDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      End Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      required
+                      value={formData.endDate}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </div>
 
-          {/* Financial Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Monthly Rent (₱) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="monthlyRent"
-                required
-                step="0.01"
-                min="0"
-                value={formData.monthlyRent}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-              <p className="text-xs text-gray-500 mt-1">💡 Automatically filled from the selected rental space rate</p>
-            </div>
+                {/* Financial Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Monthly Rent (₱) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="monthlyRent"
+                      required
+                      step="0.01"
+                      min="0"
+                      value={formData.monthlyRent}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">💡 Automatically filled from the selected rental space rate</p>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Security Deposit (₱) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="securityDeposit"
-                required
-                step="0.01"
-                min="0"
-                value={formData.securityDeposit}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Security Deposit (₱) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="securityDeposit"
+                      required
+                      step="0.01"
+                      min="0"
+                      value={formData.securityDeposit}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </div>
 
-
-          </div>
-
-          {/* Terms and Conditions */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Terms and Conditions
-            </label>
-            <textarea
-              name="terms"
-              rows={6}
-              value={formData.terms}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-              placeholder="Enter contract terms and conditions..."
-            />
-          </div>
+                {/* Terms and Conditions */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Terms and Conditions
+                  </label>
+                  <textarea
+                    name="terms"
+                    rows={6}
+                    value={formData.terms}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                    placeholder="Enter contract terms and conditions..."
+                  />
+                </div>
 
           {/* Actions */}
           <div className="flex gap-2 justify-end pt-4 border-t">
@@ -369,7 +389,10 @@ export default function EditContractPage() {
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
-        </form>
+              </form>
+            )}
+          </div>
+        </div>
       </div>
     </ProtectedRoute>
   )
