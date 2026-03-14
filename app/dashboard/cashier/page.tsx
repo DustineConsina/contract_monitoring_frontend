@@ -277,93 +277,119 @@ export default function CashierDashboard() {
           <p className="mt-2 text-sm">{todaysData?.payment_count || 0} payments recorded</p>
         </div>
 
-        {/* Recording Form */}
+        {/* Recording Modal */}
         {selectedPayment && (
-          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-600">
-            <h2 className="text-2xl font-bold mb-4">Record Payment</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="bg-gray-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Tenant</p>
-                <p className="font-bold">{selectedPayment.tenant}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Contract</p>
-                <p className="font-bold">{selectedPayment.contractNumber}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Amount Due</p>
-                <p className="font-bold">₱{parseFloat(String(selectedPayment.total || 0)).toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded">
-                <p className="text-sm text-gray-600">Outstanding Balance</p>
-                <p className="font-bold text-red-600">₱{parseFloat(String(selectedPayment.balance || 0)).toLocaleString()}</p>
+          <>
+            <div className="fixed inset-0 backdrop-blur-sm z-40" onClick={() => {
+              setSelectedPayment(null)
+              setRecordData({ amount: '', method: 'cash', remarks: '' })
+            }} />
+            <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-gray-900">Record Payment</h2>
+                  <button
+                    onClick={() => {
+                      setSelectedPayment(null)
+                      setRecordData({ amount: '', method: 'cash', remarks: '' })
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={(e) => { e.preventDefault(); handleRecordPayment(); }} className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-gray-50 p-4 rounded">
+                      <p className="text-sm text-gray-600">Tenant</p>
+                      <p className="font-bold text-lg">{selectedPayment.tenant}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded">
+                      <p className="text-sm text-gray-600">Contract</p>
+                      <p className="font-bold text-lg">{selectedPayment.contractNumber}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-1">Current Balance</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      ₱{parseFloat(String(selectedPayment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Amount to Collect (₱)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      max={selectedPayment.balance}
+                      value={recordData.amount}
+                      onChange={(e) =>
+                        setRecordData({ ...recordData, amount: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Enter amount"
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum: ₱{parseFloat(String(selectedPayment.balance || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <select
+                      value={recordData.method}
+                      onChange={(e) =>
+                        setRecordData({ ...recordData, method: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="check">Check</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+                    <textarea
+                      value={recordData.remarks}
+                      onChange={(e) =>
+                        setRecordData({ ...recordData, remarks: e.target.value })
+                      }
+                      rows={2}
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Optional notes"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-4 border-t">
+                    <button
+                      type="submit"
+                      disabled={isRecording || !recordData.amount}
+                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                    >
+                      {isRecording ? '⏳ Recording...' : '✓ Record Payment'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPayment(null)
+                        setRecordData({ amount: '', method: 'cash', remarks: '' })
+                      }}
+                      className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Amount to Collect</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  max={selectedPayment.balance}
-                  value={recordData.amount}
-                  onChange={(e) =>
-                    setRecordData({ ...recordData, amount: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="Enter amount"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Payment Method</label>
-                <select
-                  value={recordData.method}
-                  onChange={(e) =>
-                    setRecordData({ ...recordData, method: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="check">Check</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Remarks</label>
-                <textarea
-                  value={recordData.remarks}
-                  onChange={(e) =>
-                    setRecordData({ ...recordData, remarks: e.target.value })
-                  }
-                  rows={2}
-                  className="w-full px-4 py-2 border rounded-lg"
-                  placeholder="Optional notes"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleRecordPayment}
-                  disabled={isRecording}
-                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-                >
-                  {isRecording ? 'Recording...' : '✓ Record Payment'}
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedPayment(null)
-                    setRecordData({ amount: '', method: 'cash', remarks: '' })
-                  }}
-                  className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
+          </>
         )}
 
         {/* Payment Trends Chart */}

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import apiClient from '@/lib/api-client'
+import { PFDALogo } from '@/components/PFDALogo'
 import { DashboardStats } from '@/types'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
@@ -65,20 +66,23 @@ export default function DashboardPage() {
       <div className="space-y-8">
         {/* Page Header */}
         <div className="border-b border-slate-100 pb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Overview</h1>
-              <p className="text-slate-600 text-base font-medium">Welcome to the PFDA Contract Monitoring System</p>
-              {lastUpdated && (
-                <p className="text-xs text-slate-500 mt-2 font-medium">
-                  Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
-              )}
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <PFDALogo />
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Overview</h1>
+                <p className="text-slate-600 text-base font-medium">Welcome to the PFDA Contract Monitoring System</p>
+                {lastUpdated && (
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
             </div>
             <button
               onClick={fetchDashboardStats}
               disabled={isRefreshing}
-              className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
+              className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2 whitespace-nowrap"
               title="Refresh dashboard data"
             >
               {isRefreshing ? (
