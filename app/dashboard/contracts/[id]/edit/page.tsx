@@ -18,8 +18,8 @@ export default function EditContractPage() {
     endDate: '',
     monthlyRent: '',
     securityDeposit: '',
+    interestRate: '0',
     terms: '',
-    status: 'ACTIVE',
   })
 
   const [tenants, setTenants] = useState<User[]>([])
@@ -47,8 +47,8 @@ export default function EditContractPage() {
         endDate: contract.endDate ? new Date(contract.endDate).toISOString().split('T')[0] : '',
         monthlyRent: contract.monthlyRental?.toString() || contract.monthlyRent?.toString() || '',
         securityDeposit: contract.depositAmount?.toString() || contract.securityDeposit?.toString() || '',
+        interestRate: contract.interestRate?.toString() || contract.interest_rate?.toString() || '0',
         terms: contract.termsConditions || contract.terms || '',
-        status: contract.status || 'active',
       })
 
       // Fetch tenants and spaces for dropdowns
@@ -145,33 +145,37 @@ export default function EditContractPage() {
     try {
       const monthlyRentValue = parseFloat(formData.monthlyRent)
       const securityDepositValue = parseFloat(formData.securityDeposit)
+      const interestRateValue = parseFloat(formData.interestRate)
       
       console.log('📤 SUBMITTING UPDATE:')
-      console.log(`  Current formData.monthlyRent: "${formData.monthlyRent}" (type: ${typeof formData.monthlyRent})`)
-      console.log(`  Parsed monthlyRent: ${monthlyRentValue}`)
-      console.log(`  Parsed securityDeposit: ${securityDepositValue}`)
+      console.log(`  Current monthlyRent: "${formData.monthlyRent}" → ${monthlyRentValue}`)
+      console.log(`  Current securityDeposit: "${formData.securityDeposit}" → ${securityDepositValue}`)
+      console.log(`  Current interestRate: "${formData.interestRate}" → ${interestRateValue}`)
       
       const updatePayload = {
         tenantId: parseInt(formData.tenantId),
         rentalSpaceId: parseInt(formData.rentalSpaceId),
         startDate: formData.startDate,
         endDate: formData.endDate,
-        durationMonths: 1,
         monthlyRent: monthlyRentValue,
         securityDeposit: securityDepositValue,
+        interestRate: interestRateValue,
         terms: formData.terms,
-        status: formData.status,
       }
       
-      console.log(`  Full payload:`, updatePayload)
+      console.log(`  Full payload:`, JSON.stringify(updatePayload, null, 2))
 
-      await apiClient.updateContract(contractId.toString(), updatePayload)
-
+      const response = await apiClient.updateContract(contractId.toString(), updatePayload)
+      
       console.log('✅ Contract updated successfully')
+      console.log('Response:', response)
       alert('✅ Contract updated successfully')
       router.push(`/dashboard/contracts/${contractId}`)
     } catch (err: any) {
       console.error('❌ Error updating contract:', err)
+      console.error('Error status:', err.status)
+      console.error('Error errors:', err.errors)
+      console.error('Error debug:', err.debug)
       setError(err.message || 'Failed to update contract')
     } finally {
       setIsSubmitting(false)
@@ -301,7 +305,7 @@ export default function EditContractPage() {
           </div>
 
           {/* Financial Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Monthly Rent (₱) <span className="text-red-500">*</span>
@@ -334,24 +338,23 @@ export default function EditContractPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
             </div>
-          </div>
 
-          {/* Contract Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="status"
-              required
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            >
-              <option value="ACTIVE">Active</option>
-              <option value="EXPIRED">Expired</option>
-              <option value="TERMINATED">Terminated</option>
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Interest Rate (%) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="interestRate"
+                required
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.interestRate}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
           </div>
 
           {/* Terms and Conditions */}
