@@ -455,20 +455,13 @@ function ContractsPageContent() {
                         ₱{(contract.monthlyRent || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-2">
-                          <span
-                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                              (contract.status || 'PENDING').toUpperCase()
-                            )}`}
-                          >
-                            {(contract.status || 'PENDING').toUpperCase().replace('_', ' ')}
-                          </span>
-                          {contract.status?.toLowerCase() === 'for_renewal' && (
-                            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-200">
-                              ⏰ Review renewal
-                            </span>
-                          )}
-                        </div>
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
+                            (contract.status || 'PENDING').toUpperCase()
+                          )}`}
+                        >
+                          {(contract.status || 'PENDING').toUpperCase().replace('_', ' ')}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">

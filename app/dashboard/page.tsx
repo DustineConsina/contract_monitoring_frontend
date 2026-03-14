@@ -128,7 +128,7 @@ export default function DashboardPage() {
             value={stats?.activeContracts || 0}
             link="/dashboard/contracts?status=active"
           />
-          <RenewalStatsCard
+          <StatsCard
             title="For Renewal"
             value={stats?.renewalContracts || 0}
             link="/dashboard/contracts?status=for_renewal"
@@ -387,36 +387,6 @@ function StatsCard({
       <div>
         <p className="text-sm font-semibold text-indigo-600 mb-2">{title}</p>
         <p className="text-4xl font-bold text-indigo-900">{value}</p>
-      </div>
-    </div>
-  )
-
-  if (link) {
-    return (
-      <Link href={link} className="block">
-        {content}
-      </Link>
-    )
-  }
-
-  return content
-}
-
-function RenewalStatsCard({
-  title,
-  value,
-  link,
-}: {
-  title: string
-  value: string | number
-  link?: string
-}) {
-  const content = (
-    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 shadow-sm p-6 hover:shadow-lg transition-all hover:scale-102 duration-200">
-      <div>
-        <p className="text-sm font-semibold text-indigo-600 mb-2">{title}</p>
-        <p className="text-4xl font-bold text-indigo-900">{value}</p>
-        <p className="text-xs text-indigo-600 mt-2">Requires review</p>
       </div>
     </div>
   )
