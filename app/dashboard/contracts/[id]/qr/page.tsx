@@ -179,7 +179,7 @@ export default function ContractQRPage() {
                     <td className="py-2 font-medium text-gray-700">Tenant:</td>
                     <td className="py-2 text-gray-900">
                       {contract.tenant && (typeof contract.tenant === 'object' && Object.keys(contract.tenant).length > 0)
-                        ? `${contract.tenant.business_name || contract.tenant.contact_person || 'N/A'}`
+                        ? `${contract.tenant.businessName || contract.tenant.business_name || contract.tenant.contactPerson || contract.tenant.contact_person || 'N/A'}`
                         : 'N/A'}
                     </td>
                   </tr>
@@ -199,7 +199,7 @@ export default function ContractQRPage() {
                     <td className="py-2 font-medium text-gray-700">Type:</td>
                     <td className="py-2 text-gray-900">
                       {contract.rentalSpace && (typeof contract.rentalSpace === 'object' && Object.keys(contract.rentalSpace).length > 0)
-                        ? (contract.rentalSpace?.space_type || contract.rentalSpace?.type?.name || 'N/A')
+                        ? (contract.rentalSpace?.spaceType || contract.rentalSpace?.space_type || contract.rentalSpace?.type?.name || 'N/A')
                         : 'N/A'}
                     </td>
                   </tr>
@@ -207,7 +207,7 @@ export default function ContractQRPage() {
                     <td className="py-2 font-medium text-gray-700">Space Size:</td>
                     <td className="py-2 text-gray-900">
                       {contract.rentalSpace && (typeof contract.rentalSpace === 'object' && Object.keys(contract.rentalSpace).length > 0)
-                        ? `${(contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters) || 'N/A'} m²`
+                        ? `${(contract.rentalSpace?.sizeSqm || contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters) || 'N/A'} m²`
                         : 'N/A'}
                     </td>
                   </tr>
@@ -241,7 +241,7 @@ export default function ContractQRPage() {
                   <div className="border-2 border-dashed border-gray-300 rounded h-48 flex items-center justify-center">
                     <div className="text-gray-500">
                       <p className="mb-2">📍 {contract.rentalSpace?.name || 'Location'}</p>
-                      <p className="text-sm">Space: {contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters || 'N/A'} square meters</p>
+                      <p className="text-sm">Space: {contract.rentalSpace?.sizeSqm || contract.rentalSpace?.size_sqm || contract.rentalSpace?.squareMeters || 'N/A'} square meters</p>
                     </div>
                   </div>
                 </div>
