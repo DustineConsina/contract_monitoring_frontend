@@ -66,6 +66,11 @@ export default function ContractDetailsPage() {
       console.log('   tenant:', contractData.tenant, '| Type:', typeof contractData.tenant)
       console.log('   rentalSpace:', contractData.rentalSpace, '| Type:', typeof contractData.rentalSpace)
       console.log('   rental_space:', contractData.rental_space, '| Type:', typeof contractData.rental_space)
+      console.log('   Monthly Rent Debug:')
+      console.log('     monthlyRental:', contractData.monthlyRental)
+      console.log('     monthly_rental:', contractData.monthly_rental)
+      console.log('     monthlyRent:', contractData.monthlyRent)
+      console.log('     monthly_rent:', contractData.monthly_rent)
       
       // Ensure arrays are arrays
       if (contractData.payments && !Array.isArray(contractData.payments)) {
@@ -99,6 +104,12 @@ export default function ContractDetailsPage() {
       console.log('✅ Mapped Contract:', mappedContract)
       console.log('   Tenant in mapped:', mappedContract.tenant)
       console.log('   RentalSpace in mapped:', mappedContract.rentalSpace)
+      console.log('   Monthly Rent Values in Mapped:')
+      console.log('     monthlyRent:', mappedContract.monthlyRent)
+      console.log('     monthlyRental:', mappedContract.monthlyRental)
+      console.log('     monthly_rental:', mappedContract.monthly_rental)
+      console.log('     monthly_rent:', mappedContract.monthly_rent)
+      console.log('     Calculated monthlyRentValue:', monthlyRentValue)
       setContract(mappedContract)
     } catch (err: any) {
       console.error('❌ Error loading contract:', err)
@@ -318,6 +329,17 @@ export default function ContractDetailsPage() {
               Terminate
             </button>
           </div>
+        </div>
+
+        {/* DEBUG: Monthly Rent Values */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+          <p className="text-sm font-mono text-yellow-800">
+            🔍 DEBUG - Monthly Rent: 
+            monthlyRent={contract?.monthlyRent}, 
+            monthlyRental={contract?.monthlyRental}, 
+            monthly_rental={contract?.monthly_rental},
+            monthly_rent={contract?.monthly_rent}
+          </p>
         </div>
 
         {/* Contract Information */}
